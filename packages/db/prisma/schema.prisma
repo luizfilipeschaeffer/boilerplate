@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id                String   @id @default(uuid())
+  name              String
+  slug              String   @unique
+  schemaName        String   @unique @map("schema_name")
+  phase             Int      @default(1)
+  tipoNegocio       String   @map("tipo_negocio")
+  segmentoAtuacao   String?  @map("segmento_atuacao")
+  hasCnpj           Boolean  @default(false) @map("has_cnpj")
+  cnpj              String?
+  fiscalReady       Boolean  @default(false) @map("fiscal_ready")
+  tipoNegocioInteresse String? @map("tipo_negocio_interesse")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  modulosAtivos ModuloAtivo[]
+  memberships   Membership[]
+
+  @@map("organizations")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  memberships Membership[]
+
+  @@map("users")
+}
+
+model Membership {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  organizationId String   @map("organization_id")
+  role           String   @default("dono")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([userId, organizationId])
+  @@map("memberships")
+}
+
+model Sector {
+  id             String @id @default(uuid())
+  organizationId String @map("organization_id")
+  name           String
+  slug           String @default("geral")
+
+  @@unique([organizationId, slug])
+  @@map("sectors")
+}
+
+model ModuloAtivo {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  moduloId       String   @map("modulo_id")
+  ativadoEm      DateTime @default(now()) @map("ativado_em")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, moduloId])
+  @@map("modulos_ativos")
+}
+
+model ModuloDemanda {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  moduloId       String   @map("modulo_id")
+  motivo         String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("modulo_demanda")
+}

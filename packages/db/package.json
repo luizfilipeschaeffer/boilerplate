@@ -1,0 +1,21 @@
+{
+  "name": "@boilerplate/db",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "db:generate": "bun --env-file=../../.env prisma generate",
+    "db:push": "bun --env-file=../../.env prisma db push"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.9.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.9.0",
+    "typescript": "^5.8.3"
+  }
+}

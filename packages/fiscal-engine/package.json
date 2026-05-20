@@ -1,0 +1,9 @@
+{
+  "name": "@boilerplate/fiscal-engine",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@boilerplate/shared": "workspace:*" },
+  "devDependencies": { "typescript": "^5.8.3" }
+}

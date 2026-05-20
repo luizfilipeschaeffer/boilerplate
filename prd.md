@@ -1,0 +1,1863 @@
+# PRD — Plataforma de Gestão Modular Adaptativa
+
+**Versão:** 0.4 — Domínio fiscal modular (sub-módulos)  
+
+**Status:** Em implementação (fundação)  
+
+**Stack:** Next.js **16.2.6** · PostgreSQL 16 (Docker, porta **5454**) · TypeScript · **Bun** (runtime + package manager) · Turborepo · tRPC · NextAuth v5 · shadcn/ui  
+
+**Idioma:** PT-BR (único no MVP)  
+
+**Última atualização:** Maio 2026 · Next 16.2.6 · Bun · PG Docker `:5454`
+
+---
+
+## 0. Decisões de Produto (v0.3)
+
+Resumo das decisões tomadas para o primeiro ciclo de entrega:
+
+| Tema | Decisão |
+|------|---------|
+| Escopo MVP (tenant) | Apenas **Fase 1** (módulos core + Aprendiz enxuto + PWA) |
+| Perfis de negócio | **10 tipos ativos** no onboarding; **7+ tipos planejados** documentados em §5.5.1 (não ativos ainda) |
+| Classificação | **Duplo eixo:** fase (maturidade 1–4) + tipo de negócio → módulos recomendados/ativáveis (ver §6.4) |
+| Painel da plataforma | App/área **`platform-admin`** com CRM de clientes SaaS, comunicação omnichannel e analytics de demanda de módulos (ver §17) |
+| Onboarding | Perguntas de diagnóstico + **CNPJ** + **tipo de negócio** no dia 1 |
+| UI | **shadcn/ui** — blocks `login-01` (auth) e `dashboard-01` (área logada); layout **desktop-first**, responsivo |
+| Offline | **PWA** com fila de sincronização para operações críticas (ex.: vendas) |
+| Catálogo | **Grade genérica** produto/serviço (`core-catalogo`), campos evoluem com a fase |
+| Acesso | Modelar **usuário → N empresas → setor**; MVP opera 1 empresa com setor default `Geral` |
+| Dados | **Schema PostgreSQL por tenant** desde o dia 1; dev local via **Docker** (`localhost:5454`) |
+| Toolchain | **Bun** — install, scripts, `bunx`; sem pnpm/npm no monorepo (§8.1.2) |
+| Integrações | **Integradores** conectam serviços externos aos módulos e entre módulos (ver §8.7) |
+| Entidades core | `Cliente`, `Item` (produto/serviço), `Venda` — módulos estendem, não duplicam (ver §8.8) |
+| Comunicação entre módulos | Contrato de **eventos de domínio**; MVP usa transação síncrona + bus in-process (ver §8.9) |
+| Fiscal | Domínio **`fiscal-core`** (pai) + **sub-módulos** instaláveis (`fiscal-nfce`, `fiscal-cte`, …); MVP com scaffold vazio; emissão via `fiscal-engine` + integradores (§9) |
+| Cobrança | **Central de precificação** por fase/módulo + múltiplos **gateways** (adapters) |
+| Aprendiz | **No MVP** — camadas 1–2 com templates; camada 3 mínima (gatilhos fixos) |
+
+---
+
+## 1. Visão do Produto
+
+Uma plataforma SaaS de gestão empresarial que se adapta à fase real do cliente — do empreendedor informal ao negócio em expansão — entregando apenas o que ele precisa, quando ele precisa, com capacidade de evolução modular sem fricção de migração.
+
+O cliente nunca "troca de sistema". Ele cresce dentro do mesmo ambiente.
+
+---
+
+## 2. Problema
+
+| Perfil | Dor Real |
+
+|--------|----------|
+
+| Informal (fase 1) | ERPs são caros e complexos demais. Usa planilha ou caderno. |
+
+| Crescendo (fase 2) | Ferramentas simples não conectam vendas, estoque e caixa. |
+
+| Estabelecido (fase 3) | Sistemas fiscais exigem técnico para configurar. |
+
+| Em escala (fase 4) | Dados ficam espalhados em sistemas diferentes. |
+
+**Gap central:** o mercado oferece ou ferramentas simples demais (sem evolução) ou ERPs completos demais (sem adoção). Não existe uma plataforma que escale com o cliente de forma fluida e inteligente.
+
+---
+
+## 3. Proposta de Valor
+
+- **Diagnóstico automático** → sistema se configura sozinho na primeira entrada
+
+- **Módulos que se integram** → dados do dia 1 seguem o cliente até a fase 4
+
+- **Aprendiz IA** → o cliente ensina seus processos; a IA executa e sugere automações
+
+- **Evolução guiada** → sistema detecta o momento certo de sugerir o próximo módulo
+
+- **Performance nativa** → Next.js App Router + PostgreSQL otimizado, sem overhead de ERP legado
+
+- **Integradores** → serviços externos e módulos conversam por uma camada única, com responsabilidades claras
+
+- **Perfis de negócio** → mesma plataforma atende PF, varejo, atacado, cadeia industrial etc., com módulos adequados ao **tipo** e à **fase**
+
+- **Painel da plataforma** → time interno acompanha relacionamento, conversas (WhatsApp, Telegram, e-mail…) e prioriza o roadmap pelo que o mercado mais pede
+
+---
+
+## 4. Usuários-Alvo
+
+### Persona Principal — "Dona Maria" (Fase 1–2)
+
+- Proprietária de pequeno negócio (moda, alimentação, serviços)
+
+- 30–55 anos, smartphone como ferramenta principal
+
+- Não quer aprender sistema; quer resultado
+
+### Persona Secundária — "Marcos" (Fase 2–3)
+
+- Dono de loja com 2–5 funcionários
+
+- Já usa alguma ferramenta, mas é fragmentada
+
+- Quer controle sem precisar de contador para tudo
+
+### Persona Terciária — "Grupo" (Fase 4)
+
+- Gestor de rede ou franquia
+
+- Precisa de visão consolidada e integrações
+
+- Avalia ROI por unidade
+
+### 4.1 Modelo de Acesso — Empresa, Setor e Fase
+
+A **fase** é atributo da **empresa** (tenant). O **setor** define escopo de ferramentas, processos e permissões dentro da mesma empresa.
+
+```
+Usuário
+  └── Membership (empresa + papel global: dono, gerente, vendedor…)
+        └── Acesso por setor (subset de módulos/nav/permissões)
+              └── Dados operacionais no schema tenant_xxx
+```
+
+| Conceito | Escopo | MVP |
+|----------|--------|-----|
+| **Organização (tenant)** | Empresa com schema isolado, fase, módulos ativos | 1 org por fluxo principal |
+| **Setor** | Departamento (Vendas, Estoque, Financeiro…) | Setor default `Geral` |
+| **Fase** | Maturidade do negócio (1–4) | Fixo em 1 no MVP |
+| **Contexto de sessão** | `organizationId` + `sectorId` | Obrigatório no JWT/sessão |
+
+**Troca de contexto:** o usuário escolhe empresa (futuro: lista de memberships) e setor; nav e RBAC filtram por setor + módulos ativos da fase da empresa.
+
+**Schema global (`public`):** `users`, `organizations` (+ `tipo_negocio`, `segmento_atuacao`, `phase`), `memberships`, `sectors`, `user_sector_access`, `modulos_ativos`, `modulo_demanda`, entidades `platform_*` (§17).
+
+---
+
+## 5. Fases do Cliente e Módulos por Fase
+
+### Fase 1 — Informal
+
+> "Vendo para amigos e indicações, sem estrutura"
+
+**Módulos disponíveis (MVP):**
+
+- `core-catalogo` — cadastro genérico de **produto ou serviço**; formulário evolui conforme fase/módulos ativos
+
+- `core-clientes` — cadastro, histórico de compras, contato
+
+- `core-vendas` — registro de venda, forma de pagamento, status
+
+- `core-estoque-basico` — entrada/saída, alerta de estoque baixo (serviços sem controle de estoque)
+
+- `core-ranking` — itens mais vendidos, clientes que mais compram
+
+- `fiscal-core` — módulo **pai** fiscal (certificado, séries, fila, shell UI); sub-módulos `fiscal-*` instaláveis conforme tipo/fase (§9)
+
+- `aprendiz` — automações por templates no MVP (ver §7.6)
+
+**Acesso:** Layout **desktop-first** (block `dashboard-01`), totalmente responsivo. Menus mínimos na Fase 1. **PWA** para uso offline.
+
+---
+
+### Fase 2 — Crescendo
+
+> "Tenho ponto fixo ou vendo online, preciso de controle"
+
+**Módulos adicionais:**
+
+- `fin-fluxo-caixa` — entradas, saídas, saldo projetado
+
+- `fin-contas-pagar` — vencimentos, alertas, parcelamentos
+
+- `ops-vendedores` — cadastro de vendedor, atribuição de vendas
+
+- `rel-basico` — relatórios de período, ticket médio, inadimplência
+
+---
+
+### Fase 3 — Estabelecido
+
+> "Loja consolidada, preciso emitir nota e gerir equipe"
+
+**Módulos adicionais:**
+
+- Sub-módulos fiscais (ex.: `fiscal-nfce`, `fiscal-nfe`, `fiscal-cte`, `fiscal-sped`) — ativados por pacote, não monólito (§9)
+
+- `rh-comissoes` — regras de comissão por vendedor, produto ou meta
+
+- `ops-multi-caixa` — múltiplos pontos de venda simultâneos
+
+- `fin-dre-simplificado` — demonstrativo de resultado simplificado
+
+---
+
+### Fase 4 — Escala
+
+> "Tenho mais de uma loja ou quero franquear"
+
+**Módulos adicionais:**
+
+- `ops-multi-loja` — gestão centralizada com visão por unidade
+
+- `bi-dashboards` — painéis com metas, comparativos e tendências
+
+- `api-parceiros` — webhooks e API REST para integrações externas
+
+- `white-label` — plataforma com identidade do franqueador
+
+### 5.5 Perfis de Negócio (tipo operacional)
+
+Independente da **fase** (maturidade), cada organização tem um **tipo de negócio** que define fluxos, campos do catálogo e **pacote de módulos recomendados**.
+
+| `TipoNegocio` | Descrição | Ênfase funcional |
+|---------------|-----------|------------------|
+| `pessoa_fisica` | Autônomo / MEI / profissional liberal | Vendas simples, poucos clientes, estoque opcional, fiscal simplificado |
+| `varejo` | Venda direta ao consumidor final | PDV, estoque por unidade, NFC-e (fase 3), ranking |
+| `atacado` | Venda em volume para revenda | Tabela de preço por cliente, pedido mínimo, NF-e B2B, comissão |
+| `fornecedor` | Fornece insumos/produtos para outros negócios | Catálogo B2B, pedidos de compra, contas a receber, lead time |
+| `distribuidor` | Revenda/logística de **mercadoria** em rede (estoque, margem, canais) | Multi-depósito, rotas de entrega de produto, integração atacado+varejo — **não** é transporte de carga |
+| `transportadora` | Prestação de **serviço de transporte** de cargas (frete) | Frota, motoristas, CT-e, MDF-e, romaneio, tabela de frete, rastreio de viagem, manifesto |
+| `fabricante` | Fabrica e comercializa produtos (próprios ou sob encomenda) | Ordem de produção, ficha técnica, custo por lote, NF-e, vínculo fornecedor↔cliente |
+| `industria` | Indústria de transformação em escala | BOM multi-nível, capacidade produtiva, MRP, qualidade, NF-e, integração chão de fábrica |
+| `produtor_rural` | Produção agropecuária e extrativismo rural | Safra, rebanho, gleba, rastreabilidade, NF-e produtor rural / NFA-e, sazonalidade, SIF/SIE quando aplicável |
+
+> **Fase** responde *“quão estruturado o negócio está?”* · **Tipo** responde *“que modelo operacional ele exerce?”*  
+> A interseção dos dois determina módulos **elegíveis**, **recomendados** e **prioridade de UX**.
+
+**Módulos por tipo (exemplos — matriz completa em §6.4):**
+
+| Tipo | Módulos típicos além do core Fase 1 |
+|------|-------------------------------------|
+| `pessoa_fisica` | `core-vendas`, `core-clientes`; estoque desligável |
+| `varejo` | + `core-estoque-basico`, `core-ranking`; fase 3 → `fiscal-nfce` + `fiscal-sped` (§9.3) |
+| `atacado` | + `ops-tabela-preco`; fase 3 → `fiscal-nfe` + `fiscal-sped` |
+| `fornecedor` | + `ops-pedidos-compra`, `fin-contas-receber` |
+| `distribuidor` | + `ops-multi-depot`, `ops-rotas`; fase 4 → `ops-multi-loja` |
+| `transportadora` | + `ops-frota`, `ops-romaneio`; fase 2 → `fiscal-cte`, `fiscal-mdfe` |
+| `fabricante` | + `ops-ordem-producao`, `ops-ficha-tecnica`; fase 3 → `fiscal-nfe` |
+| `industria` | + `ops-bom`, `ops-mrp`; fiscal NF-e, qualidade |
+| `produtor_rural` | + `ops-safra-rebanho`, `ops-lote-rastreio`, `ops-gleba`; fiscal rural |
+
+Módulos marcados como futuros entram no registry com flag `status: 'planned'` até implementação; o diagnóstico pode **sugerir** sem ativar.
+
+### 5.5.1 Tipos planejados (ainda não no onboarding)
+
+Tipos com `status: 'planned'` no registry de negócio. **Não aparecem** na pergunta 1 do onboarding até homologação de módulos e matriz fase × tipo. Interesse antecipado → `modulo_demanda` + `tipo_negocio_interesse` (§17.5).
+
+**Critério para promover a tipo ativo** (≥ 2 itens):
+
+1. Documento fiscal dominante distinto (NFS-e, DI, CT-e já coberto, etc.)
+2. Entidade operacional core distinta (obra, contrato de locação, manifesto 3PL…)
+3. Pacote default de módulos claramente diferente na matriz §6.4
+
+Caso contrário: tipo existente + `segmentoAtuacao` + módulos avulsos.
+
+#### Ativos hoje (10) — onboarding
+
+`pessoa_fisica` · `varejo` · `atacado` · `fornecedor` · `distribuidor` · `transportadora` · `fabricante` · `industria` · `produtor_rural`
+
+#### Planejados — prioridade alta
+
+| `TipoNegocio` (futuro) | Descrição | Fiscal / módulos âncora |
+|------------------------|-----------|-------------------------|
+| `prestador_servicos` | Serviços com agenda/contrato (clínicas, salões, consultoria, TI, manutenção) | NFS-e; `ops-agenda`, `ops-contrato`; estoque opcional |
+| `operador_logistico` | Armazém geral, WMS, 3PL (guarda e movimenta carga alheia, sem revenda) | NF serviço armazenagem; `ops-wms`, `ops-deposito`; distinto de `distribuidor` e `transportadora` |
+| `importador_exportador` | Comércio exterior, trading | DI/DU-E, câmbio, Incoterm; `ops-comex`, `fiscal-comex` |
+
+#### Planejados — prioridade média
+
+| `TipoNegocio` (futuro) | Descrição | Fiscal / módulos âncora |
+|------------------------|-----------|-------------------------|
+| `construcao` | Construtora, empreiteira, obra por medição | NF-e serviço/obras; `ops-obra`, `ops-medicao`, materiais por projeto |
+| `representante_comercial` | Agente/representante sem estoque próprio | Comissão; `ops-comissao-rep`, pedidos vinculados ao fabricante |
+| `locadora` | Locação de equipamentos, veículos, imóveis comerciais | Contrato + ciclo de cobrança; `ops-locacao`, ativo imobilizado |
+
+#### Planejados — prioridade baixa / avaliar módulo antes de tipo
+
+| `TipoNegocio` (futuro) | Descrição | Nota |
+|------------------------|-----------|------|
+| `cooperativa` | Cooperativa agro, crédito, compra coletiva | Pode iniciar como `produtor_rural` + módulo `ops-cooperativa` |
+| `franqueador` | Dono da rede/franquia | Pode iniciar como Fase 4 + `white-label` + `ops-multi-loja` |
+
+#### Não viram tipo — usar tipo + segmento + módulo
+
+| Perfil | Enquadramento |
+|--------|----------------|
+| Restaurante, bar, delivery | `varejo` + segmento alimentação + `ops-comanda` |
+| Farmácia, posto | `varejo` + segmento regulado |
+| E-commerce / marketplace | `varejo` ou `atacado` + integradores canal |
+| Atacarejo | `varejo` ou `atacado` + flag `atacarejo` |
+| Franqueado | `varejo`/`atacado` + multi-loja |
+| Hotel, escola, clínica convênio | `prestador_servicos` (quando ativo) + segmento + módulo vertical |
+| Gráfica / sob encomenda | `fabricante` |
+| Corretor imóveis/seguros | `representante_comercial` (quando ativo) ou `prestador_servicos` |
+
+#### Fluxo onboarding enquanto tipo está `planned`
+
+1. Usuário não vê o ID na lista principal.
+2. Opção **“Meu negócio não está na lista”** → captura texto livre + sugestão do tipo planejado mais próximo (heurística).
+3. Persiste `organizations.tipo_negocio` = tipo ativo mais próximo + `organizations.tipo_negocio_interesse` = ID planejado.
+4. `platform-insights` agrega demanda para priorizar implementação.
+
+```typescript
+type TipoNegocioStatus = 'active' | 'planned' | 'deprecated';
+
+interface TipoNegocioDefinition {
+  id: TipoNegocio | TipoNegocioPlanejado;
+  label: string;
+  status: TipoNegocioStatus;
+  prioridade?: 'alta' | 'media' | 'baixa';
+  pacotesModulos: Record<Fase, string[]>;
+}
+```
+
+### 5.6 Dois mundos de “cliente” (terminologia)
+
+| Termo no sistema | Quem é | Onde vive |
+|------------------|--------|-----------|
+| **Cliente da plataforma** | Empresa assinante do SaaS (tenant) | Schema `public` + CRM §17 |
+| **Cliente do negócio** | Consumidor/parceiro do tenant | Schema `tenant_xxx` · módulo `core-clientes` |
+
+O **Painel da Plataforma** gerencia apenas **clientes da plataforma**. O módulo `core-clientes` gerencia **clientes do negócio** de cada tenant.
+
+---
+
+## 6. Diagnóstico Automático
+
+O diagnóstico é executado no onboarding e pode ser revisado a qualquer momento.
+
+### 6.1 Fluxo de Onboarding (dia 1)
+
+Sequência:
+
+1. **Conta** — registro/login (block shadcn `login-01`)
+2. **Empresa** — nome, provisionamento do schema `tenant_xxx`
+3. **Diagnóstico** — perfil do negócio + maturidade + **CNPJ** (abaixo)
+4. **Ativação** — módulos da **fase** + pacote recomendado pelo **tipo de negócio** (MVP: Fase 1 + tipo)
+5. **Primeiro passo** — cadastrar primeiro item (produto/serviço) ou cliente
+
+**Perguntas do diagnóstico (tenant):**
+
+1. **Tipo de negócio** (obrigatório): pessoa física · varejo · atacado · fornecedor · distribuidor · fabricante · indústria · produtor rural · **transportadora**
+2. Segmento de atuação (ícone: moda, alimentação, serviços, agro, indústria, outros — refinamento de UX)
+3. Ponto fixo ou loja física? (sim / não / online)
+4. Vendas por mês (faixa)
+5. Tem funcionários? (sim / não)
+6. Emite nota fiscal? (sim / não / não sei)
+
+> A pergunta 1 substitui o antigo “segmento único” como eixo principal de modularização operacional.
+
+**CNPJ (obrigatório no fluxo, valor opcional):**
+
+- A empresa **possui CNPJ?** (sim / não)
+- Se sim: número com validação de formato (sem consulta Receita Federal no MVP)
+- Campos: `organizations.has_cnpj`, `organizations.cnpj`, `organizations.fiscal_ready`
+
+### 6.2 Engine de Classificação
+
+```typescript
+
+type Fase = 1 | 2 | 3 | 4;
+
+type TipoNegocio =
+  | 'pessoa_fisica'
+  | 'varejo'
+  | 'atacado'
+  | 'fornecedor'
+  | 'distribuidor'
+  | 'transportadora'
+  | 'fabricante'
+  | 'industria'
+  | 'produtor_rural';
+
+interface DiagnosticoInput {
+  tipoNegocio: TipoNegocio;
+  segmentoAtuacao: Segmento;       // refinamento (ícone)
+  temPontoFixo: boolean;
+  vendasMes: 'ate50' | '50a200' | '200a1000' | 'acima1000';
+  temFuncionarios: boolean;
+  emiteNota: boolean | null;
+  possuiCnpj: boolean;
+  cnpj?: string | null;
+}
+
+function classificarFase(input: DiagnosticoInput): Fase {
+
+ let score = 0;
+
+ if (input.temPontoFixo) score += 1;
+
+ if (input.vendasMes === '50a200') score += 1;
+
+ if (input.vendasMes === '200a1000') score += 2;
+
+ if (input.vendasMes === 'acima1000') score += 3;
+
+ if (input.temFuncionarios) score += 1;
+
+ if (input.emiteNota) score += 2;
+
+ if (score <= 1) return 1;
+
+ if (score <= 3) return 2;
+
+ if (score <= 5) return 3;
+
+ return 4;
+
+}
+
+```
+
+### 6.3 Resultado do Diagnóstico
+
+Ao final, o sistema:
+
+1. Persiste `organization.phase`, `organization.tipo_negocio`, `organization.segmento_atuacao`
+2. Ativa módulos do **pacote base da fase** ∩ **elegíveis para o tipo**
+3. Configura menus, fluxos e campos do `core-catalogo` conforme tipo + fase
+4. Sugere módulos `planned` ainda não implementados (lista de interesse → analytics §17)
+5. Registra baseline para evolução de fase e feedback ao time de produto
+
+### 6.4 Engine de Recomendação de Módulos (fase × tipo)
+
+```typescript
+interface ModuloRecomendacao {
+  moduleId: string;
+  prioridade: 'obrigatorio' | 'recomendado' | 'opcional' | 'futuro';
+  motivo: string;
+}
+
+function recomendarModulos(fase: Fase, tipo: TipoNegocio): ModuloRecomendacao[] {
+  const pacoteFase = PACOTES_POR_FASE[fase];           // módulos por maturidade
+  const pacoteTipo = PACOTES_POR_TIPO[tipo];           // módulos por operação
+  return intersectarEOrdenar(pacoteFase, pacoteTipo);  // ver matriz abaixo
+}
+
+async function ativarPacoteDiagnostico(orgId: string, input: DiagnosticoInput) {
+  const fase = classificarFase(input);
+  const recomendados = recomendarModulos(fase, input.tipoNegocio);
+  for (const m of recomendados.filter(r => r.prioridade !== 'futuro')) {
+    await ativarModulo(orgId, m.moduleId);
+  }
+  await registrarDemandaModulosFuturos(orgId, recomendados.filter(r => r.prioridade === 'futuro'));
+}
+```
+
+**Matriz resumida (ativação vs sugestão):**
+
+| Tipo \ Fase | 1 | 2 | 3 | 4 |
+|-------------|---|---|---|---|
+| **pessoa_fisica** | core-* (estoque opcional) | + fin-fluxo-caixa | + fiscal se CNPJ | — |
+| **varejo** | core-* + estoque + ranking | + fin, vendedores | + nfce | + multi-loja, BI |
+| **atacado** | core-* + tabela preço (futuro) | + fin, rel | + nfe, comissões | + distribuição |
+| **fornecedor** | core-* + catálogo B2B | + contas receber | + nfe | + API parceiros |
+| **distribuidor** | core-* | + multi-depot (futuro) | + nfe, rotas | + multi-loja, BI |
+| **transportadora** | core-* (serviço frete, não PDV) | + frota, tabela frete | + cte, mdfe | + BI, API parceiros |
+| **fabricante** | core-* + OP simples (futuro) | + ficha técnica, custos | + nfe, lote | + BI, API |
+| **industria** | core-* + BOM (futuro) | + MRP, capacidade | + nfe, qualidade | + BI consolidado |
+| **produtor_rural** | core-* + gleba/safra (futuro) | + rebanho, rastreio | + NF rural, lote | + multi-fazenda |
+
+Células com “(futuro)” geram evento `modulo.demanda_registrada` consumido pelo **Painel da Plataforma** (§17.4).
+
+**Regras adicionais:**
+
+- `pessoa_fisica` sem CNPJ: não sugerir módulos fiscais até `fiscal_ready`
+- `atacado` / `fornecedor` / `distribuidor`: priorizar NF-e de mercadoria na fase 3
+- `transportadora`: pacote fiscal **`fiscal-cte` + `fiscal-ciot` + `fiscal-mdfe`** (dependência CT↔MDF §9.5); **sem** `fiscal-nfce`
+- `varejo`: pacote **`fiscal-nfce` + `fiscal-sped`** (+ `fiscal-nfe` se B2B); ver §9.3
+- `distribuidor` ≠ `transportadora`: distribuidor movimenta estoque próprio; transportadora presta frete sobre carga de terceiros
+- `fabricante` vs `industria`: fabricante → OP e ficha técnica primeiro; indústria → BOM/MRP e chão de fábrica
+- `produtor_rural`: sub-módulo **`fiscal-rural`** + `fiscal-sped`; operacional: safra, gleba, rastreio (§5.5)
+- `fabricante` / `industria` / `produtor_rural`: campos estendidos no `core-catalogo` conforme módulos ativos
+
+---
+
+## 7. Aprendiz IA — Engine de Inteligência
+
+O Aprendiz é o diferencial estratégico da plataforma. Não é um chatbot genérico — é um agente treinado pelo próprio cliente para automatizar **os processos específicos do negócio dele**.
+
+### 7.1 Conceito
+
+O cliente ensina o Aprendiz através de uma interface de "gravação de processo":
+
+```
+
+"Toda vez que uma venda for realizada para um cliente novo,
+
+cadastre-o automaticamente e envie uma mensagem de boas-vindas."
+
+```
+
+O Aprendiz interpreta, confirma a regra com o cliente, e executa.
+
+### 7.2 Camadas do Aprendiz
+
+```
+
+┌─────────────────────────────────────────────────────┐
+
+│  CAMADA 3 — Sugestão Proativa                        │
+
+│  Detecta padrões e sugere automações e módulos       │
+
+├─────────────────────────────────────────────────────┤
+
+│  CAMADA 2 — Execução Autônoma                        │
+
+│  Executa regras aprendidas sem intervenção           │
+
+├─────────────────────────────────────────────────────┤
+
+│  CAMADA 1 — Aprendizado por Instrução                │
+
+│  Cliente ensina processos em linguagem natural       │
+
+└─────────────────────────────────────────────────────┘
+
+```
+
+### 7.3 Exemplos de Automações por Fase
+
+**Fase 1:**
+
+- "Quando estoque do produto X cair abaixo de 5, me avisa"
+
+- "Registra a venda e já desconta do estoque"
+
+**Fase 2:**
+
+- "Quando um cliente não compra há 30 dias, coloca na lista de reativação"
+
+- "Fecha o caixa toda sexta às 18h e me manda o resumo"
+
+**Fase 3:**
+
+- "Emite NFC-e automaticamente para vendas no balcão"
+
+- "Calcula a comissão do vendedor no fechamento do mês"
+
+**Fase 4:**
+
+- "Consolida os resultados das 3 lojas e gera o DRE comparativo"
+
+- "Alerta se qualquer unidade tiver queda de vendas acima de 20% vs mês anterior"
+
+### 7.4 Gatilhos de Sugestão de Módulo
+
+O Aprendiz monitora sinais de uso e dispara sugestões contextuais:
+
+| Sinal Detectado | Sugestão |
+
+|-----------------|----------|
+
+| >200 vendas/mês registradas | "Você já tem volume para controlar seu fluxo de caixa. Quer ativar?" |
+
+| Cliente tenta emitir nota e não tem o módulo | "Para emitir notas, ative o módulo Fiscal. R$ 40/mês." |
+
+| 3+ vendedores cadastrados sem comissão | "Posso calcular comissões automaticamente. Quer configurar?" |
+
+| Usuário abre relatório >5x/semana | "Quer um painel automático com esses dados todo dia?" |
+
+### 7.5 Arquitetura do Aprendiz
+
+```
+
+Cliente (linguagem natural)
+
+       ↓
+
+ Parser de Intenção (LLM via API)
+
+       ↓
+
+ Validador de Regra (confirma com o usuário)
+
+       ↓
+
+ Compilador de Automação (converte em job estruturado)
+
+       ↓
+
+ Runtime de Execução (fila de jobs — BullMQ + Redis)
+
+       ↓
+
+ Monitor de Resultado (confirma execução, loga, aprende)
+
+```
+
+### 7.6 Escopo do Aprendiz no MVP (Fase 1)
+
+| Camada | MVP Fase 1 |
+|--------|------------|
+| 1 — Instrução | Sim: interface + **templates fixos** (estoque baixo, desconto na venda) |
+| 2 — Execução | Sim: regras compiladas simples; fila BullMQ para jobs adiados |
+| 3 — Proativa | Mínimo: gatilhos hardcoded (sem LLM em todo fluxo) |
+
+Parser LLM: **feature flag**; criação de regra pode começar só por template. LLM concentrado na criação/edição de regras customizadas pós-MVP.
+
+---
+
+## 8. Arquitetura Técnica
+
+### 8.1 Stack
+
+| Camada | Tecnologia | Justificativa |
+
+|--------|-----------|---------------|
+
+| Frontend | **Next.js 16.2.6** (App Router) + **shadcn/ui** | Blocks `login-01` e `dashboard-01`; RSC; layout desktop-first responsivo |
+
+| API | **tRPC** + Route Handlers | Type-safety ponta a ponta; webhooks em Route Handlers |
+
+| UI Kit | shadcn/ui + Tailwind | Componentes em `apps/web/components/ui`; sem override de tokens |
+
+| Banco | **PostgreSQL 16** (imagem Docker oficial) | JSONB, schema por tenant; dev: host `localhost`, porta **5454** |
+
+| Dev DB | Docker Compose em `infra/docker/` | `docker compose up -d`; volume persistente; ver §8.1.1 |
+
+| Cache | Redis | Sessões, jobs, cache de queries quentes |
+
+| Fila | BullMQ | Jobs do Aprendiz, emissão fiscal assíncrona |
+
+| Auth | NextAuth v5 | Multi-tenant, RBAC por módulo |
+
+| Storage | S3-compatible | Documentos fiscais, uploads |
+
+| Deploy | Vercel + Railway (DB prod) | Desenvolvimento local: PostgreSQL no Docker (§8.1.1) |
+
+### 8.1.1 Ambiente de desenvolvimento — Docker PostgreSQL
+
+Banco local **obrigatório** via Docker (não usar PostgreSQL instalado no host como padrão do time).
+
+| Parâmetro | Valor |
+|-----------|--------|
+| Imagem | `postgres:16-alpine` |
+| Porta no host | **5454** (mapeamento `5454:5432`) |
+| Arquivos | `infra/docker/docker-compose.yml` |
+| Database | `boilerplate` |
+| Usuário / senha (dev) | `boilerplate` / `boilerplate` |
+
+**Comandos:**
+
+```bash
+cd infra/docker
+docker compose up -d
+docker compose ps
+```
+
+**URL de conexão (apps e Prisma):**
+
+```
+DATABASE_URL=postgresql://boilerplate:boilerplate@localhost:5454/boilerplate
+```
+
+Copiar `.env.example` na raiz do monorepo para `.env.local` (nunca commitar segredos reais).
+
+**Versão Next.js:** fixar em **16.2.6** no `package.json` de `apps/web` e `apps/platform-admin` (`"next": "16.2.6"`). Upgrades de patch/minor alinhados em PR explícito.
+
+### 8.1.2 Toolchain — Bun (monorepo)
+
+**Decisão:** usar **Bun** como runtime e gerenciador de pacotes do monorepo. **Não** usar pnpm nem npm no dia a dia do projeto (CI pode usar `bun install --frozen-lockfile`).
+
+| Uso | Comando |
+|-----|---------|
+| Instalar dependências | `bun install` (raiz do monorepo) |
+| Dev (Turborepo) | `bun run dev` |
+| Build | `bun run build` |
+| Executar binário | `bunx <pkg>` (ex.: shadcn, prisma) |
+| Script em pacote | `bun run --filter @boilerplate/web dev` |
+
+**Arquivos:**
+
+| Arquivo | Função |
+|---------|--------|
+| `package.json` (raiz) | `"workspaces": ["apps/*", "packages/*"]` |
+| `bun.lock` | Lockfile (commitar) |
+| `bunfig.toml` | Opcional: registry, install settings |
+
+**Compatibilidade:**
+
+- Turborepo: suportado (`turbo run dev` via `bun run dev`).
+- Next.js 16.2.6: suportado (`bun run dev` em `apps/web`).
+- Prisma: `bunx prisma migrate dev`, client gerado normalmente.
+- shadcn CLI: `bunx --bun shadcn@latest init` e `bunx --bun shadcn@latest add login-01 dashboard-01`.
+
+**Instalação (Windows):** `powershell -c "irm bun.sh/install.ps1 | iex"` — ver [README.md](README.md).
+
+### 8.2 Multi-tenancy
+
+Estratégia: **schema por tenant** no PostgreSQL.
+
+```sql
+
+-- Cada empresa tem seu schema isolado
+
+CREATE SCHEMA tenant_abc123;
+
+-- Tabelas replicadas por schema
+
+CREATE TABLE tenant_abc123.vendas (
+
+ id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+ cliente_id  UUID REFERENCES tenant_abc123.clientes(id),
+
+ total       NUMERIC(12,2) NOT NULL,
+
+ status      TEXT NOT NULL,
+
+ created_at  TIMESTAMPTZ DEFAULT now()
+
+);
+
+```
+
+**Vantagens:** isolamento total de dados, backup por cliente, queries sem filtro de tenant_id, migração de fase sem risco cross-tenant.
+
+**Metadados da organização (schema `public`):**
+
+```sql
+ALTER TABLE organizations ADD COLUMN phase SMALLINT NOT NULL DEFAULT 1;
+ALTER TABLE organizations ADD COLUMN tipo_negocio TEXT NOT NULL;  -- enum §5.5
+ALTER TABLE organizations ADD COLUMN segmento_atuacao TEXT;
+ALTER TABLE organizations ADD COLUMN has_cnpj BOOLEAN;
+ALTER TABLE organizations ADD COLUMN cnpj TEXT;
+ALTER TABLE organizations ADD COLUMN fiscal_ready BOOLEAN DEFAULT false;
+```
+
+Dados de **CRM/comunicação da plataforma** ficam apenas em `public` — nunca no schema do tenant.
+
+### 8.3 Modularização — Contrato de Módulo
+
+Cada módulo é um pacote independente que segue este contrato:
+
+```typescript
+
+// types/module.ts
+
+interface ModuleDefinition {
+
+ id: string;                        // ex: 'fin-fluxo-caixa'
+
+ name: string;
+
+ faseMinima: 1 | 2 | 3 | 4;
+
+ dependencias: string[];            // módulos que devem estar ativos
+
+ // Banco de dados
+
+ migrations: MigrationFile[];       // migrations do módulo
+
+ seeds?: SeedFile[];
+
+ // Interface
+
+ routes: RouteDefinition[];         // páginas que o módulo adiciona
+
+ navItems: NavItem[];               // itens de menu que o módulo adiciona
+
+ widgets?: DashboardWidget[];       // cards no dashboard principal
+
+ // Aprendiz
+
+ automacoes: AutomacaoTemplate[];   // templates disponíveis para o Aprendiz
+
+ gatilhos: GatilhoDefinition[];     // sinais que este módulo emite
+
+ // Integração entre módulos (ver §8.9)
+
+ eventosPublicados?: DomainEventType[];
+
+ eventosConsumidos?: Partial<Record<DomainEventType, string>>; // handler name
+
+ // Integradores externos (ver §8.7)
+
+ integradores?: IntegratorBinding[];  // quais integradores este módulo usa/expõe
+
+ // Hierarquia (módulos pai ↔ sub-módulos — §9)
+
+ parentModuleId?: string;             // ex: 'fiscal-core', 'fiscal-contabil'
+
+ submodulos?: string[];                // apenas em módulos pai; filhos registrados
+
+ // Fiscal — sub-módulos de capacidade (§9)
+
+ fiscalCapability?: FiscalCapability; // ex: 'nfce', 'cte' — registra no fiscal-core
+
+ tiposNegocioElegiveis?: TipoNegocio[]; // filtro soft na recomendação; hard na ativação opcional
+
+ implementationStatus?: 'scaffold' | 'implemented' | 'deprecated';
+
+}
+
+```
+
+### 8.4 Estrutura de Pastas
+
+```
+
+/
+
+├── apps/
+
+│   ├── web/                        # App do tenant (clientes do negócio)
+
+│   └── platform-admin/             # Painel interno — CRM, comunicação, analytics (§17)
+
+│       ├── app/
+
+│       │   ├── (auth)/             # login-01, registro, onboarding + CNPJ
+
+│       │   ├── (dashboard)/        # dashboard-01 + nav dinâmico
+
+│       │   │   ├── layout.tsx      # shell sidebar (dashboard-01)
+
+│       │   │   └── [modulo]/       # rotas dinâmicas por módulo
+
+│       │   └── api/
+
+│       │       ├── trpc/
+
+│       │       └── webhooks/
+
+│       └── modules/                # cada módulo é uma pasta aqui
+
+│           ├── core-catalogo/      # produto/serviço evolutivo
+
+│           ├── core-vendas/
+
+│           ├── core-clientes/
+
+│           ├── core-estoque-basico/
+
+│           ├── core-ranking/
+
+│           ├── fiscal-core/        # módulo pai fiscal
+
+│           ├── fiscal-nfce/        # sub-módulos (scaffold MVP → implemented)
+
+│           ├── fiscal-nfe/
+
+│           ├── fiscal-cte/
+
+│           ├── fiscal-mdfe/
+
+│           ├── fiscal-ciot/
+
+│           ├── fiscal-sped/
+
+│           ├── fiscal-contabil/    # módulo pai contábil (usa fiscal-sped)
+
+│           ├── fiscal-rural/       # planejado — produtor_rural
+
+│           └── aprendiz/
+
+│   └── platform-admin/             # módulos só schema global
+
+│       └── modules/
+
+│           ├── platform-crm/
+
+│           ├── platform-comms/
+
+│           └── platform-insights/
+
+│
+
+├── packages/
+
+│   ├── db/                         # Prisma + schemas global + tenant
+
+│   ├── module-registry/            # registry + ativarModulo
+
+│   ├── integrators/                # hub de integradores (ver §8.7)
+
+│   ├── billing/                    # PricingEngine + PaymentGatewayAdapter
+
+│   ├── aprendiz-engine/
+
+│   ├── fiscal-engine/              # FiscalAdapter plugável
+
+│   └── shared/                     # types, event-bus, i18n pt-BR
+
+│
+
+└── infra/
+
+   ├── migrations/global/          # schema público (tenants, planos)
+
+   └── scripts/
+
+```
+
+### 8.5 Registry de Módulos
+
+```typescript
+
+// packages/module-registry/index.ts
+
+import { coreVendas }      from '@/modules/core-vendas/module';
+
+import { coreClientes }    from '@/modules/core-clientes/module';
+
+import { finFluxoCaixa }   from '@/modules/fin-fluxo-caixa/module';
+
+import { fiscalCore }      from '@/modules/fiscal-core/module';
+import { fiscalNfce }      from '@/modules/fiscal-nfce/module';
+import { fiscalCte }       from '@/modules/fiscal-cte/module';
+// ... demais fiscal-*
+
+export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
+ 'core-vendas':       coreVendas,
+ 'fiscal-core':       fiscalCore,
+ 'fiscal-nfce':       fiscalNfce,
+ 'fiscal-cte':        fiscalCte,
+ // ...
+};
+
+// Pacotes fiscais por tipo (usado por recomendarModulos)
+export const PACOTES_FISCAL_POR_TIPO: Partial<Record<TipoNegocio, string[]>> = {
+  varejo: ['fiscal-nfce', 'fiscal-sped'],
+  transportadora: ['fiscal-cte', 'fiscal-mdfe', 'fiscal-ciot'],
+};
+
+// Ativação de módulo (roda na compra/upgrade)
+
+export async function ativarModulo(tenantId: string, moduloId: string) {
+
+ const modulo = MODULE_REGISTRY[moduloId];
+
+ // 1. Valida dependências (+ parentModuleId: ex. fiscal-core antes de fiscal-cte)
+
+ const ativas = await getModulosAtivos(tenantId);
+
+ for (const dep of modulo.dependencias) {
+
+   if (!ativas.includes(dep)) throw new Error(`Dependência não atendida: ${dep}`);
+
+ }
+
+ if (modulo.parentModuleId && !ativas.includes(modulo.parentModuleId)) {
+
+   await ativarModulo(tenantId, modulo.parentModuleId); // ou erro, conforme política
+
+ }
+
+ // 2. Roda migrations do módulo no schema do tenant
+
+ await runMigrations(tenantId, modulo.migrations);
+
+ // 3. Registra módulo como ativo
+
+ await db.modulosAtivos.create({ tenantId, moduloId, ativadoEm: new Date() });
+
+ // 4. Invalida cache de nav e dashboard
+
+ await cache.del(`nav:${tenantId}`);
+
+ await cache.del(`dashboard:${tenantId}`);
+
+ // 5. Se sub-módulo fiscal: registrar fiscalCapability no fiscal-core
+
+ if (modulo.fiscalCapability) {
+
+   await registerFiscalCapability(tenantId, modulo.fiscalCapability);
+
+ }
+
+}
+
+```
+
+### 8.6 Nav Dinâmico
+
+```typescript
+
+// app/(dashboard)/layout.tsx
+
+async function getNavItems(tenantId: string): Promise<NavItem[]> {
+
+ const modulosAtivos = await getModulosAtivos(tenantId); // cached
+
+ return modulosAtivos
+
+   .flatMap(id => MODULE_REGISTRY[id].navItems)
+
+   .sort((a, b) => a.ordem - b.ordem);
+
+}
+
+export default async function DashboardLayout({ children }) {
+
+ const { tenantId } = await auth();
+
+ const navItems = await getNavItems(tenantId);
+
+ return (
+
+   <div>
+
+     <Sidebar items={navItems} />
+
+     <main>{children}</main>
+
+   </div>
+
+ );
+
+ }
+
+```
+
+Filtrar `navItems` também por **setor** (`sectorId`) e permissões do módulo.
+
+### 8.7 Integradores — Hub de Serviços Externos
+
+**Responsabilidade:** camada única entre **módulos de negócio** e **serviços externos** (pagamento, fiscal, mensageria, e-commerce, contabilidade, etc.). Os módulos **não chamam APIs externas diretamente** — declaram dependência de um integrador; o integrador implementa o protocolo e publica resultados para o bus de eventos.
+
+```
+┌─────────────┐     ┌──────────────────┐     ┌─────────────────────┐
+│  Módulo A   │────▶│   Integrator     │────▶│  Serviço externo    │
+│ (core-vendas)│     │  (ex: payments)  │     │  (Stripe, Asaas…)   │
+└─────────────┘     └────────┬─────────┘     └─────────────────────┘
+                             │
+┌─────────────┐              │ eventos normalizados
+│  Módulo B   │◀─────────────┘
+│ (fin-caixa) │
+└─────────────┘
+```
+
+**Tipos de integrador:**
+
+| Tipo | Exemplos | Pacote |
+|------|----------|--------|
+| `payment` | Stripe, Asaas, Mercado Pago | `packages/integrators/payment/` |
+| `fiscal` | Focus NFe, NFE.io (futuro) | `packages/integrators/fiscal/` → delega `fiscal-engine` |
+| `messaging` | WhatsApp, Telegram, e-mail, SMS | `packages/integrators/messaging/` |
+| `social` | Meta/WhatsApp Business API, Telegram Bot API | `packages/integrators/social/` (usado por `platform-comms`) |
+| `webhook` | Entrada/saída genérica | `packages/integrators/webhook/` |
+
+**Contrato (`IntegratorDefinition`):**
+
+```typescript
+interface IntegratorDefinition {
+  id: string;                              // ex: 'payment-stripe'
+  tipo: 'payment' | 'fiscal' | 'messaging' | 'webhook' | 'custom';
+  modulosSuportados: string[];             // módulos que podem registrar bindings
+  conectar(tenantId: string, credenciais: unknown): Promise<void>;
+  desconectar(tenantId: string): Promise<void>;
+  healthCheck(tenantId: string): Promise<IntegratorHealth>;
+  // handlers inbound (webhook do provedor → evento de domínio)
+  onWebhook?(payload: unknown): Promise<DomainEvent[]>;
+}
+```
+
+**Registry:** `INTEGRATOR_REGISTRY` em `packages/integrators`, análogo ao `MODULE_REGISTRY`. Configuração por tenant em schema global: `tenant_integrators (tenant_id, integrator_id, config_encrypted, ativo)`.
+
+**Interconexão entre módulos via integrador:** quando um serviço externo dispara mudança (ex.: pagamento confirmado), o integrador normaliza para evento `pagamento.confirmado`; módulos inscritos reagem sem conhecer o provedor.
+
+**MVP:** integrador `payment-mock` + estrutura `fiscal-noop`; um gateway real (ex.: Asaas) na primeira entrega de cobrança.
+
+### 8.8 Entidades Core (decisão de dados)
+
+Agregados compartilhados no schema do tenant — **módulos estendem, não duplicam**:
+
+| Entidade | Módulo dono | Regras |
+|----------|-------------|--------|
+| `Cliente` | `core-clientes` | Referenciado por vendas, ranking, Aprendiz |
+| `Item` | `core-catalogo` | `tipo: 'produto' \| 'servico'`; serviço sem estoque obrigatório |
+| `Venda`, `VendaItem` | `core-vendas` | Fonte de verdade comercial |
+
+**Evolução por fase (UI única, campos desbloqueados):**
+
+| Fase | Campos adicionais (exemplo) |
+|------|----------------------------|
+| 1 | nome, tipo, preço, unidade, estoque opcional |
+| 2+ | SKU, custo, categoria |
+| 3+ | NCM, CFOP (placeholders via `fiscal-core`) |
+| 4+ | variações, vínculo multi-loja (módulos `ops-*`) |
+
+Extensões de segmento (grade, validade) = tabelas 1:N em módulos futuros referenciando `item_id`.
+
+### 8.9 Eventos de Domínio (comunicação entre módulos)
+
+**Contrato:** cada módulo declara `eventosPublicados` e `eventosConsumidos`.
+
+**Implementação em camadas:**
+
+| Estágio | Comportamento |
+|---------|----------------|
+| MVP crítico | Transação única (ex.: `venda.confirmada` → baixa estoque no mesmo request) |
+| MVP geral | Bus in-process + tabela `domain_events` (auditoria) |
+| Pós-MVP | BullMQ para handlers assíncronos e integradores |
+
+**Eventos Fase 1 (mínimo):** `venda.confirmada`, `venda.cancelada`, `estoque.baixo`, `cliente.criado`, `item.criado`.
+
+**Offline (PWA):** operações enfileiradas no cliente; replay na API com **idempotency key**; integradores e módulos processam após sync.
+
+### 8.10 Interface — shadcn/ui
+
+| Área | Block / padrão | Observação |
+|------|----------------|------------|
+| Login / registro | **`login-01`** | `app/(auth)/`; NextAuth callbacks |
+| Dashboard shell | **`dashboard-01`** | Sidebar + header + área de conteúdo; nav injetado pelo registry |
+| Módulos | Cards, Table, Form (`Field` + `FieldGroup`) | Compor sobre primitivos shadcn; sem CSS ad hoc em componentes base |
+
+**Instalação (referência):**
+
+```bash
+cd apps/web
+bunx --bun shadcn@latest init
+bunx --bun shadcn@latest add login-01 dashboard-01
+```
+
+Conteúdo dos módulos renderiza dentro do slot `<main>` do `dashboard-01`. Widgets do dashboard = `DashboardWidget[]` do registry.
+
+### 8.11 PWA e Offline
+
+- Service Worker: cache de shell + assets estáticos
+- IndexedDB: fila `offline_queue` (vendas, clientes)
+- Sync ao reconectar: tRPC mutations com `Idempotency-Key`
+- Conflito MVP: última escrita vence; log em `domain_events` para suporte
+
+---
+
+## 9. Domínio Fiscal Modular
+
+O fiscal **não é um módulo monolítico**. É um **domínio em árvore**: módulo pai **`fiscal-core`** + **sub-módulos instaláveis** (uma capacidade documental cada). O **tipo de negócio** e a **fase** definem o pacote recomendado; a **ativação** segue o mesmo `ativarModulo()` do registry (§8.5).
+
+**Regras:**
+
+- Sub-módulos **nunca** chamam SEFAZ diretamente → `packages/fiscal-engine` via integrador `fiscal-*` (§8.7).
+- Módulos operacionais (`core-vendas`, `ops-romaneio`) **publicam eventos**; sub-módulos fiscais **consomem** e emitem documentos.
+- **MVP:** todos os `fiscal-*` existem como **scaffold** (`implementationStatus: 'scaffold'`), UI placeholder, migrations mínimas, **sem emissão** (`NoopFiscalAdapter`).
+
+### 9.1 Hierarquia de módulos fiscais
+
+```
+fiscal-core                    ← pai obrigatório de qualquer capacidade fiscal
+├── fiscal-nfce                ← capacidade: NFC-e (varejo)
+├── fiscal-nfe                 ← capacidade: NF-e mercadoria B2B
+├── fiscal-cte                 ← capacidade: CT-e (transporte)
+├── fiscal-mdfe                ← capacidade: MDF-e (manifesto — ver §9.6)
+├── fiscal-ciot                ← capacidade: CIOT (frete ANTT)
+├── fiscal-sped                ← capacidade: SPED (obrigações acessórias)
+├── fiscal-rural               ← capacidade: NF produtor / NFA-e (planejado)
+└── fiscal-contabil            ← módulo pai contábil (futuro)
+    └── (usa) fiscal-sped      ← mesma implementação SPED; não duplicar geração
+```
+
+| Camada | ID | Papel |
+|--------|-----|--------|
+| Pai fiscal | `fiscal-core` | Certificado A1, ambiente homolog/prod, séries, numeração, fila, registry de capabilities, menu **Fiscal**, persistência comum de documentos |
+| Sub-módulo capacidade | `fiscal-{capability}` | Telas, migrations (`cte_*`, `nfce_*`), permissões, eventos, integração com operação |
+| Pai contábil | `fiscal-contabil` | Plano de contas, lançamentos, fechamento (futuro); **depende de** `fiscal-sped` |
+| Engine | `packages/fiscal-engine` | `FiscalAdapter` — métodos por tipo de documento |
+| Integrador | `integrators/fiscal-*` | Provedor externo (Focus NFe, NFE.io…) |
+
+### 9.2 Capacidades (`FiscalCapability`)
+
+```typescript
+type FiscalCapability =
+  | 'nfce'
+  | 'nfe'
+  | 'cte'
+  | 'mdfe'
+  | 'ciot'
+  | 'sped'
+  | 'rural'
+  | 'nfse';  // futuro — prestador_servicos
+
+// fiscal-core mantém o que está ativo no tenant
+async function getActiveFiscalCapabilities(tenantId: string): Promise<FiscalCapability[]>
+
+// Ativar sub-módulo registra capability + roda migrations
+// ex: ativarModulo('fiscal-cte') → capabilities += 'cte'
+```
+
+Cada sub-módulo declara no `module.ts`:
+
+```typescript
+{
+  id: 'fiscal-cte',
+  parentModuleId: 'fiscal-core',
+  fiscalCapability: 'cte',
+  dependencias: ['fiscal-core', 'ops-romaneio'], // ou core-vendas conforme fluxo
+  faseMinima: 2,
+  tiposNegocioElegiveis: ['transportadora'],
+  implementationStatus: 'scaffold', // MVP
+}
+```
+
+**Nav:** menu **Fiscal** (pai) exibe **somente** subitens das capabilities ativas (NFC-e, CT-e, SPED…). Varejo não vê CT-e; transportadora não vê NFC-e (salvo add-on explícito).
+
+### 9.3 Matriz tipo de negócio × sub-módulos fiscais
+
+Recomendação na ativação pós-diagnóstico (§6.4). Add-ons podem ativar fora do pacote.
+
+| `tipo_negocio` | Sub-módulos fiscais recomendados (por fase) |
+|----------------|---------------------------------------------|
+| `pessoa_fisica` | Fase 3+: `fiscal-nfse` (futuro) se CNPJ; senão nenhum até `fiscal_ready` |
+| `varejo` | Fase 3: `fiscal-nfce`; B2B opcional: `fiscal-nfe`; obrigação: `fiscal-sped` |
+| `atacado` | Fase 2–3: `fiscal-nfe`; Fase 3+: `fiscal-sped` |
+| `fornecedor` | Fase 3: `fiscal-nfe` + `fiscal-sped` |
+| `distribuidor` | Fase 3: `fiscal-nfe` (+ `fiscal-nfce` se PDV); `fiscal-sped` |
+| `transportadora` | Fase 2: `fiscal-cte`, `fiscal-ciot`; Fase 2–3: `fiscal-mdfe` (§9.6); **sem** `fiscal-nfce` |
+| `fabricante` | Fase 3: `fiscal-nfe` + `fiscal-sped` |
+| `industria` | Fase 3: `fiscal-nfe` + `fiscal-sped` |
+| `produtor_rural` | Fase 3: `fiscal-rural` + `fiscal-sped` (blocos aplicáveis) |
+
+**Pacotes comerciais (exemplo billing §12):**
+
+| Bundle | Sub-módulos incluídos |
+|--------|------------------------|
+| Varejo Fiscal | `fiscal-nfce` + `fiscal-sped` (+ `fiscal-nfe` opcional) |
+| Transporte Fiscal | `fiscal-cte` + `fiscal-mdfe` + `fiscal-ciot` |
+| Indústria Fiscal | `fiscal-nfe` + `fiscal-sped` |
+
+### 9.4 `fiscal-sped` e `fiscal-contabil`
+
+| Módulo | Escopo |
+|--------|--------|
+| **`fiscal-sped`** | Geração de obrigações SPED (Fiscal, Contribuições, blocos conforme escopo); job por **competência**; lê documentos já autorizados nos sub-módulos de emissão |
+| **`fiscal-contabil`** | Domínio contábil (plano de contas, lançamentos, fechamento — **futuro**); **`dependencias: ['fiscal-core', 'fiscal-sped']`** |
+
+**Dois caminhos de ativação do SPED (mesma implementação):**
+
+1. **Varejo / atacado** — ativa `fiscal-sped` diretamente (sem `fiscal-contabil`).
+2. **Contabilidade completa** — ativa `fiscal-contabil`, que **reutiliza** APIs/eventos de `fiscal-sped` (não duplicar gerador de arquivo).
+
+### 9.5 CT-e e MDF-e — dependência jurídica (em estudo)
+
+| Decisão técnica atual | Decisão jurídica |
+|----------------------|------------------|
+| `fiscal-cte` e `fiscal-mdfe` são **sub-módulos irmãos** sob `fiscal-core` | **TBD:** obrigatoriedade de MDF-e vinculado a CT-e em viagem de carga |
+| Ativação independente permitida no código até conclusão do estudo | Pode virar `dependencias: ['fiscal-cte']` em `fiscal-mdfe` ou apenas recomendação soft na matriz |
+
+**Ação:** documento jurídico/técnico (ANTT + SEFAZ) → atualizar `fiscal-mdfe/module.ts` e §9.3.
+
+### 9.6 Disparo a partir da operação (eventos)
+
+| Sub-módulo | Evento origem típico | Documento |
+|------------|---------------------|-----------|
+| `fiscal-nfce` | `venda.confirmada` (balcão) | NFC-e |
+| `fiscal-nfe` | `pedido.faturado` / `venda.confirmada` B2B | NF-e |
+| `fiscal-cte` | `romaneio.fechado` / `viagem.criada` | CT-e |
+| `fiscal-mdfe` | `viagem.encerrada` (vários CT-e) | MDF-e |
+| `fiscal-ciot` | `contrato.frete.fechado` | CIOT |
+| `fiscal-sped` | `competencia.fechada` (job mensal) | Arquivos SPED |
+
+Pipeline único para emissão em tempo real:
+
+```
+Evento de domínio
+     ↓
+Sub-módulo fiscal-* (valida capability ativa)
+     ↓
+Job BullMQ — resposta imediata ao usuário
+     ↓
+FiscalAdapter via integrador fiscal-*
+     ↓
+SEFAZ / provedor → XML/PDF em storage
+     ↓
+Evento fiscal.documento.autorizado + SSE
+```
+
+### 9.7 `FiscalAdapter` e integradores
+
+```typescript
+// packages/fiscal-engine/types.ts
+interface FiscalAdapter {
+  emitirNFCe(dados: DadosNFCe): Promise<ResultadoEmissao>;
+  emitirNFe(dados: DadosNFe): Promise<ResultadoEmissao>;
+  emitirCTe(dados: DadosCTe): Promise<ResultadoEmissao>;
+  emitirMDFe(dados: DadosMDFe): Promise<ResultadoEmissao>;
+  emitirCIOT(dados: DadosCIOT): Promise<ResultadoEmissao>;
+  cancelar(tipo: FiscalCapability, chave: string): Promise<void>;
+  consultar(tipo: FiscalCapability, chave: string): Promise<StatusDocumento>;
+  gerarSped?(competencia: Competencia, blocos: SpedBloco[]): Promise<ArquivoSped>;
+}
+
+class NoopFiscalAdapter implements FiscalAdapter { /* MVP — retorna não implementado */ }
+class FocusNFeAdapter implements FiscalAdapter { /* métodos conforme homologação por capability */ }
+```
+
+- Provedor pode não suportar todas as capabilities → integrador expõe `capabilitiesSuportadas: FiscalCapability[]`.
+- Sub-módulo verifica suporte antes de enfileirar emissão.
+
+> **Provedor:** avaliação Focus NFe, NFE.io, Bling — escolha por capability, não um único fornecedor obrigatório para todos os documentos.
+
+### 9.8 MVP — scaffold de cada `fiscal-*`
+
+| Entregável | Conteúdo |
+|------------|----------|
+| `fiscal-core` | Implementado: config, registry, menu shell, `NoopFiscalAdapter` |
+| Cada `fiscal-nfce` … `fiscal-ciot`, `fiscal-sped`, `fiscal-contabil`, `fiscal-rural` | `module.ts` + pasta `migrations/` stub + rota “Em breve” + `implementationStatus: 'scaffold'` |
+| Ativação em tenant | Permitida para testar nav, matriz §9.3 e pricing; emissão retorna erro controlado |
+| Homologação | Por sub-módulo: `scaffold` → `implemented` quando adapter + SEFAZ validados |
+
+**Checklist scaffold (por sub-módulo):**
+
+- [ ] `ModuleDefinition` com `parentModuleId: 'fiscal-core'`
+- [ ] `fiscalCapability` correspondente
+- [ ] Entrada em `MODULE_REGISTRY` e `PACOTES_FISCAL_POR_TIPO`
+- [ ] Preço na `PricingEngine` (§12.2)
+- [ ] Permissões RBAC: `fiscal-{cap}.emitir`, `fiscal-{cap}.cancelar`
+
+---
+
+## 10. Performance
+
+### 10.1 Princípios
+
+- **Zero JS desnecessário no cliente** — RSC (React Server Components) para tudo que não precisa de interatividade
+
+- **Queries paginadas sempre** — nenhuma listagem sem cursor-based pagination
+
+- **Cache em camadas** — Redis para dados quentes, `unstable_cache` do Next.js para dados de servidor
+
+- **Índices por padrão de acesso** — definidos no contrato do módulo, não como afterthought
+
+### 10.2 Padrão de Query
+
+```typescript
+
+// Todas as queries do módulo seguem este padrão
+
+export async function getVendas(
+
+ tenantId: string,
+
+ { cursor, limit = 50, filtros }: QueryParams
+
+) {
+
+ return db.query(sql`
+
+   SELECT v.*, c.nome as cliente_nome
+
+   FROM ${schema(tenantId)}.vendas v
+
+   LEFT JOIN ${schema(tenantId)}.clientes c ON c.id = v.cliente_id
+
+   WHERE v.created_at < ${cursor ?? 'now()'}
+
+     AND (${filtros.status}::text IS NULL OR v.status = ${filtros.status})
+
+   ORDER BY v.created_at DESC
+
+   LIMIT ${limit + 1}
+
+ `);
+
+}
+
+```
+
+### 10.3 Índices Obrigatórios por Módulo
+
+Cada módulo declara seus índices no `module.ts`:
+
+```typescript
+
+indexes: [
+
+ { table: 'vendas', columns: ['created_at DESC'] },
+
+ { table: 'vendas', columns: ['cliente_id', 'created_at DESC'] },
+
+ { table: 'vendas', columns: ['status', 'created_at DESC'] },
+
+]
+
+```
+
+---
+
+## 11. RBAC — Controle de Acesso
+
+Permissões são definidas por módulo, não pelo sistema central.
+
+```typescript
+
+// Papéis globais
+
+type Papel = 'dono' | 'gerente' | 'vendedor' | 'financeiro' | 'aprendiz_viewer';
+
+// Cada módulo declara suas permissões
+
+permissions: {
+
+ 'fin-fluxo-caixa': {
+
+   ver:    ['dono', 'gerente', 'financeiro'],
+
+   editar: ['dono', 'financeiro'],
+
+   fechar: ['dono'],
+
+ },
+
+ 'core-vendas': {
+
+   ver:     ['dono', 'gerente', 'vendedor'],
+
+   registrar: ['dono', 'gerente', 'vendedor'],
+
+   cancelar:  ['dono', 'gerente'],
+
+ }
+
+}
+
+```
+
+---
+
+## 12. Modelo de Negócio
+
+### 12.0 Central de Precificação e Gateways
+
+**`packages/billing`** concentra precificação e pagamentos — separado dos módulos de negócio (via **integradores** `payment-*`).
+
+```typescript
+// PricingEngine — schema global
+interface PrecoModulo {
+  moduleId: string;
+  faseMinima: 1 | 2 | 3 | 4;
+  precoMensalCentavos: number;
+  incluidoNoPlano?: string[];  // planos que já incluem
+}
+
+// Cálculo: plano base da fase + soma dos add-ons ativos
+function calcularMensalidade(tenantId: string): Promise<ResumoCobranca>;
+
+// PaymentGatewayAdapter (registrado como integrador)
+interface PaymentGatewayAdapter {
+  criarAssinatura(tenantId: string, itens: ResumoCobranca): Promise<SubscriptionRef>;
+  cancelar(subscriptionId: string): Promise<void>;
+  // webhooks → integrator onWebhook → domain events
+}
+```
+
+**MVP:** tabela de preços por fase/módulo + `payment-mock`; primeiro gateway real (ex.: Asaas) via `INTEGRATOR_REGISTRY`.
+
+### 12.1 Planos Base
+
+| Plano | Preço | Fase | Módulos Incluídos |
+
+|-------|-------|------|-------------------|
+
+| Essencial | R$ 49/mês | 1–2 | core-catalogo, core-clientes, core-vendas, core-estoque-basico, core-ranking |
+
+| Profissional | R$ 129/mês | 3 | Essencial + fin-fluxo-caixa + bundle **Varejo Fiscal** (`fiscal-nfce` + `fiscal-sped`) + ops-vendedores, rh-comissoes |
+
+| Escala | R$ 299/mês | 4 | Profissional + ops-multi-loja, bi-dashboards, api-parceiros |
+
+### 12.2 Módulos e sub-módulos avulsos (Add-ons)
+
+Cobrança por **ID de módulo** (inclui sub-módulos fiscais). Bundles descontam conjuntos (§9.3).
+
+| Módulo / sub-módulo | Preço (ex.) |
+
+|---------------------|-------------|
+
+| `fiscal-nfce` | R$ 35/mês |
+
+| `fiscal-nfe` | R$ 40/mês |
+
+| `fiscal-cte` | R$ 45/mês |
+
+| `fiscal-mdfe` | R$ 25/mês |
+
+| `fiscal-ciot` | R$ 20/mês |
+
+| `fiscal-sped` | R$ 30/mês |
+
+| Bundle **Transporte Fiscal** (`cte`+`mdfe`+`ciot`) | R$ 89/mês |
+
+| Bundle **Varejo Fiscal** (`nfce`+`sped`) | R$ 55/mês |
+
+| `fiscal-contabil` | sob consulta |
+
+| `aprendiz-pro` | R$ 59/mês |
+
+| `white-label` | sob consulta |
+
+| `api-parceiros` | R$ 79/mês |
+
+### 12.3 Trial
+
+- 14 dias grátis, fase 2 completa, sem cartão
+
+- Ao final, diagnóstico recalculado e plano sugerido automaticamente
+
+---
+
+## 13. Catálogo — Grade Genérica e Refinamentos
+
+### 13.1 MVP — Grade genérica + tipo de negócio
+
+O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define quais campos e módulos aparecem:
+
+| Tipo | Comportamento catálogo Fase 1 |
+|------|------------------------------|
+| `pessoa_fisica` | Produto/serviço; estoque opcional |
+| `varejo` | Unidade, preço, estoque |
+| `atacado` | Embalagem, preço tabela (campo simples até módulo dedicado) |
+| `fornecedor` | SKU, prazo de entrega |
+| `distribuidor` | Multi-unidade de medida (futuro) |
+| `transportadora` | Tipo de serviço (frete, coleta, entrega); rota, peso/volume, tabela por eixo/km |
+| `fabricante` | Produto acabado, insumo, lote de fabricação |
+| `industria` | Insumo, semiacabado, acabado (futuro BOM) |
+| `produtor_rural` | Cultura, safra, rebanho, gleba, quantidade por hectare/cabeça |
+
+`segmentoAtuacao` (moda, alimentação, agro…) refina ícones e templates do Aprendiz, não substitui `tipoNegocio`.
+
+### 13.2 Extensões por segmento de atuação (pós-MVP)
+
+| Segmento atuação | Módulos de extensão |
+|-----------------|---------------------|
+| Moda & vestuário | `ops-grade-produto` |
+| Alimentação | `ops-validade`, `ops-ficha-tecnica` |
+| Agro | `ops-safra-rebanho`, `ops-gleba` (alinha a `produtor_rural`) |
+
+> Extensões referenciam `item_id`; elegibilidade cruzada com matriz §6.4.
+
+---
+
+## 14. Roadmap
+
+### Fase 0 — Fundação (semanas 1–4)
+
+- [ ] Monorepo Turborepo + **Bun workspaces** + `bun.lock`
+
+- [ ] **Next.js 16.2.6** fixado em `apps/web` e `apps/platform-admin`
+
+- [ ] Docker PostgreSQL (`infra/docker`, porta **5454**) + `DATABASE_URL` em `.env.local`
+
+- [ ] shadcn init + blocks **`login-01`** e **`dashboard-01`**
+
+- [ ] Schema global (orgs, memberships, sectors, módulos ativos)
+
+- [ ] Provisionamento schema por tenant + ativação de módulos
+
+- [ ] NextAuth v5 + sessão `organizationId` + `sectorId`
+
+- [ ] tRPC router base + module-registry
+
+- [ ] `packages/integrators` (registry + payment-mock + fiscal-noop)
+
+- [ ] `packages/billing` (PricingEngine + tabela de preços)
+
+- [ ] Nav dinâmico (módulos + setor)
+
+- [ ] CI/CD básico
+
+### Fase 1 — Core MVP (semanas 5–10) — somente Fase de negócio 1
+
+- [ ] Onboarding: **tipo de negócio** (10 perfis) + perguntas maturidade + **CNPJ**
+
+- [ ] Engine `recomendarModulos(fase, tipo)` + `modulo_demanda`
+
+- [ ] `core-catalogo` (campos variáveis por tipo)
+
+- [ ] `core-clientes`, `core-vendas`, `core-estoque-basico`, `core-ranking`
+
+- [ ] Domínio fiscal: `fiscal-core` + **scaffold** de todos os sub-módulos `fiscal-*` (§9.8)
+
+- [ ] **Aprendiz** MVP (templates + 1–2 automações)
+
+- [ ] Event bus in-process + `domain_events`
+
+- [ ] **PWA** + fila offline (vendas)
+
+### Fase 2 — Crescimento (semanas 11–16)
+
+- [ ] `fin-fluxo-caixa`, `ops-vendedores`, `rel-basico`
+
+- [ ] Primeiro gateway de pagamento real (integrador)
+
+- [ ] Aprendiz: LLM na criação de regras (feature flag)
+
+- [ ] Módulos de segmento (moda / alimentação)
+
+### Fase 3 — Fiscal e Equipe (semanas 17–24)
+
+- [ ] `fiscal-engine` + integrador homologado (por capability)
+
+- [ ] `fiscal-nfce` + `fiscal-nfe` → `implementationStatus: 'implemented'`
+
+- [ ] `fiscal-sped` (competência mensal)
+
+- [ ] Estudo jurídico CT-e ↔ MDF-e → regra em `fiscal-mdfe` (§9.5)
+
+- [ ] `fiscal-cte` + `fiscal-ciot` + `fiscal-mdfe` (transportadora)
+
+- [ ] `rh-comissoes`
+
+- [ ] Aprendiz v2 (camada 2 — execução autônoma)
+
+- [ ] Gatilhos de sugestão de módulo
+
+### Fase 4 — Escala (semanas 25–36)
+
+- [ ] `ops-multi-loja`
+
+- [ ] `bi-dashboards`
+
+- [ ] Aprendiz v3 (camada 3 — sugestão proativa)
+
+- [ ] API pública + webhooks
+
+- [ ] White-label
+
+### Trilha Paralela — Painel da Plataforma (§17)
+
+- [ ] `apps/platform-admin` + auth `platform_*` roles
+
+- [ ] `platform-crm` — cadastro e pipeline de **clientes da plataforma**
+
+- [ ] `platform-comms` — inbox omnichannel (integradores WhatsApp, Telegram, e-mail)
+
+- [ ] `platform-insights` — demanda de módulos, funil onboarding, health score por tenant
+
+- [ ] Vínculo conversa ↔ organização ↔ diagnóstico (tipo + fase)
+
+---
+
+## 17. Painel de Gestão da Plataforma (`platform-admin`)
+
+Área **interna** (time comercial, suporte, produto e engenharia). **Não** é visível aos usuários do tenant. Dados no **schema global** (`public`), sem misturar com `tenant_xxx`.
+
+### 17.1 Objetivos
+
+| Objetivo | Como |
+|----------|------|
+| Primeiro contato com lead/cliente | Módulo **comunicação** omnichannel |
+| Relacionamento empresa ↔ plataforma | **CRM** de clientes da plataforma |
+| Priorizar desenvolvimento | **Analytics** de módulos/funcionalidades mais solicitados |
+| Onboarding assistido | Operador vê diagnóstico (tipo + fase) e ativa módulos com o cliente |
+
+### 17.2 Arquitetura
+
+```
+apps/platform-admin/
+  app/
+    (auth)/              # login separado (mesmo NextAuth, roles platform_*)
+    (crm)/               # pipeline, contas, contatos
+    (comms)/             # inbox unificada
+    (insights)/          # dashboards produto/engenharia
+  modules/
+    platform-crm/
+    platform-comms/
+    platform-insights/
+```
+
+**Separação de responsabilidades:**
+
+| Módulo plataforma | Função | Integradores |
+|-------------------|--------|--------------|
+| `platform-crm` | Lead → conta → organização; estágio, health, CSM | — |
+| `platform-comms` | Threads, templates, atribuição a agente | `social-whatsapp`, `social-telegram`, `email-*` |
+| `platform-insights` | Agregações, ranking de demanda, export | Lê `modulo_demanda`, `domain_events`, uso |
+
+### 17.3 CRM — Cliente da Plataforma
+
+Entidades (schema `public`):
+
+| Entidade | Descrição |
+|----------|-----------|
+| `platform_lead` | Contato antes de criar tenant |
+| `platform_account` | Conta comercial (pode virar `organizations`) |
+| `platform_contact` | Pessoas (usuários futuros, decisores) |
+| `platform_deal` | Oportunidade / trial / expansão de módulos |
+| `platform_activity` | Ligação, reunião, nota, **mensagem** (vínculo com comms) |
+
+**Fluxo típico:**
+
+1. Lead entra por WhatsApp/site → `platform_lead` + thread em `platform-comms`
+2. SDR qualifica tipo de negócio e fase estimada (mesmas enums do §6)
+3. Trial criado → `organizations` + schema tenant provisionado
+4. Pós-venda: health score, módulos ativos, tickets, renovação
+
+`core-clientes` **não** substitui este CRM — são domínios diferentes.
+
+### 17.4 Comunicação / Social (`platform-comms`)
+
+**Inbox unificada** para canais externos via integradores (§8.7):
+
+| Canal | Integrador (ex.) | Uso |
+|-------|------------------|-----|
+| WhatsApp | `social-whatsapp` (Cloud API / parceiro) | Prospecção, suporte, onboarding assistido |
+| Telegram | `social-telegram` | Bots, alertas, suporte técnico |
+| E-mail | `email-resend` / `email-ses` | Transacional + sequências |
+| SMS | `messaging-sms` | OTP, lembretes (opcional) |
+
+**Recursos:**
+
+- Thread por lead/conta/organização
+- Templates aprovados (WhatsApp)
+- Handoff bot → humano
+- Webhook inbound → `platform_activity` + notificação ao agente
+- Opt-in / LGPD: consentimento registrado por canal
+
+Mensagens **não** são armazenadas no schema do tenant salvo se o cliente exportar conversa para o Aprendiz (futuro, opt-in).
+
+### 17.5 Insights para Desenvolvimento (`platform-insights`)
+
+Fontes de dados para priorizar o roadmap:
+
+| Sinal | Origem | Métrica |
+|-------|--------|---------|
+| Módulo sugerido no diagnóstico mas `planned` | `modulo_demanda` | Contagem por `moduleId` + `tipoNegocio` |
+| Tipo de negócio `planned` ou “não está na lista” | `tipo_negocio_interesse` | Contagem por ID planejado + segmento |
+| Clique em “quero este módulo” | UI tenant | `feature_interest` |
+| Tentativa de usar feature bloqueada | Middleware módulo | `module_blocked_attempt` |
+| Upgrade/downgrade de plano | `billing` | Receita por módulo |
+| Tickets/comms com palavra-chave | `platform-comms` | NLP/tags (fase 2) |
+
+**Dashboards (time produto/engenharia):**
+
+1. **Top módulos demandados** — filtro por tipo de negócio e fase
+2. **Funil** — lead → trial → ativo → expansão
+3. **Cobertura da matriz** — % células fase×tipo com módulos `implemented` vs `planned`
+4. **Churn risk** — health score + queda de uso
+
+Export semanal (CSV/API) para planejamento de sprints.
+
+### 17.6 RBAC do Painel
+
+| Papel | Permissões |
+|-------|------------|
+| `platform_admin` | Tudo |
+| `platform_comercial` | CRM + comms + criar trial |
+| `platform_suporte` | Comms + ver tenant (read-only) |
+| `platform_produto` | Insights + CRM read |
+| `platform_engenharia` | Insights + flags de módulo |
+
+Autenticação: mesmo NextAuth com `user.platform_role` ou tabela `platform_users` separada.
+
+### 17.7 UI
+
+- App dedicada `platform-admin` (subdomínio `admin.` ou rota isolada)
+- shadcn: `dashboard-01` para shell; tabelas CRM; inbox estilo “mensageria”
+- MVP plataforma: CRM mínimo + 1 canal (e-mail ou WhatsApp mock) + dashboard de demanda de módulos
+
+---
+
+## 15. Riscos e Mitigações
+
+| Risco | Probabilidade | Impacto | Mitigação |
+
+|-------|--------------|---------|-----------|
+
+| Complexidade fiscal subestimada | Alta | Alto | Sub-módulos por documento + adapter por capability + homologação incremental |
+
+| CT-e / MDF-e dependência incorreta | Média | Médio | Estudo jurídico §9.5 antes de hard dependency |
+
+| Adoção baixa do Aprendiz | Média | Médio | Onboarding guiado com templates prontos por segmento |
+
+| Performance com muitos tenants | Média | Alto | Schema isolation + connection pooling (PgBouncer) |
+
+| Dependência de módulos mal gerenciada | Baixa | Alto | Validação de dependências na ativação + testes de contrato |
+
+| Integradores mal isolados | Média | Alto | Proibir chamada externa fora de `packages/integrators`; contratos + testes de webhook |
+
+| Custo de LLM (Aprendiz) escala antes da receita | Média | Médio | Cache de automações compiladas, LLM só na criação da regra |
+
+| Complexidade fase × tipo explode combinações | Média | Alto | Matriz versionada em código; módulos `planned`; insights guiam implementação |
+
+| LGPD em comms omnichannel | Média | Alto | Consentimento por canal; retenção configurável; sem cruzar dados tenant sem base legal |
+
+---
+
+## 16. Métricas de Sucesso
+
+| Métrica | Meta (6 meses) |
+
+|---------|----------------|
+
+| Tenants ativos | 500 |
+
+| Churn mensal | < 3% |
+
+| Módulos por tenant (média) | ≥ 3 |
+
+| Taxa de upgrade de fase | > 15% ao mês |
+
+| NPS | ≥ 50 |
+
+| Automações criadas pelo Aprendiz | > 2.000 |
+
+| Uptime | 99,9% |
+
+| Leads qualificados no CRM plataforma | > 200 |
+
+| Tempo médio lead → tenant ativo | < 7 dias |
+
+| Top 5 módulos demandados reportados no insights | 100% visíveis para produto |
+
+---
+
+## Apêndice A — Glossário
+
+| Termo | Definição |
+
+|-------|-----------|
+
+| **Tenant / Organização** | Empresa com schema PostgreSQL isolado (`tenant_xxx`) |
+
+| **Setor** | Unidade organizacional; filtra ferramentas e permissões dentro do tenant |
+
+| **Membership** | Vínculo usuário ↔ empresa com papel global |
+
+| **Módulo** | Pacote de funcionalidade que segue `ModuleDefinition` |
+
+| **Integrador** | Adapter de serviço externo; conecta provedores aos módulos via eventos normalizados |
+
+| **Fase** | Maturidade do negócio (1–4) da **empresa**; determina módulos elegíveis |
+
+| **Item** | Produto ou serviço no `core-catalogo` |
+
+| **Aprendiz** | Engine de automação (templates no MVP; LLM opcional) |
+
+| **Diagnóstico** | Onboarding com 5 perguntas + CNPJ → classificação de fase |
+
+| **Gatilho** | Sinal de uso que dispara sugestão de módulo ou automação |
+
+| **Evento de domínio** | Mensagem tipada entre módulos (ex.: `venda.confirmada`) |
+
+| **PricingEngine** | Cálculo de mensalidade por fase + módulos ativos |
+
+| **fiscal-core** | Módulo pai do domínio fiscal (config, capabilities, shell UI) |
+
+| **Sub-módulo fiscal** | `fiscal-nfce`, `fiscal-cte`, etc. — capacidade instalável sob o pai |
+
+| **FiscalCapability** | Identificador da capacidade (`nfce`, `cte`, `sped`…) registrada no tenant |
+
+| **FiscalAdapter** | Interface em `fiscal-engine`; implementação por provedor SEFAZ |
+
+| **Bundle fiscal** | Conjunto de sub-módulos na precificação (ex.: Varejo Fiscal, Transporte Fiscal) |
+
+| **Tipo de negócio** | Perfil operacional (PF, varejo, fabricante, produtor rural…) — eixo do pacote de módulos |
+
+| **Cliente da plataforma** | Organização/lead gerenciado pelo CRM interno (`platform-*`) |
+
+| **Cliente do negócio** | Cadastro no `core-clientes` do tenant |
+
+| **Painel da plataforma** | `apps/platform-admin` — CRM, comms e insights para o time interno |
+
+| **modulo_demanda** | Registro de interesse em módulo ainda não implementado (priorização dev) |
+
+| **tipo_negocio_interesse** | Tipo `planned` indicado no onboarding “não está na lista” (priorização produto) |
+
+| **Tipo planejado** | `TipoNegocio` com `status: 'planned'` — documentado em §5.5.1, fora do onboarding |
+
+---
+
+*Documento vivo — atualizar a cada sprint com decisões técnicas tomadas.*

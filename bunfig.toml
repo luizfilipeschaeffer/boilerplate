@@ -1,0 +1,5 @@
+# https://bun.sh/docs/runtime/bunfig
+
+[install]
+# Preferir workspaces locais do monorepo
+linker = "isolated"
