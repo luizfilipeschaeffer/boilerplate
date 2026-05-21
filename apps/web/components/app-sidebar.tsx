@@ -10,6 +10,11 @@ import {
   BarChart3,
   FileText,
   Bot,
+  Receipt,
+  Truck,
+  FileSpreadsheet,
+  Wheat,
+  Calculator,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -23,6 +28,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { buildSidebarNavEntries } from "@/lib/modules/sidebar-nav";
 
 const iconByModule: Record<string, React.ReactNode> = {
   "core-catalogo": <Package className="size-4" />,
@@ -31,6 +37,14 @@ const iconByModule: Record<string, React.ReactNode> = {
   "core-estoque-basico": <Warehouse className="size-4" />,
   "core-ranking": <BarChart3 className="size-4" />,
   "fiscal-core": <FileText className="size-4" />,
+  "fiscal-nfce": <Receipt className="size-4" />,
+  "fiscal-nfe": <FileText className="size-4" />,
+  "fiscal-cte": <Truck className="size-4" />,
+  "fiscal-mdfe": <Truck className="size-4" />,
+  "fiscal-ciot": <FileSpreadsheet className="size-4" />,
+  "fiscal-sped": <FileSpreadsheet className="size-4" />,
+  "fiscal-rural": <Wheat className="size-4" />,
+  "fiscal-contabil": <Calculator className="size-4" />,
   aprendiz: <Bot className="size-4" />,
 };
 
@@ -49,20 +63,15 @@ export function AppSidebar({
   navItems: NavItem[];
   user: { name: string; email: string };
 }) {
-  const mainNav = [
-    {
+  const entries = buildSidebarNavEntries(navItems, {
+    home: {
+      type: "link",
       title: "Início",
       url: "/dashboard",
       icon: <LayoutDashboard className="size-4" />,
     },
-    ...navItems
-      .filter((item) => item.href !== "/dashboard")
-      .map((item) => ({
-        title: item.label,
-        url: item.href,
-        icon: moduleIcon(item.id.replace(/-nav$/, "")),
-      })),
-  ];
+    mapIcon: moduleIcon,
+  });
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -84,7 +93,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={mainNav} />
+        <NavMain entries={entries} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

@@ -25,7 +25,11 @@ function scaffold(
 }
 
 export function registerAllModules(): void {
-  scaffold("core-catalogo", "Catálogo", { navOrdem: 10, routePath: "/catalogo" });
+  scaffold("core-catalogo", "Catálogo", {
+    navOrdem: 10,
+    routePath: "/catalogo",
+    implementationStatus: "implemented",
+  });
   scaffold("core-clientes", "Clientes", { navOrdem: 20, routePath: "/clientes" });
   scaffold("core-vendas", "Vendas", { navOrdem: 30, routePath: "/vendas" });
   scaffold("core-estoque-basico", "Estoque", {

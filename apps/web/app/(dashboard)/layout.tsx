@@ -1,7 +1,10 @@
 import { auth } from "@/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { getDashboardNav } from "@/lib/modules/active-modules";
+import { ensureModulesRegistered } from "@/lib/modules/init";
 import { redirect } from "next/navigation";
+
+ensureModulesRegistered();
 
 export default async function DashboardLayout({
   children,

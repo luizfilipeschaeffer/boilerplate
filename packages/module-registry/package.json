@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@boilerplate/shared": "workspace:*"

@@ -1,5 +1,10 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import {
+  findOrCreateUserByEmail,
+  getMembershipForUser,
+  organizationHasOnboarding,
+} from "@boilerplate/db/organization";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -10,11 +15,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Senha", type: "password" },
       },
       authorize: async (credentials) => {
-        if (!credentials?.email) return null;
+        const email = credentials?.email?.toString().trim();
+        if (!email) return null;
+
+        const user = await findOrCreateUserByEmail(email);
+        const membership = await getMembershipForUser(user.id);
+
+        if (!membership) {
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            needsOnboarding: true,
+          };
+        }
+
+        const hasOnboarding = await organizationHasOnboarding(
+          membership.organizationId,
+        );
+
         return {
-          id: "dev-user",
-          email: String(credentials.email),
-          name: "Usuário Dev",
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          organizationId: membership.organizationId,
+          sectorId: "geral",
+          needsOnboarding: !hasOnboarding,
         };
       },
     }),
@@ -24,18 +50,43 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: { strategy: "jwt" },
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.organizationId = "dev-org";
-        token.sectorId = "geral";
+        const u = user as {
+          id: string;
+          organizationId?: string | null;
+          sectorId?: string | null;
+          needsOnboarding?: boolean;
+        };
+        token.userId = u.id;
+        token.organizationId = u.organizationId ?? undefined;
+        token.sectorId = u.sectorId ?? undefined;
+        token.needsOnboarding = u.needsOnboarding ?? false;
       }
+
+      if (token.userId && !user) {
+        const membership = await getMembershipForUser(token.userId as string);
+        if (!membership) {
+          token.organizationId = undefined;
+          token.needsOnboarding = true;
+        } else {
+          const hasOnboarding = await organizationHasOnboarding(
+            membership.organizationId,
+          );
+          token.organizationId = membership.organizationId;
+          token.sectorId = "geral";
+          token.needsOnboarding = !hasOnboarding;
+        }
+      }
+
       return token;
     },
     session({ session, token }) {
       if (session.user) {
-        (session as { organizationId?: string }).organizationId =
-          token.organizationId as string;
-        (session as { sectorId?: string }).sectorId = token.sectorId as string;
+        session.user.id = token.userId as string;
+        session.organizationId = token.organizationId as string | undefined;
+        session.sectorId = (token.sectorId as string) ?? "geral";
+        session.needsOnboarding = Boolean(token.needsOnboarding);
       }
       return session;
     },

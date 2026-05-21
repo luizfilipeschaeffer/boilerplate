@@ -4,17 +4,21 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./organization": "./src/organization.ts"
   },
   "scripts": {
-    "lint": "tsc --noEmit",
-    "db:generate": "bun --env-file=../../.env prisma generate",
-    "db:push": "bun --env-file=../../.env prisma db push"
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "db:validate": "bun scripts/prisma-env.ts validate",
+    "db:generate": "bun scripts/prisma-env.ts generate",
+    "db:push": "bun scripts/prisma-env.ts db push"
   },
   "dependencies": {
+    "@boilerplate/module-registry": "workspace:*",
     "@prisma/client": "^6.9.0"
   },
   "devDependencies": {
+    "@types/node": "^22.15.29",
     "prisma": "^6.9.0",
     "typescript": "^5.8.3"
   }

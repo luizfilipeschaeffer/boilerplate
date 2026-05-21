@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -10,22 +16,23 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import type { SidebarNavEntry } from "@/lib/modules/sidebar-nav";
 
 function isNavItemActive(pathname: string, url: string) {
   if (url === "/dashboard") return pathname === "/dashboard";
   return pathname === url || pathname.startsWith(`${url}/`);
 }
 
-export function NavMain({
-  items,
-}: {
-  items: {
-    title: string;
-    url: string;
-    icon?: React.ReactNode;
-  }[];
-}) {
+function isGroupActive(pathname: string, group: Extract<SidebarNavEntry, { type: "group" }>) {
+  if (group.url && isNavItemActive(pathname, group.url)) return true;
+  return group.items.some((item) => isNavItemActive(pathname, item.url));
+}
+
+export function NavMain({ entries }: { entries: SidebarNavEntry[] }) {
   const pathname = usePathname();
 
   return (
@@ -33,20 +40,77 @@ export function NavMain({
       <SidebarGroupLabel>Módulos</SidebarGroupLabel>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                tooltip={item.title}
-                isActive={isNavItemActive(pathname, item.url)}
-                render={<Link href={item.url} />}
+          {entries.map((entry) => {
+            if (entry.type === "link") {
+              return (
+                <SidebarMenuItem key={entry.url}>
+                  <SidebarMenuButton
+                    tooltip={entry.title}
+                    isActive={isNavItemActive(pathname, entry.url)}
+                    render={<Link href={entry.url} />}
+                  >
+                    {entry.icon}
+                    <span className="group-data-[collapsible=icon]:hidden">
+                      {entry.title}
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            }
+
+            const groupActive = isGroupActive(pathname, entry);
+
+            return (
+              <Collapsible
+                key={entry.title}
+                defaultOpen={groupActive}
+                className="group/collapsible"
               >
-                {item.icon}
-                <span className="group-data-[collapsible=icon]:hidden">
-                  {item.title}
-                </span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+                <SidebarMenuItem>
+                  <CollapsibleTrigger
+                    render={
+                      <SidebarMenuButton
+                        tooltip={entry.title}
+                        isActive={groupActive}
+                        className="w-full"
+                      />
+                    }
+                  >
+                    {entry.icon}
+                    <span className="group-data-[collapsible=icon]:hidden">
+                      {entry.title}
+                    </span>
+                    <ChevronRight className="ml-auto size-4 transition-transform group-data-[open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {entry.url ? (
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            isActive={isNavItemActive(pathname, entry.url)}
+                            render={<Link href={entry.url} />}
+                          >
+                            Visão geral
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ) : null}
+                      {entry.items.map((sub) => (
+                        <SidebarMenuSubItem key={sub.url}>
+                          <SidebarMenuSubButton
+                            isActive={isNavItemActive(pathname, sub.url)}
+                            render={<Link href={sub.url} />}
+                          >
+                            {sub.icon}
+                            <span>{sub.title}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            );
+          })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

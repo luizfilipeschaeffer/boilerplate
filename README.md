@@ -51,7 +51,8 @@ Detalhes: [infra/docker/README.md](./infra/docker/README.md).
 |---------|-----------|
 | `bun install` | Instala workspaces |
 | `bun run clean` | Remove `node_modules`, `.next`, `.turbo`, `dist` e outros caches |
-| `bun run dev` | Turborepo — todos os apps em dev |
+| `bun run ci` | Pipeline local (generate, validate, lint, build) — igual ao GitHub Actions |
+| `bun run dev` | Turborepo — `apps/web` (:3000) e `platform-admin` (:3002) |
 | `bun run build` | Build de produção |
 | `bunx --bun shadcn@latest …` | CLI shadcn em `apps/web` |
 | `bun run db:up` | Sobe Postgres no Docker |

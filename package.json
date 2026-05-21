@@ -7,6 +7,8 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "ci": "bun run db:generate && bun run db:validate && bun run lint && bun run build",
+    "db:validate": "bun run --filter @boilerplate/db db:validate",
     "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "db:down": "docker compose -f infra/docker/docker-compose.yml down",
     "db:generate": "bun run --filter @boilerplate/db db:generate",

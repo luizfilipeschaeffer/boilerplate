@@ -4,9 +4,10 @@
  * Não entra em .git. Pastas alvo são removidas inteiras (não desce em node_modules).
  */
 import { readdir, rm } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = join(import.meta.dir, "..");
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Pastas removidas em qualquer workspace (apps/*, packages/*, example, raiz). */
 const REMOVE_DIRS = new Set([

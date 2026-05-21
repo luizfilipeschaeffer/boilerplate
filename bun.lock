@@ -9,6 +9,26 @@
         "typescript": "^5.8.3",
       },
     },
+    "apps/platform-admin": {
+      "name": "@boilerplate/platform-admin",
+      "version": "0.0.1",
+      "dependencies": {
+        "@boilerplate/db": "workspace:*",
+        "next": "16.2.6",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4",
+      },
+      "devDependencies": {
+        "@tailwindcss/postcss": "^4.1.8",
+        "@types/node": "^22.15.29",
+        "@types/react": "^19.1.6",
+        "@types/react-dom": "^19.1.5",
+        "eslint": "^9.28.0",
+        "eslint-config-next": "16.2.6",
+        "tailwindcss": "^4.1.8",
+        "typescript": "^5.8.3",
+      },
+    },
     "apps/web": {
       "name": "@boilerplate/web",
       "version": "0.0.1",
@@ -73,9 +93,11 @@
       "name": "@boilerplate/db",
       "version": "0.0.1",
       "dependencies": {
+        "@boilerplate/module-registry": "workspace:*",
         "@prisma/client": "^6.9.0",
       },
       "devDependencies": {
+        "@types/node": "^22.15.29",
         "prisma": "^6.9.0",
         "typescript": "^5.8.3",
       },
@@ -193,6 +215,8 @@
     "@boilerplate/integrators": ["@boilerplate/integrators@workspace:packages/integrators"],
 
     "@boilerplate/module-registry": ["@boilerplate/module-registry@workspace:packages/module-registry"],
+
+    "@boilerplate/platform-admin": ["@boilerplate/platform-admin@workspace:apps/platform-admin"],
 
     "@boilerplate/shared": ["@boilerplate/shared@workspace:packages/shared"],
 
