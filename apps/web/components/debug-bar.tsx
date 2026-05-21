@@ -53,13 +53,23 @@ export function DebugBar() {
   const pathname = usePathname();
   const { organizationId, lastSyncedAt, lastError, syncing } = useSyncMeta();
   const syncSchedule = useSyncSchedule();
-  const [online, setOnline] = React.useState(true);
+  const [online, setOnline] = React.useState(
+    () => (typeof navigator !== "undefined" ? navigator.onLine : true),
+  );
   const [counts, setCounts] = React.useState<Record<string, number> | null>(
     null,
   );
 
+  const countsLoadKey =
+    enabled && organizationId ? `${organizationId}:${lastSyncedAt ?? ""}` : "";
+  const [prevCountsLoadKey, setPrevCountsLoadKey] =
+    React.useState(countsLoadKey);
+  if (countsLoadKey !== prevCountsLoadKey) {
+    setPrevCountsLoadKey(countsLoadKey);
+    setCounts(null);
+  }
+
   React.useEffect(() => {
-    setOnline(typeof navigator !== "undefined" ? navigator.onLine : true);
     const onOnline = () => setOnline(true);
     const onOffline = () => setOnline(false);
     window.addEventListener("online", onOnline);
@@ -71,10 +81,7 @@ export function DebugBar() {
   }, []);
 
   React.useEffect(() => {
-    if (!enabled || !organizationId) {
-      setCounts(null);
-      return;
-    }
+    if (!countsLoadKey || !organizationId) return;
     let cancelled = false;
     void loadStoreCounts(organizationId).then((next) => {
       if (!cancelled) setCounts(next);
@@ -82,7 +89,7 @@ export function DebugBar() {
     return () => {
       cancelled = true;
     };
-  }, [enabled, organizationId, lastSyncedAt]);
+  }, [countsLoadKey, organizationId]);
 
   if (!enabled) return null;
 
@@ -145,7 +152,7 @@ export function DebugBar() {
           value={organizationId ?? "—"}
           className="max-w-[12rem]"
         />
-        {counts ? (
+        {countsLoadKey && counts ? (
           <DebugStat
             label="IDB"
             value={`clientes ${counts.clients ?? 0} · catálogo ${counts.catalog ?? 0} · vendas ${counts.sales ?? 0}`}

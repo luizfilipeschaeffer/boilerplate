@@ -158,6 +158,11 @@ const DEFAULT_MODULO_PRECOS: ModuloPrecoRow[] = [
   { moduleId: "fiscal-rural", precoMensalCentavos: 3500, faseMinima: 1, cobrancaAvulsa: true, ativo: true },
   { moduleId: "fiscal-contabil", precoMensalCentavos: 0, faseMinima: 2, cobrancaAvulsa: true, ativo: false },
   { moduleId: "aprendiz", precoMensalCentavos: 0, faseMinima: 1, cobrancaAvulsa: false, ativo: true },
+  { moduleId: "fin-fluxo-caixa", precoMensalCentavos: 2900, faseMinima: 2, cobrancaAvulsa: true, ativo: true },
+  { moduleId: "ops-vendedores", precoMensalCentavos: 1900, faseMinima: 2, cobrancaAvulsa: true, ativo: true },
+  { moduleId: "rel-basico", precoMensalCentavos: 1900, faseMinima: 2, cobrancaAvulsa: true, ativo: true },
+  { moduleId: "segment-moda", precoMensalCentavos: 0, faseMinima: 2, cobrancaAvulsa: false, ativo: true },
+  { moduleId: "segment-alimentacao", precoMensalCentavos: 0, faseMinima: 2, cobrancaAvulsa: false, ativo: true },
 ];
 
 const DEFAULT_PLANOS: PlanoBaseRow[] = [

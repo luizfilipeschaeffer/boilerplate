@@ -14,7 +14,7 @@ import {
 } from "@boilerplate/db";
 import {
   resumirAprendizado,
-  responderMensagemAprendiz,
+  responderMensagemAprendizComLlm,
   TEMPLATES_FASE_1,
   type AprendizPerfilCadastro,
 } from "@boilerplate/aprendiz-engine";
@@ -126,7 +126,7 @@ export async function sendAprendizChatMessageAction(
     perfil?.owner_name ??
     "você";
 
-  const reply = responderMensagemAprendiz(trimmed, {
+  const { reply, mode } = await responderMensagemAprendizComLlm(trimmed, {
     ownerFirstName: firstName,
     negocioNome: perfil?.negocio_nome,
   });
@@ -134,6 +134,7 @@ export async function sendAprendizChatMessageAction(
   await appendAprendizMessage(ctx.schemaName, {
     role: "aprendiz",
     content: reply,
+    meta: { mode },
   });
 
   const rows = await listAprendizMessages(ctx.schemaName);

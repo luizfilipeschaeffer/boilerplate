@@ -27,6 +27,7 @@ export function SalesForm({
 }) {
   const { requestSync } = useSyncContext();
   const [clientId, setClientId] = React.useState<string>("_none");
+  const [sellerId, setSellerId] = React.useState<string>("_none");
   const [paymentMethod, setPaymentMethod] = React.useState("dinheiro");
   const [catalogItemId, setCatalogItemId] = React.useState("");
   const [quantity, setQuantity] = React.useState("1");
@@ -41,6 +42,8 @@ export function SalesForm({
 
     const payload = {
       clientId: clientId === "_none" ? null : clientId,
+      sellerId:
+        data.sellers?.length && sellerId !== "_none" ? sellerId : null,
       paymentMethod: paymentMethod as
         | "dinheiro"
         | "pix"
@@ -108,6 +111,27 @@ export function SalesForm({
             </SelectContent>
           </Select>
         </Field>
+        {data.sellers && data.sellers.length > 0 ? (
+          <Field>
+            <FieldLabel>Vendedor (opcional)</FieldLabel>
+            <Select
+              value={sellerId}
+              onValueChange={(v) => setSellerId(v ?? "_none")}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Sem vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none">Sem vendedor</SelectItem>
+                {data.sellers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+        ) : null}
         <Field>
           <FieldLabel>Pagamento</FieldLabel>
           <Select

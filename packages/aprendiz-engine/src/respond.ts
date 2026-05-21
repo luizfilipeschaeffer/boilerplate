@@ -46,5 +46,66 @@ export function responderMensagemAprendiz(
     return `Estou acompanhando o ${ctx.negocioNome} com você. Quanto mais você usar vendas e estoque, mais contexto eu ganho.`;
   }
 
-  return "Ainda estou na Fase 1 — consigo ajudar com vendas, estoque, clientes e automações do painel. Tente perguntar sobre um desses temas.";
+  if (q.includes("fluxo") || q.includes("caixa")) {
+    return "No Fluxo de caixa você registra entradas e saídas. Vendas confirmadas entram automaticamente; contas a pagar ficam como saídas previstas com vencimento.";
+  }
+
+  if (q.includes("vendedor") || q.includes("comiss")) {
+    return "Em Vendedores você cadastra a equipe. Na hora da venda, escolha o vendedor — o relatório mostra desempenho por pessoa.";
+  }
+
+  if (q.includes("relat") || q.includes("ticket")) {
+    return "Em Relatórios você vê vendas no período, ticket médio e contas vencidas. Ajuste as datas e clique em Atualizar.";
+  }
+
+  return "Posso ajudar com vendas, estoque, fluxo de caixa, vendedores, relatórios e automações. Pergunte sobre um desses temas.";
+}
+
+/** Fase 2 — LLM opcional via feature flag + OPENAI_API_KEY. */
+export async function responderMensagemAprendizComLlm(
+  text: string,
+  ctx: { ownerFirstName?: string; negocioNome?: string },
+): Promise<{ reply: string; mode: "llm" | "templates" }> {
+  const enabled = process.env.APRENDIZ_LLM_ENABLED === "true";
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  if (!enabled || !apiKey) {
+    return {
+      reply: responderMensagemAprendiz(text, ctx),
+      mode: "templates",
+    };
+  }
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: process.env.APRENDIZ_LLM_MODEL ?? "gpt-4o-mini",
+        max_tokens: 400,
+        messages: [
+          {
+            role: "system",
+            content: `Você é o Aprendiz, assistente de um ERP simples em PT-BR. Negócio: ${ctx.negocioNome ?? "do cliente"}. Respostas curtas e práticas sobre vendas, estoque, fluxo de caixa e vendedores.`,
+          },
+          { role: "user", content: text },
+        ],
+      }),
+    });
+    if (!res.ok) throw new Error(`OpenAI ${res.status}`);
+    const data = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const content = data.choices?.[0]?.message?.content?.trim();
+    if (content) return { reply: content, mode: "llm" };
+  } catch {
+    /* fallback */
+  }
+
+  return {
+    reply: responderMensagemAprendiz(text, ctx),
+    mode: "templates",
+  };
 }
