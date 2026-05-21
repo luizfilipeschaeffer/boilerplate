@@ -107,6 +107,40 @@ function tenantMigrateStatements(schema: string): string[] {
       completed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       source TEXT NOT NULL DEFAULT 'auto'
     )`,
+    `CREATE TABLE IF NOT EXISTS "${schema}"."crm_lead" (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
+      pipeline_stage TEXT NOT NULL DEFAULT 'lead',
+      estimated_phase INTEGER DEFAULT 1,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS "${schema}"."crm_deal" (
+      id TEXT PRIMARY KEY,
+      client_id TEXT,
+      crm_lead_id TEXT,
+      phase INTEGER NOT NULL DEFAULT 1,
+      pipeline_stage TEXT NOT NULL DEFAULT 'trial',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS "${schema}"."crm_note" (
+      id TEXT PRIMARY KEY,
+      body TEXT NOT NULL,
+      organization_ref TEXT,
+      client_id TEXT,
+      crm_lead_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS "${schema}"."crm_activity" (
+      id TEXT PRIMARY KEY,
+      activity_type TEXT NOT NULL,
+      body TEXT,
+      client_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
   ];
 }
 

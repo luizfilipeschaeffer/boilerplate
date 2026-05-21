@@ -32,3 +32,21 @@ registerIntegrator({
   tipo: "fiscal",
   modulosSuportados: ["fiscal-core"],
 });
+
+registerIntegrator({
+  id: "email-resend-mock",
+  tipo: "messaging",
+  modulosSuportados: ["platform-comms"],
+});
+
+registerIntegrator({
+  id: "social-whatsapp-mock",
+  tipo: "social",
+  modulosSuportados: ["platform-comms"],
+});
+
+registerIntegrator({
+  id: "social-telegram-mock",
+  tipo: "social",
+  modulosSuportados: ["platform-comms"],
+});

@@ -11,6 +11,7 @@ const ROUTE_MODULE: Record<string, PlatformModuleId> = {
   "/crm": "platform-crm",
   "/comms": "platform-comms",
   "/insights": "platform-insights",
+  "/modulos": "platform-modulos",
   "/organizacoes": "organizacoes",
 };
 

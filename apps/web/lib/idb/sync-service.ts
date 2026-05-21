@@ -67,6 +67,34 @@ let activeOrgId: string | null = null;
 let syncInFlight = false;
 let incrementalCount = 0;
 let lowStockIds: string[] = [];
+let scheduledIntervalMs = SYNC_INTERVAL_MS;
+let nextIntervalSyncAt: number | null = null;
+const scheduleListeners = new Set<() => void>();
+
+function notifyScheduleChange() {
+  scheduleListeners.forEach((listener) => listener());
+}
+
+function bumpNextIntervalSync(fromMs: number) {
+  nextIntervalSyncAt = fromMs + scheduledIntervalMs;
+  notifyScheduleChange();
+}
+
+export function getSyncSchedule() {
+  return {
+    intervalMs: scheduledIntervalMs,
+    nextAt: nextIntervalSyncAt,
+    active: intervalHandle !== null,
+    inFlight: syncInFlight,
+  };
+}
+
+export function subscribeSyncSchedule(listener: () => void) {
+  scheduleListeners.add(listener);
+  return () => {
+    scheduleListeners.delete(listener);
+  };
+}
 
 function mapClients(rows: SyncApiResponse["clients"]): CachedClient[] {
   return rows.map((r) => ({
@@ -137,6 +165,7 @@ export async function pullTenantSync(
   if (typeof window === "undefined") return { ok: false, error: "SSR" };
   if (syncInFlight) return { ok: true };
   syncInFlight = true;
+  notifyScheduleChange();
   const gen = ++syncGeneration;
 
   try {
@@ -215,6 +244,7 @@ export async function pullTenantSync(
     return { ok: false, error: message };
   } finally {
     syncInFlight = false;
+    notifyScheduleChange();
   }
 }
 
@@ -242,10 +272,13 @@ export function startTenantSyncLoop(
   stopTenantSyncLoop();
   activeOrgId = organizationId;
   incrementalCount = 0;
+  scheduledIntervalMs = intervalMs;
 
+  bumpNextIntervalSync(Date.now());
   void pullTenantSync(organizationId, { full: true });
 
   intervalHandle = setInterval(() => {
+    bumpNextIntervalSync(Date.now());
     void pullTenantSync(organizationId);
   }, intervalMs);
 
@@ -266,6 +299,8 @@ export function stopTenantSyncLoop() {
     intervalHandle = null;
   }
   activeOrgId = null;
+  nextIntervalSyncAt = null;
+  notifyScheduleChange();
 }
 
 export function buildStockFromCatalog(

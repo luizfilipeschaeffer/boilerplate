@@ -50,6 +50,40 @@ export async function getOrganizationById(organizationId: string) {
   });
 }
 
+export function slugifyOrganizationName(name: string): string {
+  return (
+    name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "org"
+  );
+}
+
+/** Garante slug único (ex.: "informatica", "informatica-2"). */
+export async function resolveUniqueOrganizationSlug(
+  organizationName: string,
+): Promise<string> {
+  const base = slugifyOrganizationName(organizationName);
+  let candidate = base;
+  let suffix = 0;
+
+  while (
+    await prisma.organization.findUnique({
+      where: { slug: candidate },
+      select: { id: true },
+    })
+  ) {
+    suffix += 1;
+    const tail = `-${suffix}`;
+    candidate = `${base.slice(0, Math.max(1, 48 - tail.length))}${tail}`;
+  }
+
+  return candidate;
+}
+
 export interface CreateOrganizationInput {
   name: string;
   slug: string;

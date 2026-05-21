@@ -18,7 +18,9 @@
     "db:restart": "bun ./scripts/db-restart.ts"
   },
   "dependencies": {
+    "@boilerplate/crm": "workspace:*",
     "@boilerplate/module-registry": "workspace:*",
+    "@boilerplate/shared": "workspace:*",
     "@prisma/client": "^6.9.0",
     "bcryptjs": "^3.0.2"
   },

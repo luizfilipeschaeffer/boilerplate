@@ -16,6 +16,7 @@ import {
   type OnboardingDraft,
   type OnboardingStepId,
 } from "@/lib/onboarding-chat/steps";
+import { validateAccessPassword } from "@/lib/onboarding-chat/validate-password";
 import {
   getOnboardingStepRawValue,
   truncateMessagesToStep,
@@ -23,6 +24,7 @@ import {
   type StepHistoryEntry,
 } from "@/lib/chat/step-history";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
@@ -34,6 +36,18 @@ function promptFor(stepId: OnboardingStepId, draft: OnboardingDraft): string {
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function initialWelcomeMessages(draft: OnboardingDraft): ChatMessage[] {
+  const content = promptFor("welcome", draft);
+  return [
+    {
+      id: "aprendiz-welcome",
+      role: "aprendiz",
+      content,
+      stepId: "welcome",
+    },
+  ];
 }
 
 /** Onboarding conversacional com o Aprendiz (sem repetir o que já veio do cadastro). */
@@ -51,17 +65,19 @@ export function AprendizOnboardingChat({
   const [draft, setDraft] = React.useState<OnboardingDraft>(initialDraft);
   const [currentStep, setCurrentStep] =
     React.useState<OnboardingStepId>("welcome");
-  const [messages, setMessages] = React.useState<ChatMessage[]>([]);
+  const [messages, setMessages] = React.useState<ChatMessage[]>(() =>
+    initialWelcomeMessages(initialDraft),
+  );
   const [input, setInput] = React.useState("");
   const [typing, setTyping] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [inputError, setInputError] = React.useState<string | null>(null);
   const [finished, setFinished] = React.useState(false);
+  const [accessPassword, setAccessPassword] = React.useState("");
+  const [accessPasswordConfirm, setAccessPasswordConfirm] = React.useState("");
   const [history, setHistory] = React.useState<
     StepHistoryEntry<OnboardingStepId, OnboardingDraft>[]
   >([]);
-  const bootstrapped = React.useRef(false);
-
   const scrollToBottom = React.useCallback(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -101,17 +117,10 @@ export function AprendizOnboardingChat({
     pushMessage("aprendiz", promptFor(stepId, nextDraft), stepId);
     setCurrentStep(stepId);
     scrollToBottom();
-    if (step.kind !== "info" && step.kind !== "choices") {
+    if (step.kind === "text") {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }
-
-  React.useEffect(() => {
-    if (bootstrapped.current) return;
-    bootstrapped.current = true;
-    void showAprendiz("welcome", initialDraft);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap único
-  }, []);
 
   React.useEffect(() => {
     scrollToBottom();
@@ -125,15 +134,18 @@ export function AprendizOnboardingChat({
         : step.choices
       : undefined;
 
-  async function finishOnboarding(finalDraft: OnboardingDraft) {
+  async function finishOnboarding(
+    finalDraft: OnboardingDraft,
+    password: string,
+  ) {
     setSubmitting(true);
     setFinished(true);
     try {
       const payload = draftToOnboardingInput(finalDraft);
-      await submitOnboarding(payload);
+      await submitOnboarding({ ...payload, password });
       const res = await signIn("credentials", {
         email: payload.email,
-        password: "",
+        password,
         redirect: false,
       });
       if (res?.error || !res?.ok) {
@@ -169,6 +181,10 @@ export function AprendizOnboardingChat({
     const entryIndex = history.findLastIndex((e) => e.stepId === targetStepId);
     if (entryIndex < 0) return;
     const entry = history[entryIndex];
+    if (currentStep === "password") {
+      setAccessPassword("");
+      setAccessPasswordConfirm("");
+    }
     setHistory((prev) => prev.slice(0, entryIndex));
     setMessages((prev) => truncateMessagesToStep(prev, targetStepId));
     setDraft(entry.draftBefore);
@@ -216,14 +232,31 @@ export function AprendizOnboardingChat({
     if (!nextId) return;
 
     if (nextId === "summary") {
-      setCurrentStep("summary");
-      await showAprendiz("summary", nextDraft);
-      await finishOnboarding(nextDraft);
       return;
     }
 
     setCurrentStep(nextId);
     await showAprendiz(nextId, nextDraft);
+  }
+
+  async function handlePasswordSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (typing || submitting || finished || currentStep !== "password") return;
+
+    const err = validateAccessPassword(accessPassword, accessPasswordConfirm);
+    if (err) {
+      setInputError(err);
+      return;
+    }
+    setInputError(null);
+
+    const draftBefore = draft;
+    pushMessage("user", formatUserAnswer("password", "", draft), "password");
+    recordAnswer("password", draftBefore, "ok");
+
+    setCurrentStep("summary");
+    await showAprendiz("summary", draft);
+    await finishOnboarding(draft, accessPassword);
   }
 
   async function handleTextSubmit(e: React.FormEvent) {
@@ -250,6 +283,9 @@ export function AprendizOnboardingChat({
     !typing &&
     step.kind === "text" &&
     currentStep !== "summary";
+
+  const showPasswordSetup =
+    !finished && !typing && !submitting && step.kind === "password";
 
   const showContinueInfo =
     !finished && !typing && step.kind === "info" && currentStep === "welcome";
@@ -388,6 +424,50 @@ export function AprendizOnboardingChat({
           >
             Vamos lá
           </Button>
+        ) : null}
+
+        {showPasswordSetup ? (
+          <form
+            onSubmit={(e) => void handlePasswordSubmit(e)}
+            className="flex flex-col gap-3"
+          >
+            <Field>
+              <FieldLabel htmlFor="onboarding-password">Senha de acesso</FieldLabel>
+              <Input
+                id="onboarding-password"
+                type="password"
+                autoComplete="new-password"
+                value={accessPassword}
+                onChange={(e) => setAccessPassword(e.target.value)}
+                placeholder="Mínimo 8 caracteres"
+                disabled={submitting}
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="onboarding-password-confirm">
+                Confirmar senha
+              </FieldLabel>
+              <Input
+                id="onboarding-password-confirm"
+                type="password"
+                autoComplete="new-password"
+                value={accessPasswordConfirm}
+                onChange={(e) => setAccessPasswordConfirm(e.target.value)}
+                placeholder="Repita a senha"
+                disabled={submitting}
+              />
+            </Field>
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? (
+                <>
+                  <Spinner className="mr-2" />
+                  Configurando painel…
+                </>
+              ) : (
+                "Criar senha e concluir"
+              )}
+            </Button>
+          </form>
         ) : null}
 
         {showTextInput ? (

@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import { NextResponse } from "next/server";
 
+/** Edge: sem Prisma. Setup (onboarding vs painel) é resolvido no servidor via `resolveUserSetup`. */
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
@@ -10,6 +11,7 @@ export default auth((req) => {
 
   const isAuthPage =
     pathname.startsWith("/login") ||
+    pathname.startsWith("/cadastro") ||
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/esqueci-senha");
   const isPublic =
@@ -18,25 +20,14 @@ export default auth((req) => {
     pathname.startsWith("/api/trpc");
 
   if (!session?.user && !isPublic) {
-    const login = new URL("/login", req.url);
-    return NextResponse.redirect(login);
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const needsSetup =
-    Boolean(session?.needsOnboarding) || !session?.organizationId;
-
-  if (session?.user && needsSetup && !pathname.startsWith("/onboarding") && !isPublic) {
-    return NextResponse.redirect(new URL("/onboarding", req.url));
-  }
-
-  if (session?.user && !needsSetup && pathname.startsWith("/onboarding")) {
+  if (
+    session?.user &&
+    (pathname === "/login" || pathname.startsWith("/cadastro"))
+  ) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
-  }
-
-  if (session?.user && pathname === "/login") {
-    return NextResponse.redirect(
-      new URL(needsSetup ? "/onboarding" : "/dashboard", req.url),
-    );
   }
 
   return NextResponse.next();

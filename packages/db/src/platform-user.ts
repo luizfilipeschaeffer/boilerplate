@@ -65,16 +65,3 @@ export async function listOrganizationsForAdmin() {
     },
   });
 }
-
-export async function getInsightsDemanda() {
-  const rows = await prisma.moduloDemanda.findMany({
-    select: { moduloId: true, organizationId: true },
-  });
-  const byModule = new Map<string, number>();
-  for (const row of rows) {
-    byModule.set(row.moduloId, (byModule.get(row.moduloId) ?? 0) + 1);
-  }
-  return [...byModule.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([moduloId, count]) => ({ moduloId, count }));
-}

@@ -11,6 +11,7 @@ import {
   createOrganizationWithTenant,
   getMembershipForUser,
   registerModuloDemanda,
+  resolveUniqueOrganizationSlug,
   setOrganizationModules,
 } from "./organization";
 
@@ -35,13 +36,7 @@ export async function completeOnboarding(
     possuiCnpj: input.possuiCnpj,
   });
 
-  const slug = input.organizationName
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 48) || `org-${Date.now()}`;
+  const slug = await resolveUniqueOrganizationSlug(input.organizationName);
 
   const org = await createOrganizationWithTenant(
     {

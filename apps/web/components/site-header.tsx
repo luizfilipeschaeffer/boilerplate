@@ -1,5 +1,4 @@
 import { HeaderActionsSlot } from "@/components/header-actions-context";
-import { SyncStatus } from "@/components/sync-status";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -15,9 +14,6 @@ export function SiteHeader({ title = "Início" }: { title?: string }) {
         <h1 className="min-w-0 truncate text-base font-medium">{title}</h1>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <HeaderActionsSlot />
-          <div className="hidden sm:block">
-            <SyncStatus />
-          </div>
         </div>
       </div>
     </header>

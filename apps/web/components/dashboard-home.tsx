@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   CheckCircle2,
   Circle,
+  KeyRound,
   Package,
   ShoppingCart,
   Sparkles,
@@ -26,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const MISSION_ICONS: Record<MissionId, LucideIcon> = {
+  criar_senha: KeyRound,
   primeiro_cliente: Users,
   primeiro_produto: Package,
   primeira_venda: ShoppingCart,

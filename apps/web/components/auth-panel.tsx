@@ -1,45 +1,37 @@
 "use client";
 
-import * as React from "react";
+import Link from "next/link";
 
 import { LoginForm } from "@/components/login-form";
-import { AprendizCadastroChat } from "@/components/signup-chat";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-
-type AuthMode = "login" | "signup";
 
 export function AuthPanel({
   className,
   initialEmail = "",
+  inactivityLogout = false,
 }: {
   className?: string;
   initialEmail?: string;
+  inactivityLogout?: boolean;
 }) {
-  const [mode, setMode] = React.useState<AuthMode>("login");
-
-  if (mode === "signup") {
-    return (
-      <AprendizCadastroChat
-        className={className}
-        onBackToLogin={() => setMode("login")}
-      />
-    );
-  }
-
   return (
     <div className={cn("flex w-full flex-col gap-4", className)}>
-      <LoginForm initialEmail={initialEmail} />
+      <LoginForm
+        initialEmail={initialEmail}
+        inactivityLogout={inactivityLogout}
+      />
       <div className="text-center">
         <p className="text-sm text-muted-foreground">Primeira vez aqui?</p>
-        <Button
-          type="button"
-          variant="link"
-          className="h-auto p-0 text-primary"
-          onClick={() => setMode("signup")}
+        <Link
+          href="/cadastro"
+          className={cn(
+            buttonVariants({ variant: "link" }),
+            "h-auto p-0 text-primary",
+          )}
         >
           Conhecer o Aprendiz e criar conta
-        </Button>
+        </Link>
       </div>
     </div>
   );

@@ -202,6 +202,39 @@ export function buildSignupVerificationEmailHtml(input: {
   });
 }
 
+export function buildWelcomePasswordEmailHtml(input: {
+  name: string;
+  code: string;
+  copyUrl: string;
+}): string {
+  const name = escapeHtml(firstNameFrom(input.name));
+
+  const body = [
+    buildParagraph(`Olá, <strong>${name}</strong>!`),
+    buildParagraph(
+      "Sua conta no painel já está pronta. Para acessar de novo depois deste primeiro contato, <strong>crie sua senha</strong> com o código abaixo:",
+    ),
+    buildOtpBlock({
+      code: input.code,
+      copyUrl: input.copyUrl,
+      copyHint:
+        "Abra o link, cole o código e defina uma senha com pelo menos 8 caracteres.",
+      validityMinutes: 15,
+    }),
+    buildInfoBox(
+      "<strong>Próximos acessos:</strong> use seu e-mail e a senha que você criar. Se o painel já está aberto neste aparelho, você pode continuar explorando e criar a senha quando quiser.",
+    ),
+  ].join("");
+
+  return buildEmailLayout({
+    preheader: `Crie sua senha de acesso — código ${input.code}`,
+    eyebrow: "Aprendiz · Primeiro acesso",
+    title: "Crie sua senha de acesso",
+    footerLabel: "Aprendiz · Boilerplate",
+    bodyHtml: body,
+  });
+}
+
 export function buildPasswordResetEmailHtml(input: {
   name: string;
   code: string;

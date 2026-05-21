@@ -41,6 +41,22 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function initialWelcomeMessages(): ChatMessage[] {
+  const step = getStep("welcome");
+  const content =
+    typeof step.prompt === "function"
+      ? step.prompt(INITIAL_SIGNUP_DRAFT)
+      : step.prompt;
+  return [
+    {
+      id: "aprendiz-welcome",
+      role: "aprendiz",
+      content,
+      stepId: "welcome",
+    },
+  ];
+}
+
 /** Primeiro contato com o Aprendiz — cadastro conversacional. */
 export function AprendizCadastroChat({
   className,
@@ -55,7 +71,9 @@ export function AprendizCadastroChat({
 
   const [draft, setDraft] = React.useState<SignupDraft>(INITIAL_SIGNUP_DRAFT);
   const [currentStep, setCurrentStep] = React.useState<SignupStepId>("welcome");
-  const [messages, setMessages] = React.useState<ChatMessage[]>([]);
+  const [messages, setMessages] = React.useState<ChatMessage[]>(
+    initialWelcomeMessages,
+  );
   const [input, setInput] = React.useState("");
   const [typing, setTyping] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
@@ -65,8 +83,6 @@ export function AprendizCadastroChat({
   const [history, setHistory] = React.useState<
     StepHistoryEntry<SignupStepId, SignupDraft>[]
   >([]);
-  const bootstrapped = React.useRef(false);
-
   const scrollToBottom = React.useCallback(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -107,13 +123,6 @@ export function AprendizCadastroChat({
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }
-
-  React.useEffect(() => {
-    if (bootstrapped.current) return;
-    bootstrapped.current = true;
-    void showAprendiz("welcome", INITIAL_SIGNUP_DRAFT);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap único
-  }, []);
 
   React.useEffect(() => {
     scrollToBottom();

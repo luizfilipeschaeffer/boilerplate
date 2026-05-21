@@ -1,6 +1,9 @@
 "use client";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { DebugBar, DebugBarSpacer } from "@/components/debug-bar";
+import { DebugModeProvider } from "@/components/debug-mode-provider";
+import { InactivityLogoutGuard } from "@/components/inactivity-logout-guard";
 import { HeaderActionsProvider } from "@/components/header-actions-context";
 import { SiteHeaderDynamic } from "@/components/site-header-dynamic";
 import type { NavItem } from "@boilerplate/shared";
@@ -21,20 +24,25 @@ export function DashboardShell({
   user: { name: string; email: string };
 }) {
   return (
-    <SidebarProvider style={sidebarStyle}>
-      <AppSidebar variant="inset" navItems={navItems} user={user} />
-      <SidebarInset>
-        <HeaderActionsProvider>
-          <div className="flex min-h-0 flex-1 flex-col">
-            <SiteHeaderDynamic />
-            <div className="flex min-h-0 flex-1 flex-col pt-6 md:pt-8">
-              <div className="@container/main flex min-h-0 flex-1 flex-col gap-2">
-                {children}
+    <DebugModeProvider>
+      <InactivityLogoutGuard />
+      <SidebarProvider style={sidebarStyle}>
+        <AppSidebar variant="inset" navItems={navItems} user={user} />
+        <SidebarInset>
+          <HeaderActionsProvider>
+            <div className="flex min-h-0 flex-1 flex-col">
+              <SiteHeaderDynamic />
+              <div className="flex min-h-0 flex-1 flex-col pt-6 md:pt-8">
+                <div className="@container/main flex min-h-0 flex-1 flex-col gap-2">
+                  {children}
+                </div>
+                <DebugBarSpacer />
               </div>
             </div>
-          </div>
-        </HeaderActionsProvider>
-      </SidebarInset>
-    </SidebarProvider>
+          </HeaderActionsProvider>
+        </SidebarInset>
+        <DebugBar />
+      </SidebarProvider>
+    </DebugModeProvider>
   );
 }

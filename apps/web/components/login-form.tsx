@@ -17,17 +17,27 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { INACTIVITY_LOGOUT_MINUTES } from "@/lib/inactivity-logout";
 
 export function LoginForm({
   className,
   initialEmail = "",
+  inactivityLogout = false,
   ...props
-}: React.ComponentProps<"div"> & { initialEmail?: string }) {
+}: React.ComponentProps<"div"> & {
+  initialEmail?: string;
+  inactivityLogout?: boolean;
+}) {
   const router = useRouter();
   const [email, setEmail] = React.useState(initialEmail);
   const [password, setPassword] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [info, setInfo] = React.useState<string | null>(
+    inactivityLogout
+      ? `Sessão encerrada após ${INACTIVITY_LOGOUT_MINUTES} minutos sem atividade.`
+      : null,
+  );
 
   const emailNormalized = email.trim().toLowerCase();
   const canRecoverPassword = isValidEmail(emailNormalized);
@@ -35,6 +45,7 @@ export function LoginForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setInfo(null);
     setSubmitting(true);
 
     const res = await signIn("credentials", {
@@ -50,8 +61,8 @@ export function LoginForm({
       return;
     }
 
-    router.push("/dashboard");
     router.refresh();
+    router.push("/dashboard");
   }
 
   return (
@@ -116,6 +127,12 @@ export function LoginForm({
               </p>
             )}
           </Field>
+
+          {info ? (
+            <p className="text-sm text-muted-foreground" role="status">
+              {info}
+            </p>
+          ) : null}
 
           {error ? <FieldError role="alert">{error}</FieldError> : null}
 

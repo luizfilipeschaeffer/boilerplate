@@ -6,6 +6,11 @@ import type { PlatformRole } from "@/lib/platform-role";
  */
 export const authConfig = {
   trustHost: true,
+  cookies: {
+    sessionToken: {
+      name: "boilerplate-platform-admin.session-token",
+    },
+  },
   pages: {
     signIn: "/login",
   },

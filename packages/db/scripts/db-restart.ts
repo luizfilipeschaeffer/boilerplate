@@ -1,11 +1,12 @@
 #!/usr/bin/env bun
 /**
- * Reinicia o banco local: remove schemas tenant, recria o schema public (Prisma)
+ * Reinicia o banco local: remove schemas tenant, recria o schema boilerplate (Prisma)
  * e aplica o seed do platform-admin.
  */
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { PLATFORM_SCHEMA } from "../src/platform-schema";
 import { loadMonorepoEnv } from "./load-monorepo-env";
 
 const SCRIPTS_DIR = dirname(fileURLToPath(import.meta.url));
@@ -28,8 +29,8 @@ runPrisma(["generate"]);
 console.log("[db:restart] 2/4 — removendo schemas tenant_*…");
 await dropTenantSchemas();
 
-console.log("[db:restart] 3/4 — recriando schema public…");
-await resetPublicSchema();
+console.log("[db:restart] 3/4 — recriando schema boilerplate…");
+await resetPlatformSchema();
 runPrisma(["db", "push"]);
 
 console.log("[db:restart] 4/4 — seed platform-admin…");
@@ -96,12 +97,14 @@ async function dropTenantSchemas(): Promise<void> {
   });
 }
 
-/** Zera todas as tabelas do Prisma (public) sem depender de --force-reset. */
-async function resetPublicSchema(): Promise<void> {
+/** Zera todas as tabelas do Prisma (schema global) sem depender de --force-reset. */
+async function resetPlatformSchema(): Promise<void> {
   await withPrisma(async (prisma) => {
-    await prisma.$executeRawUnsafe(`DROP SCHEMA IF EXISTS public CASCADE`);
-    await prisma.$executeRawUnsafe(`CREATE SCHEMA public`);
-    await prisma.$executeRawUnsafe(`GRANT ALL ON SCHEMA public TO public`);
+    await prisma.$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${PLATFORM_SCHEMA}" CASCADE`);
+    await prisma.$executeRawUnsafe(`CREATE SCHEMA "${PLATFORM_SCHEMA}"`);
+    await prisma.$executeRawUnsafe(
+      `GRANT ALL ON SCHEMA "${PLATFORM_SCHEMA}" TO CURRENT_USER`,
+    );
   });
 }
 

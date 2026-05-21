@@ -1,10 +1,16 @@
 import type { NextAuthConfig } from "next-auth";
 
 /**
- * Config compartilhada sem Prisma. O middleware importa só este arquivo.
+ * Base NextAuth para o middleware (Edge, sem Prisma).
+ * Membership no JWT é sincronizada em `auth.ts` (Node).
  */
 export const authConfig = {
   trustHost: true,
+  cookies: {
+    sessionToken: {
+      name: "boilerplate-web.session-token",
+    },
+  },
   pages: {
     signIn: "/login",
   },

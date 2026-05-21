@@ -12,6 +12,38 @@ import { authConfig } from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user }) {
+      if (user) {
+        const u = user as {
+          id: string;
+          organizationId?: string | null;
+          sectorId?: string | null;
+          needsOnboarding?: boolean;
+        };
+        token.userId = u.id;
+        token.organizationId = u.organizationId ?? undefined;
+        token.sectorId = u.sectorId ?? undefined;
+        token.needsOnboarding = u.needsOnboarding ?? false;
+      }
+
+      const userId = token.userId as string | undefined;
+      if (userId) {
+        const membership = await getMembershipForUser(userId);
+        if (membership) {
+          token.organizationId = membership.organizationId;
+          token.needsOnboarding = false;
+          if (!token.sectorId) token.sectorId = "geral";
+        } else if (!user) {
+          token.organizationId = undefined;
+          token.needsOnboarding = true;
+        }
+      }
+
+      return token;
+    },
+  },
   providers: [
     Credentials({
       name: "credentials",

@@ -2,7 +2,7 @@
 
 **Versão:** 0.4 — Domínio fiscal modular (sub-módulos)  
 
-**Status:** Fase 0 concluída · Fase 1 concluída (core MVP) · CI no GitHub Actions  
+**Status:** Fase 0 concluída · Fase 1 concluída (core MVP + trilha platform-admin) · CI no GitHub Actions  
 
 **Stack:** Next.js **16.2.6** · PostgreSQL 16 (Docker, porta **5454**) · TypeScript · **Bun** (runtime + package manager) · Turborepo · tRPC · NextAuth v5 · shadcn/ui  
 
@@ -1620,13 +1620,13 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 - [x] `apps/platform-admin` + auth `platform_*` roles (esqueleto MVP)
 
-- [ ] `platform-crm` — cadastro e pipeline de **clientes da plataforma**
+- [x] `platform-crm` — cadastro e pipeline de **clientes da plataforma**
 
-- [ ] `platform-comms` — inbox omnichannel (integradores WhatsApp, Telegram, e-mail)
+- [x] `platform-comms` — inbox omnichannel (integradores WhatsApp, Telegram, e-mail mock)
 
-- [ ] `platform-insights` — demanda de módulos, funil onboarding, health score por tenant
+- [x] `platform-insights` — demanda de módulos, funil onboarding, health score por tenant
 
-- [ ] Vínculo conversa ↔ organização ↔ diagnóstico (tipo + fase)
+- [x] Vínculo conversa ↔ organização ↔ diagnóstico (tipo + fase)
 
 ---
 

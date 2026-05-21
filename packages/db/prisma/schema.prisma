@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["boilerplate"]
 }
 
 model Organization {
@@ -13,6 +14,8 @@ model Organization {
   slug              String   @unique
   schemaName        String   @unique @map("schema_name")
   phase             Int      @default(1)
+  /// lead | trial | active | expansion | churn_risk
+  crmStage          String   @default("trial") @map("crm_stage")
   tipoNegocio       String   @map("tipo_negocio")
   segmentoAtuacao   String?  @map("segmento_atuacao")
   hasCnpj           Boolean  @default(false) @map("has_cnpj")
@@ -22,10 +25,67 @@ model Organization {
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
-  modulosAtivos ModuloAtivo[]
-  memberships   Membership[]
+  modulosAtivos  ModuloAtivo[]
+  moduloDemanda  ModuloDemanda[]
+  memberships    Membership[]
+  crmDeals       CrmDeal[]
+  crmNotes       PlatformCrmNote[]
 
+  @@schema("boilerplate")
   @@map("organizations")
+}
+
+/// Lead comercial antes de virar tenant (PRD §17.3)
+model PlatformLead {
+  id              String   @id @default(uuid())
+  name            String
+  email           String?
+  tipoNegocio     String?  @map("tipo_negocio")
+  estimatedPhase  Int?     @map("estimated_phase")
+  crmStage        String   @default("lead") @map("crm_stage")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  crmDeals CrmDeal[]
+  crmNotes PlatformCrmNote[]
+
+  @@schema("boilerplate")
+  @@map("platform_leads")
+}
+
+/// Oportunidade / vínculo pipeline (organização ou lead)
+model CrmDeal {
+  id             String   @id @default(uuid())
+  organizationId String?  @map("organization_id")
+  platformLeadId String?  @map("platform_lead_id")
+  phase          Int      @default(1)
+  pipelineStage  String   @map("pipeline_stage")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platformLead PlatformLead? @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
+  notes        PlatformCrmNote[]
+
+  @@schema("boilerplate")
+  @@map("crm_deals")
+}
+
+model PlatformCrmNote {
+  id                    String   @id @default(uuid())
+  body                  String
+  organizationId        String?  @map("organization_id")
+  platformLeadId        String?  @map("platform_lead_id")
+  crmDealId             String?  @map("crm_deal_id")
+  platformUserId        String?  @map("platform_user_id")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platformLead PlatformLead? @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
+  crmDeal      CrmDeal?      @relation(fields: [crmDealId], references: [id], onDelete: Cascade)
+
+  @@schema("boilerplate")
+  @@map("platform_crm_notes")
 }
 
 model User {
@@ -37,6 +97,7 @@ model User {
 
   memberships Membership[]
 
+  @@schema("boilerplate")
   @@map("users")
 }
 
@@ -52,6 +113,7 @@ model PlatformUser {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  @@schema("boilerplate")
   @@map("platform_users")
 }
 
@@ -66,6 +128,7 @@ model Membership {
   organization Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([userId, organizationId])
+  @@schema("boilerplate")
   @@map("memberships")
 }
 
@@ -76,6 +139,7 @@ model Sector {
   slug           String @default("geral")
 
   @@unique([organizationId, slug])
+  @@schema("boilerplate")
   @@map("sectors")
 }
 
@@ -88,6 +152,7 @@ model ModuloAtivo {
   organization Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([organizationId, moduloId])
+  @@schema("boilerplate")
   @@map("modulos_ativos")
 }
 
@@ -98,7 +163,51 @@ model ModuloDemanda {
   motivo         String?
   createdAt      DateTime @default(now()) @map("created_at")
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@schema("boilerplate")
   @@map("modulo_demanda")
+}
+
+/// Preço mensal por módulo (add-on) — PRD §12.2
+model ModuloPreco {
+  moduleId              String   @id @map("module_id")
+  precoMensalCentavos   Int      @map("preco_mensal_centavos")
+  faseMinima            Int      @default(1) @map("fase_minima")
+  cobrancaAvulsa        Boolean  @default(true) @map("cobranca_avulsa")
+  ativo                 Boolean  @default(true)
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@schema("boilerplate")
+  @@map("modulo_precos")
+}
+
+/// Plano base por faixa de fase — PRD §12.1
+model PlanoBase {
+  id                  String   @id
+  nome                String
+  precoMensalCentavos Int      @map("preco_mensal_centavos")
+  faseMinima          Int      @map("fase_minima")
+  faseMaxima          Int      @map("fase_maxima")
+  modulosInclusos     Json     @default("[]") @map("modulos_inclusos")
+  ativo               Boolean  @default(true)
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@schema("boilerplate")
+  @@map("planos_base")
+}
+
+/// Bundle de módulos com preço único — PRD §12.2 / §9.3
+model BundlePreco {
+  id                  String   @id
+  nome                String
+  moduleIds           Json     @default("[]") @map("module_ids")
+  precoMensalCentavos Int      @map("preco_mensal_centavos")
+  ativo               Boolean  @default(true)
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@schema("boilerplate")
+  @@map("bundle_precos")
 }
 
 /// Rascunho do cadastro conversacional (reutilizado no onboarding sem repetir perguntas)
@@ -107,6 +216,7 @@ model SignupDraft {
   payload   Json
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@schema("boilerplate")
   @@map("signup_drafts")
 }
 
@@ -121,6 +231,7 @@ model SignupEmailVerification {
   createdAt  DateTime  @default(now()) @map("created_at")
 
   @@index([email, createdAt])
+  @@schema("boilerplate")
   @@map("signup_email_verifications")
 }
 
@@ -135,6 +246,7 @@ model PasswordResetVerification {
   createdAt  DateTime  @default(now()) @map("created_at")
 
   @@index([email, createdAt])
+  @@schema("boilerplate")
   @@map("password_reset_verifications")
 }
 
@@ -147,5 +259,6 @@ model DomainEvent {
   createdAt      DateTime @default(now()) @map("created_at")
 
   @@index([organizationId, createdAt])
+  @@schema("boilerplate")
   @@map("domain_events")
 }

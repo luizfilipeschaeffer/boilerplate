@@ -13,11 +13,15 @@ import {
   getDiagnosticoStep,
 } from "@/lib/diagnostico/steps-shared";
 
-export type OnboardingStepId = "welcome" | DiagnosticoStepId | "summary";
+export type OnboardingStepId =
+  | "welcome"
+  | DiagnosticoStepId
+  | "password"
+  | "summary";
 
 export type OnboardingDraft = DiagnosticoDraft;
 
-export type StepKind = "text" | "choices" | "info";
+export type StepKind = "text" | "choices" | "info" | "password";
 
 export type ChoiceOption = { value: string; label: string };
 
@@ -53,6 +57,7 @@ const diagnosticoSteps: OnboardingStepDef[] = DIAGNOSTICO_STEP_IDS.map(
       },
       next: (draft) => {
         const n = base.next(draft);
+        if (id === "emiteNota") return "password";
         if (!n) return "summary";
         return n;
       },
@@ -75,10 +80,17 @@ export const ONBOARDING_STEPS: OnboardingStepDef[] = [
   },
   ...diagnosticoSteps,
   {
+    id: "password",
+    kind: "password",
+    prompt: (d) =>
+      `Por último, ${firstName(d.name)}: crie uma senha para acessar o painel com ${d.email.trim() || "seu e-mail"}.`,
+    next: () => "summary",
+  },
+  {
     id: "summary",
     kind: "info",
     prompt: (d) =>
-      `Perfeito, ${firstName(d.name)}! Já sei o essencial sobre “${d.organizationName.trim()}”. Vou preparar seus módulos e te levar ao painel.`,
+      `Perfeito, ${firstName(d.name)}! Já sei o essencial sobre “${d.organizationName.trim()}” e sua senha está configurada. Vou preparar seus módulos e te levar ao painel.`,
     next: () => null,
   },
 ];
@@ -94,7 +106,9 @@ export function formatUserAnswer(
   value: string,
   draft: OnboardingDraft,
 ): string {
-  if (stepId === "welcome" || stepId === "summary") return "";
+  if (stepId === "welcome" || stepId === "summary" || stepId === "password") {
+    return stepId === "password" ? "Senha de acesso criada" : "";
+  }
   return formatDiagnosticoAnswer(stepId, value, draft);
 }
 
@@ -103,6 +117,8 @@ export function applyAnswer(
   value: string,
   draft: OnboardingDraft,
 ): OnboardingDraft {
-  if (stepId === "welcome" || stepId === "summary") return draft;
+  if (stepId === "welcome" || stepId === "summary" || stepId === "password") {
+    return draft;
+  }
   return applyDiagnosticoAnswer(stepId, value, draft);
 }

@@ -3,6 +3,7 @@ import { passwordResetEmailCopyUrl } from "@/lib/app-url";
 import {
   buildPasswordResetEmailHtml,
   buildSignupVerificationEmailHtml,
+  buildWelcomePasswordEmailHtml,
 } from "@/lib/email/templates";
 
 function getResendClient(): Resend {
@@ -51,6 +52,25 @@ export async function sendSignupVerificationEmail(input: {
     html: buildSignupVerificationEmailHtml({
       name: input.name,
       code: input.code,
+    }),
+  });
+}
+
+/** Primeira senha após cadastro ou onboarding. */
+export async function sendWelcomePasswordEmail(input: {
+  to: string;
+  name: string;
+  code: string;
+}): Promise<void> {
+  const copyUrl = passwordResetEmailCopyUrl(input.to, input.code);
+
+  await sendHtmlEmail({
+    to: input.to,
+    subject: `${input.code} — crie sua senha de acesso`,
+    html: buildWelcomePasswordEmailHtml({
+      name: input.name,
+      code: input.code,
+      copyUrl,
     }),
   });
 }

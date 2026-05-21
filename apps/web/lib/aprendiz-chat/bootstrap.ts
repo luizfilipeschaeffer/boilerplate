@@ -3,6 +3,8 @@ export type AprendizChatBootstrapInput = {
   ownerName: string;
   negocioNome: string;
   insights: string[];
+  pendingPasswordSetup?: boolean;
+  userEmail?: string;
 };
 
 export type BootstrapMessage = {

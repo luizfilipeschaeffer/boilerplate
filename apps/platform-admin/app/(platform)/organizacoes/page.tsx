@@ -1,4 +1,5 @@
 import { listOrganizationsForAdmin } from "@boilerplate/db";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -27,7 +28,10 @@ export default async function OrganizacoesPage() {
         <CardHeader>
           <CardTitle>Organizações</CardTitle>
           <CardDescription>
-            Tenants, módulos ativos e tamanho da equipe.
+            Tenants, módulos ativos e tamanho da equipe.{" "}
+            <Link href="/crm?view=list" className="text-primary underline-offset-4 hover:underline">
+              Abrir no CRM
+            </Link>
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,43 +1,41 @@
-import { getInsightsDemanda } from "@boilerplate/db";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  getInsightsDemanda,
+  getInsightsFunnel,
+  getInsightsMatrixCoverage,
+  getInsightsTenantHealth,
+  getInsightsTipoInteresse,
+} from "@boilerplate/db";
+import { InsightsDashboard } from "@/modules/platform-insights/insights-dashboard";
 
 export const dynamic = "force-dynamic";
 
 export default async function InsightsPage() {
-  const demandas = await getInsightsDemanda();
+  const [demanda, funnel, tipoInteresse, matrix, health] = await Promise.all([
+    getInsightsDemanda(),
+    getInsightsFunnel(),
+    getInsightsTipoInteresse(),
+    getInsightsMatrixCoverage(),
+    getInsightsTenantHealth(),
+  ]);
+
+  const matrixSample = matrix.cells.filter((c) => c.fase <= 2).slice(0, 8);
 
   return (
-    <div className="flex flex-col gap-4 px-4 lg:px-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Insights de produto</CardTitle>
-          <CardDescription>
-            Agregação de modulo_demanda e sinais de adoção (PRD §17.4).
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {demandas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
-          ) : (
-            <ul className="space-y-2 text-sm">
-              {demandas.map((d) => (
-                <li key={d.moduloId} className="flex justify-between gap-4">
-                  <span className="font-medium">{d.moduloId}</span>
-                  <span className="tabular-nums text-muted-foreground">
-                    {d.count} org(s)
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+    <div className="px-4 pb-8 lg:px-6">
+      <div className="mb-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Insights</h1>
+        <p className="text-sm text-muted-foreground">
+          Demanda de módulos, funil, cobertura da matriz e health score (PRD §17.5).
+        </p>
+      </div>
+      <InsightsDashboard
+        demanda={demanda}
+        funnel={funnel}
+        tipoInteresse={tipoInteresse}
+        matrixOverallPct={matrix.overallPct}
+        matrixSample={matrixSample}
+        health={health}
+      />
     </div>
   );
 }

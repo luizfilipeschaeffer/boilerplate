@@ -6,6 +6,7 @@ import {
   Building2,
   LayoutDashboard,
   MessageSquare,
+  Package,
   Users,
 } from "lucide-react";
 
@@ -45,6 +46,13 @@ const ALL_NAV: PlatformNavItem[] = [
     href: "/insights",
     ordem: 40,
     icon: <BarChart3 className="size-4" />,
+  },
+  {
+    id: "platform-modulos",
+    label: "Módulos",
+    href: "/modulos",
+    ordem: 45,
+    icon: <Package className="size-4" />,
   },
   {
     id: "organizacoes",
