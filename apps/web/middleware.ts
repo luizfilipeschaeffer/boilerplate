@@ -1,12 +1,17 @@
-import { auth } from "@/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "./auth.config";
 import { NextResponse } from "next/server";
+
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
 
   const isAuthPage =
-    pathname.startsWith("/login") || pathname.startsWith("/onboarding");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/esqueci-senha");
   const isPublic =
     isAuthPage ||
     pathname.startsWith("/api/auth") ||
@@ -17,21 +22,20 @@ export default auth((req) => {
     return NextResponse.redirect(login);
   }
 
-  if (session?.needsOnboarding && !pathname.startsWith("/onboarding")) {
+  const needsSetup =
+    Boolean(session?.needsOnboarding) || !session?.organizationId;
+
+  if (session?.user && needsSetup && !pathname.startsWith("/onboarding") && !isPublic) {
     return NextResponse.redirect(new URL("/onboarding", req.url));
   }
 
-  if (
-    session?.user &&
-    !session.needsOnboarding &&
-    pathname.startsWith("/onboarding")
-  ) {
+  if (session?.user && !needsSetup && pathname.startsWith("/onboarding")) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   if (session?.user && pathname === "/login") {
     return NextResponse.redirect(
-      new URL(session.needsOnboarding ? "/onboarding" : "/dashboard", req.url),
+      new URL(needsSetup ? "/onboarding" : "/dashboard", req.url),
     );
   }
 

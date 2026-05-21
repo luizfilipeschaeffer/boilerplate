@@ -1,34 +1,28 @@
 "use server";
 
-import { auth } from "@/auth";
+import { emitAndPersist } from "@/lib/events/emit";
+import { requireTenantContext } from "@/lib/tenant-context";
 import {
   createCatalogItem,
-  deleteCatalogItem,
-  getOrganizationById,
   listCatalogItems,
+  setCatalogItemActive,
+  updateCatalogItem,
   type CatalogItemType,
 } from "@boilerplate/db";
 import { revalidatePath } from "next/cache";
 
-async function requireOrg() {
-  const session = await auth();
-  if (!session?.organizationId || session.needsOnboarding) {
-    throw new Error("Organização não disponível");
-  }
-  const org = await getOrganizationById(session.organizationId);
-  if (!org) throw new Error("Organização não encontrada");
-  return org;
-}
-
 export async function listCatalogAction() {
-  const org = await requireOrg();
-  const rows = await listCatalogItems(org.schemaName);
+  const { schemaName } = await requireTenantContext();
+  const rows = await listCatalogItems(schemaName);
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
     itemType: row.item_type as CatalogItemType,
     sku: row.sku,
     priceCents: row.price_cents,
+    stockQty: row.stock_qty,
+    stockMin: row.stock_min,
+    active: row.active,
   }));
 }
 
@@ -38,13 +32,33 @@ export async function createCatalogAction(data: {
   sku?: string | null;
   priceCents?: number | null;
 }) {
-  const org = await requireOrg();
-  await createCatalogItem(org.schemaName, data);
+  const ctx = await requireTenantContext();
+  const row = await createCatalogItem(ctx.schemaName, data);
+  await emitAndPersist({
+    type: "item.criado",
+    organizationId: ctx.organizationId,
+    schemaName: ctx.schemaName,
+    payload: { itemId: row.id, name: row.name, itemType: row.item_type },
+  });
   revalidatePath("/catalogo");
 }
 
-export async function deleteCatalogAction(id: string) {
-  const org = await requireOrg();
-  await deleteCatalogItem(org.schemaName, id);
+export async function updateCatalogAction(
+  id: string,
+  data: {
+    name: string;
+    itemType: CatalogItemType;
+    sku?: string | null;
+    priceCents?: number | null;
+  },
+) {
+  const ctx = await requireTenantContext();
+  await updateCatalogItem(ctx.schemaName, id, data);
+  revalidatePath("/catalogo");
+}
+
+export async function setCatalogItemActiveAction(id: string, active: boolean) {
+  const ctx = await requireTenantContext();
+  await setCatalogItemActive(ctx.schemaName, id, active);
   revalidatePath("/catalogo");
 }

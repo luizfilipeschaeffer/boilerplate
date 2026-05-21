@@ -29,14 +29,30 @@ model Organization {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?  @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   memberships Membership[]
 
   @@map("users")
+}
+
+/// Operadores internos do painel platform-admin (PRD §17.6)
+model PlatformUser {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?  @map("password_hash")
+  /// platform_admin | platform_comercial | platform_suporte | platform_produto | platform_engenharia
+  role         String   @default("platform_admin")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_users")
 }
 
 model Membership {
@@ -83,4 +99,53 @@ model ModuloDemanda {
   createdAt      DateTime @default(now()) @map("created_at")
 
   @@map("modulo_demanda")
+}
+
+/// Rascunho do cadastro conversacional (reutilizado no onboarding sem repetir perguntas)
+model SignupDraft {
+  email     String   @id
+  payload   Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("signup_drafts")
+}
+
+/// Código de verificação de e-mail no cadastro (Aprendiz)
+model SignupEmailVerification {
+  id         String    @id @default(uuid())
+  email      String
+  codeHash   String    @map("code_hash")
+  expiresAt  DateTime  @map("expires_at")
+  verifiedAt DateTime? @map("verified_at")
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([email, createdAt])
+  @@map("signup_email_verifications")
+}
+
+/// Código para recuperação de senha (login do tenant)
+model PasswordResetVerification {
+  id         String    @id @default(uuid())
+  email      String
+  codeHash   String    @map("code_hash")
+  expiresAt  DateTime  @map("expires_at")
+  verifiedAt DateTime? @map("verified_at")
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([email, createdAt])
+  @@map("password_reset_verifications")
+}
+
+/// Auditoria de eventos de domínio (PRD §8.9)
+model DomainEvent {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  eventType      String   @map("event_type")
+  payload        Json     @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, createdAt])
+  @@map("domain_events")
 }

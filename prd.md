@@ -2,7 +2,7 @@
 
 **Versão:** 0.4 — Domínio fiscal modular (sub-módulos)  
 
-**Status:** Fase 0 concluída · Fase 1 em andamento (onboarding + catálogo) · CI no GitHub Actions  
+**Status:** Fase 0 concluída · Fase 1 concluída (core MVP) · CI no GitHub Actions  
 
 **Stack:** Next.js **16.2.6** · PostgreSQL 16 (Docker, porta **5454**) · TypeScript · **Bun** (runtime + package manager) · Turborepo · tRPC · NextAuth v5 · shadcn/ui  
 
@@ -1566,15 +1566,15 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 - [x] `core-catalogo` (campos variáveis por tipo) — **implemented** (CRUD tenant)
 
-- [ ] `core-clientes`, `core-vendas`, `core-estoque-basico`, `core-ranking`
+- [x] `core-clientes`, `core-vendas`, `core-estoque-basico`, `core-ranking`
 
 - [x] Domínio fiscal: `fiscal-core` + **scaffold** de todos os sub-módulos `fiscal-*` (§9.8)
 
-- [ ] **Aprendiz** MVP (templates + 1–2 automações)
+- [x] **Aprendiz** MVP (templates + 1–2 automações)
 
-- [ ] Event bus in-process + `domain_events`
+- [x] Event bus in-process + `domain_events`
 
-- [ ] **PWA** + fila offline (vendas)
+- [x] **PWA** + fila offline (vendas)
 
 ### Fase 2 — Crescimento (semanas 11–16)
 

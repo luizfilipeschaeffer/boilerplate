@@ -12,7 +12,10 @@
     "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "db:down": "docker compose -f infra/docker/docker-compose.yml down",
     "db:generate": "bun run --filter @boilerplate/db db:generate",
-    "db:push": "bun run --filter @boilerplate/db db:push"
+    "db:push": "bun run --filter @boilerplate/db db:push",
+    "db:migrate-tenants": "bun run --filter @boilerplate/db db:migrate-tenants",
+    "db:seed-platform-admin": "bun run --filter @boilerplate/db db:seed-platform-admin",
+    "db:restart": "bun run --filter @boilerplate/db db:restart"
   },
   "devDependencies": {
     "turbo": "^2.5.4",

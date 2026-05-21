@@ -6,6 +6,7 @@ import {
   type DiagnosticoInput,
 } from "@boilerplate/module-registry";
 import { validateModuleActivation } from "@boilerplate/module-registry";
+import { prisma } from "./client";
 import {
   createOrganizationWithTenant,
   getMembershipForUser,
@@ -19,6 +20,11 @@ export async function completeOnboarding(
   userId: string,
   input: DiagnosticoInput & { organizationName: string },
 ) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new Error("Usuário não encontrado. Saia e entre novamente.");
+  }
+
   const existing = await getMembershipForUser(userId);
   if (existing) {
     throw new Error("Usuário já concluiu o onboarding");

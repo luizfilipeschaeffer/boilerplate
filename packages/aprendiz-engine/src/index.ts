@@ -1,3 +1,12 @@
+export type {
+  AprendizPerfilCadastro,
+} from "./cadastro";
+export {
+  resumirAprendizado,
+  sugerirAutomacoesIniciais,
+} from "./cadastro";
+export { responderMensagemAprendiz } from "./respond";
+
 export interface AutomacaoTemplate {
   id: string;
   nome: string;

@@ -2,9 +2,11 @@
 
 import * as React from "react";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LayoutGrid } from "lucide-react";
 
+import { isValidEmail } from "@/lib/mask-email";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,13 +20,17 @@ import { Spinner } from "@/components/ui/spinner";
 
 export function LoginForm({
   className,
+  initialEmail = "",
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & { initialEmail?: string }) {
   const router = useRouter();
-  const [email, setEmail] = React.useState("");
+  const [email, setEmail] = React.useState(initialEmail);
   const [password, setPassword] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  const emailNormalized = email.trim().toLowerCase();
+  const canRecoverPassword = isValidEmail(emailNormalized);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,7 +45,7 @@ export function LoginForm({
 
     setSubmitting(false);
 
-    if (res?.error) {
+    if (res?.error || !res?.ok) {
       setError("Não foi possível entrar. Verifique e-mail e senha.");
       return;
     }
@@ -90,6 +96,25 @@ export function LoginForm({
               required
               disabled={submitting}
             />
+            {canRecoverPassword ? (
+              <Button
+                type="button"
+                variant="link"
+                nativeButton={false}
+                render={
+                  <Link
+                    href={`/esqueci-senha?email=${encodeURIComponent(emailNormalized)}`}
+                  />
+                }
+                className="h-auto justify-start p-0 text-xs text-muted-foreground"
+              >
+                Não sei minha senha
+              </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Informe seu e-mail acima para recuperar o acesso.
+              </p>
+            )}
           </Field>
 
           {error ? <FieldError role="alert">{error}</FieldError> : null}

@@ -1,18 +1,44 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Providers } from "@/components/providers";
+import { cn } from "@/lib/utils";
 import "./globals.css";
 
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "Boilerplate — Painel da Plataforma",
-  description: "CRM, comunicação e insights (time interno)",
+  title: "Boilerplate Admin",
+  description: "Painel interno — CRM, comunicação e insights da plataforma",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="pt-BR">
-      <body className="min-h-svh bg-zinc-950 text-zinc-100 antialiased">
-        {children}
+    <html
+      lang="pt-BR"
+      className={cn(
+        "h-full antialiased",
+        geistSans.variable,
+        geistMono.variable,
+        "font-sans",
+        inter.variable,
+      )}
+    >
+      <body className="min-h-full flex flex-col">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

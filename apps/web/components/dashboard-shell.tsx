@@ -1,6 +1,7 @@
 "use client";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { HeaderActionsProvider } from "@/components/header-actions-context";
 import { SiteHeaderDynamic } from "@/components/site-header-dynamic";
 import type { NavItem } from "@boilerplate/shared";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -23,12 +24,16 @@ export function DashboardShell({
     <SidebarProvider style={sidebarStyle}>
       <AppSidebar variant="inset" navItems={navItems} user={user} />
       <SidebarInset>
-        <SiteHeaderDynamic />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            {children}
+        <HeaderActionsProvider>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <SiteHeaderDynamic />
+            <div className="flex min-h-0 flex-1 flex-col pt-6 md:pt-8">
+              <div className="@container/main flex min-h-0 flex-1 flex-col gap-2">
+                {children}
+              </div>
+            </div>
           </div>
-        </div>
+        </HeaderActionsProvider>
       </SidebarInset>
     </SidebarProvider>
   );

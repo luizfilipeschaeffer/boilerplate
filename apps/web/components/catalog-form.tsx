@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { createCatalogAction } from "@/app/actions/catalog";
+import {
+  createCatalogAction,
+  updateCatalogAction,
+} from "@/app/actions/catalog";
+import { useSyncContext } from "@/components/sync-provider";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -13,41 +17,88 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function CatalogForm() {
-  const [name, setName] = React.useState("");
-  const [itemType, setItemType] = React.useState<"produto" | "servico">("produto");
-  const [sku, setSku] = React.useState("");
-  const [price, setPrice] = React.useState("");
+export type CatalogFormValues = {
+  name: string;
+  itemType: "produto" | "servico";
+  sku: string;
+  price: string;
+};
+
+function parsePriceCents(price: string): number | null {
+  const priceCents = price
+    ? Math.round(parseFloat(price.replace(",", ".")) * 100)
+    : null;
+  return Number.isFinite(priceCents) ? priceCents : null;
+}
+
+export function CatalogForm({
+  layout = "grid",
+  itemId,
+  initialValues,
+  onSuccess,
+  submitLabel = "Salvar item",
+}: {
+  layout?: "grid" | "stack";
+  itemId?: string;
+  initialValues?: CatalogFormValues;
+  onSuccess?: () => void;
+  submitLabel?: string;
+}) {
+  const { requestSync } = useSyncContext();
+  const isEdit = Boolean(itemId);
+  const [name, setName] = React.useState(initialValues?.name ?? "");
+  const [itemType, setItemType] = React.useState<"produto" | "servico">(
+    initialValues?.itemType ?? "produto",
+  );
+  const [sku, setSku] = React.useState(initialValues?.sku ?? "");
+  const [price, setPrice] = React.useState(initialValues?.price ?? "");
   const [pending, setPending] = React.useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPending(true);
-    const priceCents = price
-      ? Math.round(parseFloat(price.replace(",", ".")) * 100)
-      : null;
-    await createCatalogAction({
-      name,
-      itemType,
-      sku: sku || null,
-      priceCents: Number.isFinite(priceCents) ? priceCents : null,
-    });
-    setName("");
-    setSku("");
-    setPrice("");
-    setPending(false);
+    try {
+      const payload = {
+        name: name.trim(),
+        itemType,
+        sku: sku.trim() || null,
+        priceCents: parsePriceCents(price),
+      };
+      if (isEdit && itemId) {
+        await updateCatalogAction(itemId, payload);
+      } else {
+        await createCatalogAction(payload);
+      }
+      await requestSync();
+      if (!isEdit) {
+        setName("");
+        setSku("");
+        setPrice("");
+        setItemType("produto");
+      }
+      onSuccess?.();
+    } finally {
+      setPending(false);
+    }
   }
 
+  const isStack = layout === "stack";
+
   return (
-    <form onSubmit={onSubmit}>
-      <FieldGroup className="grid gap-4 md:grid-cols-2">
-        <Field className="md:col-span-2">
+    <form onSubmit={(e) => void onSubmit(e)}>
+      <FieldGroup
+        className={
+          isStack ? "flex flex-col gap-4" : "grid gap-4 md:grid-cols-2"
+        }
+      >
+        <Field className={isStack ? undefined : "md:col-span-2"}>
           <FieldLabel>Nome</FieldLabel>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
             placeholder="Produto ou serviço"
+            autoFocus={isStack}
           />
         </Field>
         <Field>
@@ -69,7 +120,7 @@ export function CatalogForm() {
           <FieldLabel>SKU (opcional)</FieldLabel>
           <Input value={sku} onChange={(e) => setSku(e.target.value)} />
         </Field>
-        <Field>
+        <Field className={isStack ? undefined : "md:col-span-2"}>
           <FieldLabel>Preço (R$)</FieldLabel>
           <Input
             value={price}
@@ -78,9 +129,13 @@ export function CatalogForm() {
             inputMode="decimal"
           />
         </Field>
-        <div className="md:col-span-2">
-          <Button type="submit" disabled={pending}>
-            {pending ? "Salvando…" : "Adicionar item"}
+        <div className={isStack ? undefined : "md:col-span-2"}>
+          <Button
+            type="submit"
+            className={isStack ? "w-full" : undefined}
+            disabled={pending}
+          >
+            {pending ? "Salvando…" : submitLabel}
           </Button>
         </div>
       </FieldGroup>

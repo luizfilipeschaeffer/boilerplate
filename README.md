@@ -32,9 +32,16 @@ cp .env.example .env
 bun run db:generate
 bun run db:push
 
-# 5. Dev
+# 5. Super admin do platform-admin (somente dev local)
+# Copie .env.example → .env.development e preencha:
+#   PLATFORM_ADMIN_SEED_EMAIL=seu@email.dev
+#   PLATFORM_ADMIN_SEED_PASSWORD=senha-forte-local
+bun run db:seed-platform-admin
+
+# 6. Dev
 bun run dev
-# Abra http://localhost:3000 — login dev com qualquer e-mail/senha
+# Tenant: http://localhost:3000 — login dev com qualquer e-mail/senha
+# Platform-admin: http://localhost:3002 — use o e-mail/senha do seed acima
 ```
 
 ## PostgreSQL (Docker)
@@ -56,6 +63,36 @@ Detalhes: [infra/docker/README.md](./infra/docker/README.md).
 | `bun run build` | Build de produção |
 | `bunx --bun shadcn@latest …` | CLI shadcn em `apps/web` |
 | `bun run db:up` | Sobe Postgres no Docker |
+| `bun run db:push` | Aplica schema Prisma |
+| `bun run db:restart` | Zera o banco, recria schema public e roda seed do superadmin |
+| `bun run db:seed-platform-admin` | Cria/atualiza `platform_admin` (dev) |
+| `bun run db:migrate-tenants` | Atualiza DDL dos schemas `tenant_*` |
+
+## Platform-admin — primeiro operador (segurança)
+
+### Desenvolvimento local
+
+1. Defina no `.env.development` (gitignored), **sem** commitar senha:
+
+   ```env
+   PLATFORM_ADMIN_SEED_EMAIL=voce@empresa.dev
+   PLATFORM_ADMIN_SEED_PASSWORD=senha-forte-apenas-local
+   ```
+
+2. Execute: `bun run db:seed-platform-admin`
+
+3. Acesse http://localhost:3002/login com essas credenciais.
+
+A senha é armazenada como **bcrypt** em `platform_users.password_hash`.
+
+### Produção e staging
+
+- O script **recusa** rodar com `NODE_ENV=production` unless `ALLOW_PLATFORM_ADMIN_SEED=true`.
+- **Não** use senha fixa em `.env` de produção.
+- Fluxo recomendado:
+  - Criar o primeiro `platform_admin` via pipeline com secrets do provedor (GitHub Actions, Vercel, etc.), **uma vez**; ou
+  - Inserção manual controlada / convite corporativo (SSO futuro).
+- Para bootstrap em ambiente efêmero (ex.: review app), injete `PLATFORM_ADMIN_SEED_*` como secrets de CI e set `ALLOW_PLATFORM_ADMIN_SEED=true` só naquele job — nunca no repositório.
 
 ## Estrutura (alvo)
 

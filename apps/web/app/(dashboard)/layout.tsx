@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { SyncProvider } from "@/components/sync-provider";
 import { getDashboardNav } from "@/lib/modules/active-modules";
 import { ensureModulesRegistered } from "@/lib/modules/init";
 import { redirect } from "next/navigation";
@@ -15,6 +16,8 @@ export default async function DashboardLayout({
   if (!session) redirect("/login");
 
   const orgId = (session as { organizationId?: string }).organizationId;
+  if (!orgId) redirect("/onboarding");
+
   const navItems = await getDashboardNav(orgId);
 
   const user = {
@@ -23,8 +26,10 @@ export default async function DashboardLayout({
   };
 
   return (
-    <DashboardShell navItems={navItems} user={user}>
-      {children}
-    </DashboardShell>
+    <SyncProvider organizationId={orgId}>
+      <DashboardShell navItems={navItems} user={user}>
+        {children}
+      </DashboardShell>
+    </SyncProvider>
   );
 }

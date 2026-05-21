@@ -19,3 +19,38 @@ export function tenantCatalogTable(schemaName: string): string {
   assertSafeSchemaName(schemaName);
   return `"${schemaName}"."catalog_items"`;
 }
+
+export function tenantClientsTable(schemaName: string): string {
+  assertSafeSchemaName(schemaName);
+  return `"${schemaName}"."clients"`;
+}
+
+export function tenantSalesTable(schemaName: string): string {
+  assertSafeSchemaName(schemaName);
+  return `"${schemaName}"."sales"`;
+}
+
+export function tenantSaleItemsTable(schemaName: string): string {
+  assertSafeSchemaName(schemaName);
+  return `"${schemaName}"."sale_items"`;
+}
+
+export function tenantStockMovementsTable(schemaName: string): string {
+  assertSafeSchemaName(schemaName);
+  return `"${schemaName}"."stock_movements"`;
+}
+
+export function tenantAprendizTable(schemaName: string): string {
+  assertSafeSchemaName(schemaName);
+  return `"${schemaName}"."aprendiz_automacoes"`;
+}
+
+export function tenantAprendizPerfilTable(schemaName: string): string {
+  assertSafeSchemaName(schemaName);
+  return `"${schemaName}"."aprendiz_perfil"`;
+}
+
+export function tenantAprendizMessagesTable(schemaName: string): string {
+  assertSafeSchemaName(schemaName);
+  return `"${schemaName}"."aprendiz_messages"`;
+}

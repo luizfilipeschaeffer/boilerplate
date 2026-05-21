@@ -30,17 +30,27 @@ export function registerAllModules(): void {
     routePath: "/catalogo",
     implementationStatus: "implemented",
   });
-  scaffold("core-clientes", "Clientes", { navOrdem: 20, routePath: "/clientes" });
-  scaffold("core-vendas", "Vendas", { navOrdem: 30, routePath: "/vendas" });
+  scaffold("core-clientes", "Clientes", {
+    navOrdem: 20,
+    routePath: "/clientes",
+    implementationStatus: "implemented",
+  });
+  scaffold("core-vendas", "Vendas", {
+    navOrdem: 30,
+    routePath: "/vendas",
+    implementationStatus: "implemented",
+  });
   scaffold("core-estoque-basico", "Estoque", {
     navOrdem: 40,
     dependencias: ["core-catalogo"],
     routePath: "/estoque",
+    implementationStatus: "implemented",
   });
   scaffold("core-ranking", "Ranking", {
     navOrdem: 50,
     dependencias: ["core-vendas"],
     routePath: "/ranking",
+    implementationStatus: "implemented",
   });
 
   scaffold("fiscal-core", "Fiscal", {
@@ -81,5 +91,9 @@ export function registerAllModules(): void {
     faseMinima: 2,
   });
 
-  scaffold("aprendiz", "Aprendiz", { navOrdem: 70, routePath: "/aprendiz" });
+  scaffold("aprendiz", "Aprendiz", {
+    navOrdem: 70,
+    routePath: "/aprendiz",
+    implementationStatus: "implemented",
+  });
 }
