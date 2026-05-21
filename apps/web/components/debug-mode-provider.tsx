@@ -31,11 +31,7 @@ function writeStored(enabled: boolean) {
 }
 
 export function DebugModeProvider({ children }: { children: React.ReactNode }) {
-  const [enabled, setEnabledState] = React.useState(false);
-
-  React.useEffect(() => {
-    setEnabledState(readStored());
-  }, []);
+  const [enabled, setEnabledState] = React.useState(() => readStored());
 
   const setEnabled = React.useCallback((value: boolean) => {
     setEnabledState(value);

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 
 export type SalesFormData = {
   clients: { id: string; name: string }[];
+  sellers?: { id: string; name: string }[];
   items: {
     id: string;
     name: string;

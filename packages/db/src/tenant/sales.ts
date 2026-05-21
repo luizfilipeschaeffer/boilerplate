@@ -8,6 +8,7 @@ import {
 import { getCatalogItemById } from "./catalog";
 import { decreaseStockForSale } from "./stock";
 import { isAprendizEnabled } from "./aprendiz";
+import { recordSaleCashInflow } from "./cash-flow";
 
 export type SaleStatus = "confirmada" | "cancelada";
 export type PaymentMethod =
@@ -20,6 +21,7 @@ export type PaymentMethod =
 export interface SaleRow {
   id: string;
   client_id: string | null;
+  seller_id: string | null;
   status: string;
   payment_method: string;
   total_cents: number;
@@ -51,7 +53,7 @@ export async function listSales(
   const schema = schemaName;
 
   const sales = await prisma.$queryRawUnsafe<SaleRow[]>(
-    `SELECT id, client_id, status, payment_method, total_cents, idempotency_key, created_at
+    `SELECT id, client_id, seller_id, status, payment_method, total_cents, idempotency_key, created_at
      FROM ${salesTable}
      ORDER BY created_at DESC
      LIMIT $1`,
@@ -87,6 +89,7 @@ export async function createSale(
   schemaName: string,
   input: {
     clientId?: string | null;
+    sellerId?: string | null;
     paymentMethod: PaymentMethod;
     lines: { catalogItemId: string; quantity: number }[];
     idempotencyKey?: string | null;
@@ -150,10 +153,11 @@ export async function createSale(
   }
 
   await prisma.$executeRawUnsafe(
-    `INSERT INTO ${salesTable} (id, client_id, status, payment_method, total_cents, idempotency_key)
-     VALUES ($1, $2, 'confirmada', $3, $4, $5)`,
+    `INSERT INTO ${salesTable} (id, client_id, seller_id, status, payment_method, total_cents, idempotency_key)
+     VALUES ($1, $2, $3, 'confirmada', $4, $5, $6)`,
     saleId,
     input.clientId ?? null,
+    input.sellerId ?? null,
     input.paymentMethod,
     totalCents,
     input.idempotencyKey ?? null,
@@ -174,6 +178,12 @@ export async function createSale(
     if (line.itemType === "produto" && descontaEstoque) {
       await decreaseStockForSale(schemaName, line.catalogItemId, line.quantity);
     }
+  }
+
+  try {
+    await recordSaleCashInflow(schemaName, saleId, totalCents);
+  } catch {
+    /* fluxo de caixa opcional até migração do tenant */
   }
 
   const all = await listSales(schemaName, 200);

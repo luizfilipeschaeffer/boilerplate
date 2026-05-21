@@ -36,23 +36,38 @@ export function CrmRecordExtras({
   );
   const [saving, setSaving] = useState(false);
 
-  const reload = useCallback(async () => {
+  const recordKey = `${record.id}:${record.kind}`;
+  const [prevRecordKey, setPrevRecordKey] = useState(recordKey);
+  if (recordKey !== prevRecordKey) {
+    setPrevRecordKey(recordKey);
     setLoading(true);
-    try {
-      const [c, a] = await Promise.all([
-        loadCrmContactsAction(record.id, record.kind),
-        loadCrmActivitiesAction(record.id, record.kind),
-      ]);
-      setContacts(c);
-      setActivities(a);
-    } finally {
-      setLoading(false);
-    }
+  }
+
+  const reload = useCallback(async () => {
+    const [c, a] = await Promise.all([
+      loadCrmContactsAction(record.id, record.kind),
+      loadCrmActivitiesAction(record.id, record.kind),
+    ]);
+    setContacts(c);
+    setActivities(a);
   }, [record.id, record.kind]);
 
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    let cancelled = false;
+    void Promise.all([
+      loadCrmContactsAction(record.id, record.kind),
+      loadCrmActivitiesAction(record.id, record.kind),
+    ]).then(([c, a]) => {
+      if (!cancelled) {
+        setContacts(c);
+        setActivities(a);
+        setLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [record.id, record.kind]);
 
   return (
     <div className="flex flex-col gap-4 text-sm">

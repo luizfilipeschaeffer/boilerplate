@@ -27,6 +27,18 @@ registerIntegrator({
   modulosSuportados: ["*"],
 });
 
+export {
+  createAsaasSubscription,
+  type PaymentSubscriptionInput,
+  type PaymentSubscriptionResult,
+} from "./payment-asaas";
+
+registerIntegrator({
+  id: "payment-asaas",
+  tipo: "payment",
+  modulosSuportados: ["*"],
+});
+
 registerIntegrator({
   id: "fiscal-noop",
   tipo: "fiscal",

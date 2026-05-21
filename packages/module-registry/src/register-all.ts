@@ -97,6 +97,48 @@ export function registerAllModules(): void {
     faseMinima: 2,
   });
 
+  scaffold("fin-fluxo-caixa", "Fluxo de caixa", {
+    navOrdem: 35,
+    routePath: "/fluxo-caixa",
+    faseMinima: 2,
+    dependencias: ["core-vendas"],
+    implementationStatus: "implemented",
+  });
+
+  scaffold("ops-vendedores", "Vendedores", {
+    navOrdem: 36,
+    routePath: "/vendedores",
+    faseMinima: 2,
+    dependencias: ["core-vendas"],
+    implementationStatus: "implemented",
+  });
+
+  scaffold("rel-basico", "Relatórios", {
+    navOrdem: 55,
+    routePath: "/relatorios",
+    faseMinima: 2,
+    dependencias: ["core-vendas"],
+    implementationStatus: "implemented",
+  });
+
+  scaffold("segment-moda", "Catálogo Moda", {
+    navOrdem: 11,
+    routePath: "/catalogo",
+    faseMinima: 2,
+    dependencias: ["core-catalogo"],
+    implementationStatus: "implemented",
+    tiposNegocioElegiveis: ["varejo"],
+  });
+
+  scaffold("segment-alimentacao", "Catálogo Alimentação", {
+    navOrdem: 12,
+    routePath: "/catalogo",
+    faseMinima: 2,
+    dependencias: ["core-catalogo"],
+    implementationStatus: "implemented",
+    tiposNegocioElegiveis: ["varejo", "atacado"],
+  });
+
   scaffold("aprendiz", "Aprendiz", {
     navOrdem: 70,
     routePath: "/aprendiz",

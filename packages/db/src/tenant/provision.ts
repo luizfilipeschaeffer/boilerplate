@@ -141,6 +141,28 @@ function tenantMigrateStatements(schema: string): string[] {
       client_id TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`,
+    `CREATE TABLE IF NOT EXISTS "${schema}"."cash_flow_entries" (
+      id TEXT PRIMARY KEY,
+      entry_type TEXT NOT NULL,
+      amount_cents INTEGER NOT NULL,
+      description TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'geral',
+      status TEXT NOT NULL DEFAULT 'realizado',
+      due_date DATE,
+      sale_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS "${schema}"."sellers" (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
+      commission_rate_bp INTEGER NOT NULL DEFAULT 0,
+      active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `ALTER TABLE "${schema}"."sales" ADD COLUMN IF NOT EXISTS seller_id TEXT`,
   ];
 }
 

@@ -1,26 +1,44 @@
 # PRD — Plataforma de Gestão Modular Adaptativa
 
-**Versão:** 0.4 — Domínio fiscal modular (sub-módulos)  
+**Versão:** 0.7 — Core por setor, evolução E0–E10 e profundidade de módulo  
 
-**Status:** Fase 0 concluída · Fase 1 concluída (core MVP + trilha platform-admin) · CI no GitHub Actions  
+**Status:** Marco **R0** ✅ · **R1** ✅ · **R2** (tenant P1–P2) ✅ · Trilha `platform-admin` ✅ · **Próximo:** Marco **R3** — Fiscal e equipe  
 
-**Stack:** Next.js **16.2.6** · PostgreSQL 16 (Docker, porta **5454**) · TypeScript · **Bun** (runtime + package manager) · Turborepo · tRPC · NextAuth v5 · shadcn/ui  
+**Stack:** Next.js **16.2.6** · PostgreSQL 16 (Docker, porta **5454**, schema global `boilerplate`) · TypeScript · **Bun** · Turborepo · tRPC · NextAuth v5 · shadcn/ui  
 
 **Idioma:** PT-BR (único no MVP)  
 
-**Última atualização:** Maio 2026 · Next 16.2.6 · Bun · PG Docker `:5454`
+**Última atualização:** 21 Maio 2026 — PRD v0.7 (setores core, estágios E, profundidade D, catálogo roadmap)
+
+**Referências de mercado:** [Estrutura Organizacional por Segmento, Setor e Módulos](doc/estudo-de-mercado/Estrutura%20Organizacional%20por%20Segmento,%20Setor%20e%20Módulos.md) · [Módulos Vitais por Segmento](doc/estudo-de-mercado/Módulos%20Vitais%20por%20Segmento.md)
+
+### Como lemos “fase” e escalas neste documento
+
+| Sigla | Nome | Escala | Uso |
+|-------|------|--------|-----|
+| **R0–R4** | Marco de **entrega** (engenharia) | R0 fundação … R4 escala | §14 — o que o time implementa por sprint |
+| **P1–P4** | **Fase de produto** do tenant | 1 informal … 4 escala | `organizations.phase`, pacotes de módulos, precificação |
+| **E0–E10** | **Estágio de evolução** empresarial | 0 sobrevivência … 10 mega corp | §4.2 — maturidade real do negócio do cliente |
+| **D0–D5** | **Profundidade** do módulo | 0 inexistente … 5 escala | §5.0.1 — o quão completo um módulo está hoje vs alvo |
+| **Setor core** | Catálogo global (`core_sectors`) | slugs fixos | Financeiro, Comercial, Operação… — §5.0 |
+| **Setor tenant** | Instância por organização | `sectors` | Departamento na empresa; default `geral` |
+
+> **Não confundir:** marco **R0** (fundação técnica) ≠ estágio **E0** (sobrevivência do negócio). Fase de produto **P2** ≠ estágio **E2** (estruturação).
 
 ---
 
-## 0. Decisões de Produto (v0.3)
+## 0. Decisões de Produto (v0.7)
 
 Resumo das decisões tomadas para o primeiro ciclo de entrega:
 
 | Tema | Decisão |
 |------|---------|
-| Escopo MVP (tenant) | Apenas **Fase 1** (módulos core + Aprendiz enxuto + PWA) |
-| Perfis de negócio | **10 tipos ativos** no onboarding; **7+ tipos planejados** documentados em §5.5.1 (não ativos ainda) |
-| Classificação | **Duplo eixo:** fase (maturidade 1–4) + tipo de negócio → módulos recomendados/ativáveis (ver §6.4) |
+| Escopo entregue (tenant) | **P1** (core + Aprendiz + PWA) e **P2** (fluxo de caixa, vendedores, relatórios) — ver §14.0 |
+| Perfis de negócio | **10 tipos ativos** no onboarding; **7+ tipos planejados** em §5.5.1; **40 segmentos de mercado** no catálogo global (§5.0.2) |
+| Classificação | **Quádruplo eixo:** estágio **E** (referência) + fase **P** (módulos) + **tipo de negócio** + **setor core** → pacote e UX (§6.4, §5.0) |
+| Core por setor | Módulos organizados em **setores universais**; catálogo global `core_modules_catalog` + seed (§5.0, §8.10) |
+| Profundidade | Todo módulo de produto com **D atual** e **D alvo**; changelog público de evolução (§5.0.1, §17.8) |
+| Evolução visível ao cliente | Rota `/evolucao` (tenant): % do caminho por setor, próximas melhorias, feed de releases |
 | Painel da plataforma | App/área **`platform-admin`** com CRM de clientes SaaS, comunicação omnichannel e analytics de demanda de módulos (ver §17) |
 | Onboarding | Perguntas de diagnóstico + **CNPJ** + **tipo de negócio** no dia 1 |
 | UI | **shadcn/ui** — blocks `login-01` (auth) e `dashboard-01` (área logada); layout **desktop-first**, responsivo |
@@ -33,7 +51,7 @@ Resumo das decisões tomadas para o primeiro ciclo de entrega:
 | Entidades core | `Cliente`, `Item` (produto/serviço), `Venda` — módulos estendem, não duplicam (ver §8.8) |
 | Comunicação entre módulos | Contrato de **eventos de domínio**; MVP usa transação síncrona + bus in-process (ver §8.9) |
 | Fiscal | Domínio **`fiscal-core`** (pai) + **sub-módulos** instaláveis (`fiscal-nfce`, `fiscal-cte`, …); MVP com scaffold vazio; emissão via `fiscal-engine` + integradores (§9) |
-| Cobrança | **Central de precificação** por fase/módulo + múltiplos **gateways** (adapters) |
+| Cobrança | **Central de precificação** por fase **P**/módulo + múltiplos **gateways** (adapters); estágio **E** e profundidade **D** informam CSM, não precificam no MVP |
 | Aprendiz | **No MVP** — camadas 1–2 com templates; camada 3 mínima (gatilhos fixos) |
 
 ---
@@ -52,13 +70,13 @@ O cliente nunca "troca de sistema". Ele cresce dentro do mesmo ambiente.
 
 |--------|----------|
 
-| Informal (fase 1) | ERPs são caros e complexos demais. Usa planilha ou caderno. |
+| Informal (P1 / E0–E1) | ERPs são caros e complexos demais. Usa planilha ou caderno. |
 
-| Crescendo (fase 2) | Ferramentas simples não conectam vendas, estoque e caixa. |
+| Crescendo (P2 / E2–E3) | Ferramentas simples não conectam vendas, estoque e caixa. |
 
-| Estabelecido (fase 3) | Sistemas fiscais exigem técnico para configurar. |
+| Estabelecido (P3 / E3–E4) | Sistemas fiscais exigem técnico para configurar. |
 
-| Em escala (fase 4) | Dados ficam espalhados em sistemas diferentes. |
+| Em escala (P4 / E4–E5) | Dados ficam espalhados em sistemas diferentes; precisa de governança e BI. |
 
 **Gap central:** o mercado oferece ou ferramentas simples demais (sem evolução) ou ERPs completos demais (sem adoção). Não existe uma plataforma que escale com o cliente de forma fluida e inteligente.
 
@@ -68,11 +86,13 @@ O cliente nunca "troca de sistema". Ele cresce dentro do mesmo ambiente.
 
 - **Diagnóstico automático** → sistema se configura sozinho na primeira entrada
 
-- **Módulos que se integram** → dados do dia 1 seguem o cliente até a fase 4
+- **Módulos que se integram** → dados do dia 1 seguem o cliente até P4 / estágios E mais altos
 
 - **Aprendiz IA** → o cliente ensina seus processos; a IA executa e sugere automações
 
-- **Evolução guiada** → sistema detecta o momento certo de sugerir o próximo módulo
+- **Evolução guiada** → sistema detecta o momento certo de sugerir o próximo módulo (fase P e profundidade D)
+
+- **Transparência de evolução** → cliente vê para onde a plataforma caminha (% profundidade por setor, changelog de melhorias — §5.0.1)
 
 - **Performance nativa** → Next.js App Router + PostgreSQL otimizado, sem overhead de ERP legado
 
@@ -86,7 +106,7 @@ O cliente nunca "troca de sistema". Ele cresce dentro do mesmo ambiente.
 
 ## 4. Usuários-Alvo
 
-### Persona Principal — "Dona Maria" (Fase 1–2)
+### Persona Principal — "Dona Maria" (P1–P2 · E0–E2)
 
 - Proprietária de pequeno negócio (moda, alimentação, serviços)
 
@@ -94,7 +114,7 @@ O cliente nunca "troca de sistema". Ele cresce dentro do mesmo ambiente.
 
 - Não quer aprender sistema; quer resultado
 
-### Persona Secundária — "Marcos" (Fase 2–3)
+### Persona Secundária — "Marcos" (P2–P3 · E2–E3)
 
 - Dono de loja com 2–5 funcionários
 
@@ -102,7 +122,7 @@ O cliente nunca "troca de sistema". Ele cresce dentro do mesmo ambiente.
 
 - Quer controle sem precisar de contador para tudo
 
-### Persona Terciária — "Grupo" (Fase 4)
+### Persona Terciária — "Grupo" (P4 · E4–E5)
 
 - Gestor de rede ou franquia
 
@@ -110,9 +130,9 @@ O cliente nunca "troca de sistema". Ele cresce dentro do mesmo ambiente.
 
 - Avalia ROI por unidade
 
-### 4.1 Modelo de Acesso — Empresa, Setor e Fase
+### 4.1 Modelo de Acesso — Empresa, Setor e Fase de Produto
 
-A **fase** é atributo da **empresa** (tenant). O **setor** define escopo de ferramentas, processos e permissões dentro da mesma empresa.
+A **fase de produto (P1–P4)** é atributo da **empresa** (tenant) — determina módulos elegíveis e precificação. O **setor tenant** define escopo de ferramentas, processos e permissões dentro da mesma empresa. O **setor core** (catálogo) agrupa módulos por área funcional (§5.0).
 
 ```
 Usuário
@@ -124,21 +144,215 @@ Usuário
 | Conceito | Escopo | MVP |
 |----------|--------|-----|
 | **Organização (tenant)** | Empresa com schema isolado, fase, módulos ativos | 1 org por fluxo principal |
-| **Setor** | Departamento (Vendas, Estoque, Financeiro…) | Setor default `Geral` |
-| **Fase** | Maturidade do negócio (1–4) | Fixo em 1 no MVP |
+| **Setor tenant** | Departamento na empresa (`sectors`) | Default `Geral`; futuro: template a partir de `core_sectors` |
+| **Fase de produto (P)** | Tier de módulos (1–4) | P1–P2 entregues; diagnóstico classifica P1–P4 |
+| **Estágio de evolução (E)** | Maturidade empresarial (0–10) | Referência + analytics; campo `evolution_stage` (futuro) |
 | **Contexto de sessão** | `organizationId` + `sectorId` | Obrigatório no JWT/sessão |
 
-**Troca de contexto:** o usuário escolhe empresa (futuro: lista de memberships) e setor; nav e RBAC filtram por setor + módulos ativos da fase da empresa.
+**Troca de contexto:** o usuário escolhe empresa (futuro: lista de memberships) e setor; nav e RBAC filtram por setor + módulos ativos da fase P da empresa.
 
-**Schema global (`public`):** `users`, `organizations` (+ `tipo_negocio`, `segmento_atuacao`, `phase`), `memberships`, `sectors`, `user_sector_access`, `modulos_ativos`, `modulo_demanda`, entidades `platform_*` (§17).
+**Schema global (`boilerplate`):** `users`, `organizations` (+ `tipo_negocio`, `segmento_atuacao`, `phase`), `memberships`, `sectors`, `modulos_ativos`, `modulo_demanda`, catálogo `core_*` / `market_*` (§8.10), `module_depth_changelog`, entidades `platform_*` (§17).
 
 ---
 
-## 5. Fases do Cliente e Módulos por Fase
+### 4.2 Estágios de Evolução Empresarial (E0–E10)
 
-### Fase 1 — Informal
+Modelo de maturidade **real** do negócio — independente do tamanho físico (funcionários/faturamento). Uma software house de 15 pessoas pode estar estruturalmente à frente de uma indústria de 300 funcionários.
 
-> "Vendo para amigos e indicações, sem estrutura"
+| Estágio | Título | Descrição | O que muda |
+|---------|--------|-----------|------------|
+| **E0** | Sobrevivência | Negócio inicial, geralmente sozinho ou poucos clientes | Foco em vender e sobreviver; sem processos; tudo depende do dono |
+| **E1** | Operação inicial | Clientes recorrentes e pequeno fluxo de caixa | Primeiras contratações; organização básica; controle financeiro simples |
+| **E2** | Estruturação | Empresa deixa de ser improvisada | Processos internos; CRM, ERP, suporte, marketing básico |
+| **E3** | Crescimento local | Marca ganha relevância regional | Equipes por função; metas, indicadores, liderança intermediária |
+| **E4** | Expansão regional | Múltiplas cidades ou regiões | Filiais; padronização operacional; gestão descentralizada |
+| **E5** | Empresa escalável | Crescimento acelerado com replicação | Automação; tecnologia forte; times especializados; cultura organizacional |
+| **E6** | Corporação nacional | Presença consolidada no país | Governança; compliance; múltiplos departamentos; grande operação financeira |
+| **E7** | Grupo empresarial | Várias empresas, marcas ou unidades | Holdings; aquisições; conselhos; estratégia corporativa |
+| **E8** | Multinacional | Operação internacional | Adaptação cultural, tributária e jurídica global; gestão distribuída |
+| **E9** | Conglomerado global | Influência mundial e grande poder econômico | Ecossistema próprio; milhares de funcionários; operações gigantescas |
+| **E10** | Mega corporação global | Molda mercados globais | Influência política/econômica; inovação em larga escala |
+
+**Resumo da evolução:**
+
+- **E0 → E2:** do caos operacional à organização básica
+- **E3 → E5:** de empresa pequena a negócio escalável
+- **E6 → E8:** de empresa nacional a potência internacional
+- **E9 → E10:** de gigante a influência global de mercado
+
+**O que normalmente muda entre estágios:** quantidade de clientes, funcionários, complexidade operacional, dependência do fundador, automação, governança, presença geográfica, estrutura financeira, capacidade de escala, poder de marca.
+
+**Fatores que definem o estágio (peso relativo):**
+
+| Fator | Peso |
+|-------|------|
+| Escalabilidade | Altíssimo |
+| Dependência do dono | Altíssimo |
+| Estrutura operacional | Alto |
+| Automação | Alto |
+| Alcance geográfico | Alto |
+| Governança | Médio |
+| Faturamento | Médio |
+| Quantidade de funcionários | Médio |
+| Marca / influência | Médio |
+
+**Exemplos ilustrativos:**
+
+| Empresa | Estágio aproximado |
+|---------|-------------------|
+| Pequeno MEI local | E0–E1 |
+| Agência regional | E2–E3 |
+| Franquia nacional | E5–E6 |
+| Grande banco nacional | E6–E7 |
+| Amazon | E9 |
+| Google / Apple / Microsoft | E9–E10 |
+
+**Velocidade de evolução por segmento** (mesma estrutura E0–E10, ritmo diferente):
+
+| Segmento | Ritmo | Nota |
+|----------|-------|------|
+| Software / SaaS | Muito rápido | Pouca estrutura física; 20 pessoas podem estar em E5–E6 (ex.: Stripe no início) |
+| E-commerce | Rápido | Logística terceirizada + automação (ex.: ecossistema Shopify) |
+| Consultoria / agência | Lento | Crescimento = contratar pessoas; muitas ficam em E2–E4 |
+| Indústria | Lento | Fábricas, estoque, máquinas, distribuição; 200 funcionários podem ser E3–E4 |
+| Restaurante | Lento local / rápido em franquia | Operação local E2–E3; rede tipo McDonald's E8–E9 |
+| Varejo | Médio | PDV + fiscal + estoque |
+
+---
+
+### 4.3 Mapeamento Estágio E ↔ Fase de Produto P
+
+A plataforma implementa hoje **P1–P4** (código e precificação). Os estágios **E0–E10** orientam visão de produto, CSM e roadmap; nem todo E alto exige P5+ no curto prazo.
+
+| Estágio E | Título | Fase P | Situação na plataforma (Mai/2026) |
+|-----------|--------|--------|-----------------------------------|
+| E0–E1 | Sobrevivência / operação inicial | P1 | Core MVP entregue (R1) |
+| E2 | Estruturação | P1–P2 | P2 entregue — finanças, vendedores, relatórios (R2) |
+| E3 | Crescimento local | P2–P3 | R3 em andamento — fiscal homologado, comissões |
+| E4 | Expansão regional | P3–P4 | P4 planejado — multi-loja, BI |
+| E5 | Empresa escalável | P4+ | Visão §5.9 — automação, API, cultura |
+| E6–E10 | Nacional → mega corp | — | Roadmap de longo prazo; sem tier P5–P10 no código atual |
+
+**Módulos críticos por faixa de estágio E** (estudo de mercado — referência de cobertura):
+
+| Faixa E | Módulos críticos (mercado) |
+|---------|----------------------------|
+| E0–E1 | Financeiro, CRM, Vendas |
+| E2–E3 | ERP, Estoque, RH |
+| E4–E5 | BI, Automação, Processos |
+| E6–E7 | Compliance, Governança, Integrações |
+| E8–E10 | Data Lake, IA, Segurança global, Multi-operação |
+
+**Módulos emergentes (todos os segmentos):** IA operacional, automação de processos, BI em tempo real, cibersegurança, gestão de APIs, data warehouse/lake, IA agêntica, workflow automation, observabilidade, governança de dados.
+
+---
+
+## 5. Fases de Produto (P1–P4) e Módulos
+
+### 5.0 Core organizado por setor
+
+Os módulos de produto pertencem a **setores core** (catálogo global). Isso facilita gestão no `platform-admin`, navegação futura no tenant e narrativa de evolução para o cliente.
+
+**Setores universais** (estudo de mercado + produto):
+
+| Setor core (`slug`) | Camada | Presença | Módulos de produto (exemplos) |
+|---------------------|--------|----------|-------------------------------|
+| `comercial` | Tática | Universal | `core-clientes`, `core-vendas`, `core-ranking`, `ops-vendedores`, `core-crm` (scaffold) |
+| `operacao` | Operacional | Universal | `core-catalogo`, `core-estoque-basico`, `segment-moda`, `segment-alimentacao` |
+| `financeiro` | Tática | Universal | `fin-fluxo-caixa`; planejado: `fin-contas-pagar`, `fin-dre-simplificado` |
+| `fiscal` | Compliance | Crescente | `fiscal-core`, sub-módulos `fiscal-*` |
+| `analytics` | Estratégica | Crescente | `rel-basico`; planejado: `bi-dashboards` |
+| `pessoas` | Tática | Muito comum | `ops-vendedores`; planejado: `rh-comissoes` |
+| `logistica` | Operacional | Muito comum | Planejado: `ops-multi-depot`, `ops-rotas`, `ops-frota` |
+| `atendimento` | Operacional | Muito comum | Planejado: SAC/chat; automação via `aprendiz` |
+| `tecnologia` | Técnica | Crescente | `aprendiz`; planejado: `api-parceiros` |
+| `compliance` | Compliance | Crescente | `fiscal-sped`; planejado: LGPD |
+
+**Camadas organizacionais:**
+
+| Camada | Conteúdo típico | Setores core |
+|--------|-----------------|--------------|
+| Estratégica | BI, KPIs, IA, planejamento | `analytics`, `aprendiz` (camada 3) |
+| Tática | ERP, CRM, BPM, gestão | `comercial`, `financeiro`, `fiscal` |
+| Operacional | PDV, estoque, produção, frota | `operacao`, `logistica`, `atendimento` |
+| Técnica | APIs, segurança, observabilidade | `tecnologia` |
+
+**Módulos transversais de mercado** (presentes em vários setores): ERP, CRM, Financeiro, Estoque, BI, RH, Logística, Compliance, Automação, Atendimento/Suporte, Segurança, Infraestrutura/APIs.
+
+**Mapeamento conceito de mercado → ID de produto:**
+
+| Mercado | ID plataforma | Situação |
+|---------|---------------|----------|
+| ERP | Pacote `core-*` + finanças | Parcial P1–P2 |
+| CRM | `core-clientes`, `core-crm` | Clientes ✅; CRM scaffold |
+| Financeiro / Caixa | `fin-fluxo-caixa` | ✅ P2 |
+| PDV / Vendas | `core-vendas` | ✅ P1 |
+| Estoque | `core-estoque-basico` | ✅ P1 |
+| Fiscal | `fiscal-core`, `fiscal-*` | Core ✅; emissão R3 |
+| BI / Relatórios | `rel-basico` | ✅ P2 |
+| RH / Comissão | `ops-vendedores`, `rh-comissoes` | Parcial / R3 |
+| Automação / IA | `aprendiz` | ✅ templates + LLM opcional |
+| WMS / TMS / Frota | `ops-*` | Planejado |
+| Multi-loja | `ops-multi-loja`, `bi-dashboards` | P4 |
+
+### 5.0.1 Profundidade de módulo (D0–D5)
+
+Complementa `implementation_status` (existe código?) e fase P (quando é elegível). Responde: **quão completo o módulo está hoje** e **até onde queremos levá-lo**.
+
+| Nível | Nome | Critério |
+|-------|------|----------|
+| **D0** | Inexistente | Não catalogado ou só referência de mercado (`market_*`) |
+| **D1** | Essencial | Fluxo feliz único; dados manuais; sem integração entre módulos |
+| **D2** | Conectado | Integra com ≥1 módulo core (eventos, lançamento automático, offline/PWA) |
+| **D3** | Profissional | Relatórios, regras de negócio, papéis, refinamento por segmento/tipo |
+| **D4** | Avançado | Fiscal, automação, multi-usuário avançado; Aprendiz camada 2+ |
+| **D5** | Escala | Multi-unidade, API, BI, white-label — alinhado a P4 / E4+ |
+
+**Campos no catálogo** (`core_modules_catalog` + espelho no `module-registry`): `depth_current`, `depth_target`, `depth_target_marco` (R0–R4), `depth_rubric` (JSON por módulo), `depth_notes` (interno).
+
+**Agregados:** `sector_depth_pct = média(depth_current / depth_target)` por setor; `platform_depth_pct` nos módulos com `registry_sync=true`.
+
+**Snapshot Mai/2026 (produto):**
+
+| Módulo | D atual | D alvo | Marco alvo |
+|--------|---------|--------|------------|
+| `core-vendas` | 2 | 4 | R3 |
+| `core-clientes` | 2 | 3 | R2 |
+| `core-crm` | 0 | 3 | R3+ |
+| `fin-fluxo-caixa` | 2 | 3 | R2 |
+| `fiscal-core` | 1 | 3 | R3 |
+| `fiscal-nfce` (e sub-módulos) | 0 | 2 | R3 |
+| `rel-basico` | 2 | 4 | R4 |
+| `aprendiz` | 2 | 4 | R3 |
+| `ops-vendedores` | 2 | 3 | R2 |
+
+**Changelog (`module_depth_changelog`):** histórico de promoções de profundidade (título, resumo público, `delivery_marco`, `show_to_tenants`). Exemplos já entregues: `core-vendas` D1→D2 (PWA offline); `fin-fluxo-caixa` D1→D2 (lançamento automático na venda confirmada).
+
+**Regra de engenharia:** ao fechar marco R, atualizar `depth_current` nos módulos afetados e registrar changelog.
+
+**Tenant — `/evolucao`:** barras por setor (% do caminho), próximas melhorias, feed “o que melhorou na plataforma”. Copy: *“A plataforma evolui em camadas; você não precisa trocar de sistema — os mesmos dados ganham novas capacidades.”*
+
+**Não expor ao cliente:** siglas R, IDs `market_*`, notas internas `depth_notes`.
+
+### 5.0.2 Segmentos de mercado (catálogo)
+
+**40 segmentos** documentados em `doc/estudo-de-mercado/` (Agronegócio, Varejo, Saúde, E-commerce, …), cada um com matriz **segmento × setor × módulos de mercado** (~90 linhas) e lista de **módulos vitais**.
+
+| Conceito | Papel |
+|----------|-------|
+| `market_segment` | Vocabulário do estudo; priorização e cobertura no `platform-admin` |
+| `tipo_negocio` | Perfil operacional no onboarding (10 ativos) |
+| `segmento_atuacao` | Refinamento UX (moda, alimentação, agro…) |
+
+Ex.: “Alimentação / Food Service” → `tipo_negocio=varejo` + `segmento_atuacao=alimentacao` + módulos de mercado PDV, KDS, Delivery.
+
+Os 40 segmentos **não** viram 40 tipos no onboarding; interesse antecipado continua em `modulo_demanda` e `tipo_negocio_interesse` (§17.5).
+
+---
+
+### Fase de produto P1 — Informal
+
+> "Vendo para amigos e indicações, sem estrutura" · estágios **E0–E1**
 
 **Módulos disponíveis (MVP):**
 
@@ -156,13 +370,13 @@ Usuário
 
 - `aprendiz` — automações por templates no MVP (ver §7.6)
 
-**Acesso:** Layout **desktop-first** (block `dashboard-01`), totalmente responsivo. Menus mínimos na Fase 1. **PWA** para uso offline.
+**Acesso:** Layout **desktop-first** (block `dashboard-01`), totalmente responsivo. Menus mínimos na fase **P1**. **PWA** para uso offline.
 
 ---
 
-### Fase 2 — Crescendo
+### Fase de produto P2 — Crescendo
 
-> "Tenho ponto fixo ou vendo online, preciso de controle"
+> "Tenho ponto fixo ou vendo online, preciso de controle" · estágios **E2–E3**
 
 **Módulos adicionais:**
 
@@ -176,9 +390,9 @@ Usuário
 
 ---
 
-### Fase 3 — Estabelecido
+### Fase de produto P3 — Estabelecido
 
-> "Loja consolidada, preciso emitir nota e gerir equipe"
+> "Loja consolidada, preciso emitir nota e gerir equipe" · estágios **E3–E4**
 
 **Módulos adicionais:**
 
@@ -192,9 +406,9 @@ Usuário
 
 ---
 
-### Fase 4 — Escala
+### Fase de produto P4 — Escala
 
-> "Tenho mais de uma loja ou quero franquear"
+> "Tenho mais de uma loja ou quero franquear" · estágios **E4–E5**
 
 **Módulos adicionais:**
 
@@ -206,9 +420,23 @@ Usuário
 
 - `white-label` — plataforma com identidade do franqueador
 
+### 5.9 Visão de longo prazo — estágios E5–E10
+
+Faixa além de **P4** no produto atual; orienta backlog estratégico e catálogo `market_*` (sem datas de sprint).
+
+| Estágio E | Capacidades de produto (direção) |
+|-----------|----------------------------------|
+| **E5** | Automação avançada, cultura organizacional, `bi-dashboards`, `api-parceiros`, integrações profundas |
+| **E6** | Governança, compliance corporativo, consolidação financeira multi-unidade |
+| **E7** | Holdings, multi-empresa, estratégia de grupo, relatórios consolidados |
+| **E8** | Multinacional — localização, tributação global, operações distribuídas |
+| **E9–E10** | Ecossistema, data lake, IA agêntica em escala, segurança global |
+
+Módulos de mercado típicos nessas faixas: data warehouse/lake, governança de dados, observabilidade, IAM avançado, workflow enterprise.
+
 ### 5.5 Perfis de Negócio (tipo operacional)
 
-Independente da **fase** (maturidade), cada organização tem um **tipo de negócio** que define fluxos, campos do catálogo e **pacote de módulos recomendados**.
+Independente da **fase de produto P** e do **estágio E** (referência), cada organização tem um **tipo de negócio** que define fluxos, campos do catálogo e **pacote de módulos recomendados**.
 
 | `TipoNegocio` | Descrição | Ênfase funcional |
 |---------------|-----------|------------------|
@@ -222,8 +450,8 @@ Independente da **fase** (maturidade), cada organização tem um **tipo de negó
 | `industria` | Indústria de transformação em escala | BOM multi-nível, capacidade produtiva, MRP, qualidade, NF-e, integração chão de fábrica |
 | `produtor_rural` | Produção agropecuária e extrativismo rural | Safra, rebanho, gleba, rastreabilidade, NF-e produtor rural / NFA-e, sazonalidade, SIF/SIE quando aplicável |
 
-> **Fase** responde *“quão estruturado o negócio está?”* · **Tipo** responde *“que modelo operacional ele exerce?”*  
-> A interseção dos dois determina módulos **elegíveis**, **recomendados** e **prioridade de UX**.
+> **Fase P** responde *“qual tier de módulos a plataforma oferece?”* · **Estágio E** responde *“quão madura é a empresa?”* · **Tipo** responde *“que modelo operacional ela exerce?”* · **Setor core** organiza *“em qual área da empresa cada módulo atua?”*  
+> A interseção P × tipo × setor determina módulos **elegíveis**, **recomendados** e **prioridade de UX**; profundidade **D** mede o quanto cada módulo já entregou dessa visão.
 
 **Módulos por tipo (exemplos — matriz completa em §6.4):**
 
@@ -334,7 +562,7 @@ Sequência:
 1. **Conta** — registro/login (block shadcn `login-01`)
 2. **Empresa** — nome, provisionamento do schema `tenant_xxx`
 3. **Diagnóstico** — perfil do negócio + maturidade + **CNPJ** (abaixo)
-4. **Ativação** — módulos da **fase** + pacote recomendado pelo **tipo de negócio** (MVP: Fase 1 + tipo)
+4. **Ativação** — módulos da **fase P** + pacote recomendado pelo **tipo de negócio** (entregue: P1–P2 conforme diagnóstico)
 5. **Primeiro passo** — cadastrar primeiro item (produto/serviço) ou cliente
 
 **Perguntas do diagnóstico (tenant):**
@@ -410,6 +638,18 @@ function classificarFase(input: DiagnosticoInput): Fase {
 
 ```
 
+> **Implementado:** `classificarFase()` → **P1–P4** apenas. **Não** classifica estágio **E0–E10** no onboarding atual.
+
+### 6.2.1 Estágio de evolução E (futuro)
+
+Função planejada `estimarEstagioEvolucao(input, tipoNegocio)` com questionário ampliado:
+
+- Dependência do dono, nível de automação, alcance geográfico, número de unidades, processos documentados
+
+**Coeficiente de velocidade por segmento** (§4.2): SaaS/e-commerce aceleram; indústria/restaurante local desaceleram.
+
+Persistência opcional: `organizations.evolution_stage` (Int 0–10) — somente leitura/analytics e CSM no início; **não** altera pacote P no MVP.
+
 ### 6.3 Resultado do Diagnóstico
 
 Ao final, o sistema:
@@ -420,7 +660,7 @@ Ao final, o sistema:
 4. Sugere módulos `planned` ainda não implementados (lista de interesse → analytics §17)
 5. Registra baseline para evolução de fase e feedback ao time de produto
 
-### 6.4 Engine de Recomendação de Módulos (fase × tipo)
+### 6.4 Engine de Recomendação de Módulos (fase P × tipo)
 
 ```typescript
 interface ModuloRecomendacao {
@@ -520,25 +760,25 @@ O Aprendiz interpreta, confirma a regra com o cliente, e executa.
 
 ### 7.3 Exemplos de Automações por Fase
 
-**Fase 1:**
+**Fase P1 (E0–E2):**
 
 - "Quando estoque do produto X cair abaixo de 5, me avisa"
 
 - "Registra a venda e já desconta do estoque"
 
-**Fase 2:**
+**Fase P2 (E2–E3):**
 
 - "Quando um cliente não compra há 30 dias, coloca na lista de reativação"
 
 - "Fecha o caixa toda sexta às 18h e me manda o resumo"
 
-**Fase 3:**
+**Fase P3 (E3–E4):**
 
 - "Emite NFC-e automaticamente para vendas no balcão"
 
 - "Calcula a comissão do vendedor no fechamento do mês"
 
-**Fase 4:**
+**Fase P4 (E4–E5):**
 
 - "Consolida os resultados das 3 lojas e gera o DRE comparativo"
 
@@ -717,7 +957,7 @@ CREATE TABLE tenant_abc123.vendas (
 
 **Vantagens:** isolamento total de dados, backup por cliente, queries sem filtro de tenant_id, migração de fase sem risco cross-tenant.
 
-**Metadados da organização (schema `public`):**
+**Metadados da organização (schema `boilerplate`):**
 
 ```sql
 ALTER TABLE organizations ADD COLUMN phase SMALLINT NOT NULL DEFAULT 1;
@@ -1124,6 +1364,23 @@ Conteúdo dos módulos renderiza dentro do slot `<main>` do `dashboard-01`. Widg
 - Sync ao reconectar: tRPC mutations com `Idempotency-Key`
 - Conflito MVP: última escrita vence; log em `domain_events` para suporte
 
+### 8.12 Catálogo global de produto (roadmap)
+
+Schema `boilerplate` — gestão de setores, módulos, segmentos e profundidade. Populado por `bun run db:seed-roadmap` (ver `packages/db/scripts/seed-product-roadmap.ts`).
+
+| Tabela | Função |
+|--------|--------|
+| `core_sectors` | Setores universais (slug, camada, presença) |
+| `core_modules_catalog` | Módulos produto + referências de mercado; `depth_current`, `depth_target`, `implementation_status`, `delivery_marco`, `sector_slug` |
+| `market_segments` | 40 segmentos do estudo de mercado |
+| `segment_sector_modules` | Matriz segmento × setor × módulos de mercado |
+| `segment_vital_modules` | Módulos vitais por segmento |
+| `module_depth_changelog` | Histórico de evolução de profundidade (público/interno) |
+
+**`ModuleDefinition` (registry)** — campos adicionais planejados: `sectorSlug`, `camada`, `depthCurrent`, `depthTarget`, `depthTargetMarco`. Sincronização `syncRegistryToCatalog()` evita drift código ↔ catálogo.
+
+**Tenant `sectors`:** campo opcional `core_sector_slug` vincula instância ao template do setor core.
+
 ---
 
 ## 9. Domínio Fiscal Modular
@@ -1444,7 +1701,9 @@ interface PaymentGatewayAdapter {
 }
 ```
 
-**MVP:** tabela de preços por fase/módulo + `payment-mock`; primeiro gateway real (ex.: Asaas) via `INTEGRATOR_REGISTRY`.
+**MVP:** tabela de preços por **fase P**/módulo + `payment-mock`; primeiro gateway real (ex.: Asaas) via `INTEGRATOR_REGISTRY`.
+
+**Profundidade D e estágio E:** não alteram preço no MVP; alimentam `/evolucao` (tenant) e argumentação comercial (CSM). Upsell futuro pode considerar add-ons quando módulo atinge D alvo.
 
 ### 12.1 Planos Base
 
@@ -1530,13 +1789,39 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 ---
 
-## 14. Roadmap
+## 14. Roadmap (marcos de entrega R0–R4)
 
-### Fase 0 — Fundação (semanas 1–4)
+> Marcos **R** = entregas de engenharia. Não confundir com fase de produto **P** nem estágio **E**.
+
+### 14.0 Estado atual do repositório (Maio 2026)
+
+| Área | Marco | Situação no código |
+|------|-------|-------------------|
+| Monorepo, auth, multi-tenant, registry, billing, CI | R0 | ✅ Entregue |
+| Módulos core P1 (`core-catalogo` … `core-ranking`, `aprendiz`) | R1 | ✅ `implementationStatus: implemented` |
+| Fiscal pai + sub-módulos `fiscal-*` | R1 | ✅ `fiscal-core` implementado; demais **scaffold** |
+| Onboarding diagnóstico + `recomendarModulos` + `modulo_demanda` | R1 | ✅ |
+| Cadastro conversacional, e-mail, senha | R1 | ✅ `apps/web` |
+| Missões “primeiros passos” | R1 | ✅ `FASE1_MISSIONS` |
+| PWA vendas offline + fila + IndexedDB sync | R1 | ✅ |
+| `fin-fluxo-caixa`, `ops-vendedores`, `rel-basico` | R2 | ✅ P2 tenant |
+| `segment-moda`, `segment-alimentacao`, Asaas mock, Aprendiz LLM | R2 | ✅ |
+| `core-crm` (tenant) | R2+ | ⏳ **scaffold** |
+| Emissão fiscal homologada | R3 | ⏳ Planejado |
+| Catálogo global + profundidade D + seed roadmap | R2.5 | ⏳ PRD v0.7 — implementação em andamento |
+| UI `/roadmap` + `/evolucao` (admin + tenant) | R3 | ⏳ Planejado |
+| `apps/platform-admin` | §17 | ✅ CRM, comms mock, insights, `/modulos` |
+| Modelo E0–E10 + core por setor no PRD | Doc | ✅ v0.7 |
+
+**Apps em produção local:** `apps/web` (tenant) · `apps/platform-admin` (interno, porta **3002**).
+
+---
+
+### Marco R0 — Fundação (semanas 1–4)
 
 - [x] Monorepo Turborepo + **Bun workspaces** + `bun.lock`
 
-- [x] **Next.js 16.2.6** fixado em `apps/web` · `apps/platform-admin` (esqueleto em andamento)
+- [x] **Next.js 16.2.6** em `apps/web` e `apps/platform-admin` (app interna operacional)
 
 - [x] Docker PostgreSQL (`infra/docker`, porta **5454**) + `DATABASE_URL` em `.env` / `.env.development`
 
@@ -1550,7 +1835,7 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 - [x] tRPC router base + module-registry
 
-- [x] `packages/integrators` (registry + payment-mock + fiscal-noop)
+- [x] `packages/integrators` (registry + payment-mock + fiscal-noop + mocks comms §17)
 
 - [x] `packages/billing` (PricingEngine + tabela de preços)
 
@@ -1558,7 +1843,7 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 - [x] CI/CD básico (GitHub Actions: `lint` + `build` + Prisma validate)
 
-### Fase 1 — Core MVP (semanas 5–10) — somente Fase de negócio 1
+### Marco R1 — Core MVP (semanas 5–10) — fase de produto P1
 
 - [x] Onboarding: **tipo de negócio** (10 perfis) + perguntas maturidade + **CNPJ**
 
@@ -1576,17 +1861,40 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 - [x] **PWA** + fila offline (vendas)
 
-### Fase 2 — Crescimento (semanas 11–16)
+- [x] Cadastro conversacional (`/cadastro`, Aprendiz) + rascunho `signup_drafts`
 
-- [ ] `fin-fluxo-caixa`, `ops-vendedores`, `rel-basico`
+- [x] Verificação de e-mail no cadastro + recuperação / primeira senha (`/esqueci-senha`, `/conta/senha`)
 
-- [ ] Primeiro gateway de pagamento real (integrador)
+- [x] Missões de ativação pós-onboarding (`/dashboard` — primeiros passos)
 
-- [ ] Aprendiz: LLM na criação de regras (feature flag)
+- [x] Sincronização offline ampliada: IndexedDB + `GET /api/sync` (catálogo, clientes, vendas)
 
-- [ ] Módulos de segmento (moda / alimentação)
+> **Fora do escopo R1:** `core-crm` no tenant permanece **scaffold** (previsto P2+).
 
-### Fase 3 — Fiscal e Equipe (semanas 17–24)
+### Marco R2 — Crescimento (semanas 11–16) — fase P2 — **concluído no código**
+
+- [x] `fin-fluxo-caixa` — entradas/saídas, saldo projetado, contas a pagar (previsto + vencimento)
+
+- [x] `ops-vendedores` — cadastro, comissão %, atribuição na venda, totais por vendedor
+
+- [x] `rel-basico` — relatório por período, ticket médio, inadimplência (contas vencidas)
+
+- [x] Integrador `payment-asaas` (`packages/integrators`) — mock sem API key; sandbox com `ASAAS_API_KEY`
+
+- [x] Aprendiz: respostas via LLM opcional (`APRENDIZ_LLM_ENABLED` + `OPENAI_API_KEY`)
+
+- [x] `segment-moda` e `segment-alimentacao` — hints de campos no catálogo (varejo/atacado)
+
+- [x] Vendas confirmadas → lançamento automático no fluxo de caixa (`recordSaleCashInflow`)
+
+### Marco R2.5 — Catálogo de produto (prep R3)
+
+- [ ] Schema `core_sectors`, `core_modules_catalog`, `market_segments`, `segment_*`, `module_depth_changelog` (§8.12)
+- [ ] `seed-product-roadmap.ts` + `product-roadmap.json` (setores, profundidades D, 40 segmentos, changelog R1/R2)
+- [ ] `sectorSlug` + `depthCurrent` / `depthTarget` no `module-registry`
+- [ ] PRD v0.7 publicado ✅
+
+### Marco R3 — Fiscal e Equipe (semanas 17–24) — fase P3
 
 - [ ] `fiscal-engine` + integrador homologado (por capability)
 
@@ -1603,8 +1911,10 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 - [ ] Aprendiz v2 (camada 2 — execução autônoma)
 
 - [ ] Gatilhos de sugestão de módulo
+- [ ] `platform-admin` rota `/roadmap` (setor, profundidade, changelog)
+- [ ] Tenant `/evolucao` — evolução visível ao cliente
 
-### Fase 4 — Escala (semanas 25–36)
+### Marco R4 — Escala (semanas 25–36) — fase P4
 
 - [ ] `ops-multi-loja`
 
@@ -1616,23 +1926,31 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 - [ ] White-label
 
-### Trilha Paralela — Painel da Plataforma (§17)
+### 14.6 Visão de produto — estágios E5–E10
 
-- [x] `apps/platform-admin` + auth `platform_*` roles (esqueleto MVP)
+Backlog estratégico sem sprint fixo (detalhe §5.9): governança, multi-empresa, data lake, IA agêntica em escala. Alimenta catálogo `market_*` e priorização via `platform-insights`.
 
-- [x] `platform-crm` — cadastro e pipeline de **clientes da plataforma**
+### Trilha Paralela — Painel da Plataforma (§17) — **concluída (MVP)**
 
-- [x] `platform-comms` — inbox omnichannel (integradores WhatsApp, Telegram, e-mail mock)
+- [x] `apps/platform-admin` + auth `platform_users` + RBAC `platform_*`
 
-- [x] `platform-insights` — demanda de módulos, funil onboarding, health score por tenant
+- [x] `platform-crm` — leads, organizações, pipeline, notas, contas/contatos, atividades, vínculo lead → org
 
-- [x] Vínculo conversa ↔ organização ↔ diagnóstico (tipo + fase)
+- [x] `platform-comms` — inbox (`/comms`, `/comms/[threadId]`), threads/mensagens, consentimento LGPD; integradores **mock** (`email-resend-mock`, `social-whatsapp-mock`, `social-telegram-mock`)
+
+- [x] `platform-insights` — demanda (`modulo_demanda`), funil, health score heurístico, cobertura matriz, export CSV
+
+- [x] Vínculo conversa ↔ organização/lead ↔ diagnóstico (tipo + fase no thread e no CRM)
+
+- [x] `platform-modulos` — gestão de `modulo_precos`, `planos_base`, `bundle_precos` (§12)
+
+> **Pendente pós-MVP §17:** integradores reais (WhatsApp Cloud API, Resend prod), `platform_activity` como entidade separada de notas (hoje: `PlatformActivity` + `PlatformCrmNote`), NLP em comms (§17.5 — fase 2).
 
 ---
 
 ## 17. Painel de Gestão da Plataforma (`platform-admin`)
 
-Área **interna** (time comercial, suporte, produto e engenharia). **Não** é visível aos usuários do tenant. Dados no **schema global** (`public`), sem misturar com `tenant_xxx`.
+Área **interna** (time comercial, suporte, produto e engenharia). **Não** é visível aos usuários do tenant. Dados no **schema global** `boilerplate` (Prisma), sem misturar com `tenant_xxx`.
 
 ### 17.1 Objetivos
 
@@ -1668,15 +1986,17 @@ apps/platform-admin/
 
 ### 17.3 CRM — Cliente da Plataforma
 
-Entidades (schema `public`):
+Entidades (schema `boilerplate`):
 
-| Entidade | Descrição |
-|----------|-----------|
-| `platform_lead` | Contato antes de criar tenant |
-| `platform_account` | Conta comercial (pode virar `organizations`) |
-| `platform_contact` | Pessoas (usuários futuros, decisores) |
-| `platform_deal` | Oportunidade / trial / expansão de módulos |
-| `platform_activity` | Ligação, reunião, nota, **mensagem** (vínculo com comms) |
+| Entidade | Descrição | Status no código |
+|----------|-----------|------------------|
+| `platform_lead` | Contato antes de criar tenant | ✅ |
+| `platform_account` | Conta comercial (org ou lead) | ✅ |
+| `platform_contact` | Pessoas (decisores) | ✅ |
+| `crm_deals` | Oportunidade / trial / expansão | ✅ (`CrmDeal`) |
+| `platform_crm_notes` | Notas no card CRM | ✅ |
+| `platform_activities` | Ligação, reunião, nota, mensagem (comms gera `message`) | ✅ |
+| `platform_comms_*` | Threads, mensagens, consentimento | ✅ |
 
 **Fluxo típico:**
 
@@ -1744,9 +2064,34 @@ Autenticação: mesmo NextAuth com `user.platform_role` ou tabela `platform_user
 
 ### 17.7 UI
 
-- App dedicada `platform-admin` (subdomínio `admin.` ou rota isolada)
-- shadcn: `dashboard-01` para shell; tabelas CRM; inbox estilo “mensageria”
-- MVP plataforma: CRM mínimo + 1 canal (e-mail ou WhatsApp mock) + dashboard de demanda de módulos
+- App dedicada `platform-admin` (porta dev **3002**; futuro subdomínio `admin.`)
+- shadcn shell + rotas: `/dashboard`, `/crm`, `/comms`, `/insights`, `/modulos`, `/organizacoes`
+- **Entregue (MVP):** kanban/lista CRM, inbox omnichannel (mock), dashboards de insights, editor de precificação
+- **Não entregue:** inbox com API real de WhatsApp/Telegram; webhooks inbound de provedores
+
+### 17.8 Gestão de produto — roadmap por setor e profundidade
+
+Objetivo: o time interno e o cliente enxergarem **onde estamos** e **para onde vamos** sem confundir marco R, fase P e estágio E.
+
+**Rota planejada:** `platform-admin` → `/roadmap` (ou abas em `/modulos`).
+
+| Vista | Conteúdo | Público |
+|-------|----------|---------|
+| Por setor core | Módulos agrupados; badge `implementation_status` + barra D atual→alvo | Produto, engenharia |
+| Por marco R | Colunas R0–R4; cards de módulo | Engenharia |
+| Por estágio E | Faixas E0–E2, E3–E5… + módulos vitais do estudo | Produto, comercial |
+| Cobertura segmento | Heatmap segmento × módulo vital × status | Produto |
+| Profundidade | Gap “implementado mas raso”; média por setor | Produto, CSM |
+| Changelog | `module_depth_changelog`; releases que subiram D | Admin (edição); tenant (leitura pública) |
+| Convencimento | KPI: releases/mês, Δ profundidade média, setor que mais evoluiu | Comercial |
+
+**RBAC:** `platform_produto` e `platform_engenharia` leem; `platform_admin` edita notas de roadmap e changelog.
+
+**Organização (`/organizacoes/[id]`):** módulos ativos agrupados por setor core; fase P; estágio E estimado (quando existir).
+
+**Tenant (`/evolucao`):** % do caminho por setor; próximas melhorias; feed público do changelog — §5.0.1.
+
+**Fontes:** catálogo §8.12; estudos em `doc/estudo-de-mercado/`.
 
 ---
 
@@ -1802,6 +2147,10 @@ Autenticação: mesmo NextAuth com `user.platform_role` ou tabela `platform_user
 
 | Top 5 módulos demandados reportados no insights | 100% visíveis para produto |
 
+| Tenants que visualizam `/evolucao` ao menos 1×/mês | > 40% dos ativos |
+
+| Entradas no changelog de profundidade (públicas) | ≥ 1 release/mês após R2.5 |
+
 ---
 
 ## Apêndice A — Glossário
@@ -1812,7 +2161,9 @@ Autenticação: mesmo NextAuth com `user.platform_role` ou tabela `platform_user
 
 | **Tenant / Organização** | Empresa com schema PostgreSQL isolado (`tenant_xxx`) |
 
-| **Setor** | Unidade organizacional; filtra ferramentas e permissões dentro do tenant |
+| **Setor tenant** | Instância departamental na empresa (`sectors`); filtra ferramentas e permissões |
+
+| **Setor core** | Catálogo global de áreas funcionais (`core_sectors`: comercial, financeiro…) |
 
 | **Membership** | Vínculo usuário ↔ empresa com papel global |
 
@@ -1820,7 +2171,15 @@ Autenticação: mesmo NextAuth com `user.platform_role` ou tabela `platform_user
 
 | **Integrador** | Adapter de serviço externo; conecta provedores aos módulos via eventos normalizados |
 
-| **Fase** | Maturidade do negócio (1–4) da **empresa**; determina módulos elegíveis |
+| **Marco de entrega (R)** | Entrega de engenharia R0–R4 (§14); não é estágio E nem fase P |
+
+| **Fase de produto (P)** | Tier de módulos da empresa (1–4); `organizations.phase`; precificação |
+
+| **Estágio de evolução (E)** | Maturidade empresarial real (0–10); §4.2 |
+
+| **Profundidade (D)** | Completude funcional de um módulo (0–5); `depth_current` / `depth_target`; §5.0.1 |
+
+| **Fase** (legado no código) | Sinônimo de **fase de produto P** (1–4) — evitar ambiguidade com marco R ou estágio E |
 
 | **Item** | Produto ou serviço no `core-catalogo` |
 
@@ -1857,6 +2216,25 @@ Autenticação: mesmo NextAuth com `user.platform_role` ou tabela `platform_user
 | **tipo_negocio_interesse** | Tipo `planned` indicado no onboarding “não está na lista” (priorização produto) |
 
 | **Tipo planejado** | `TipoNegocio` com `status: 'planned'` — documentado em §5.5.1, fora do onboarding |
+
+| **market_segment** | Segmento do estudo de mercado (40); catálogo global; não substitui `tipo_negocio` |
+
+| **module_depth_changelog** | Registro público/interno de aumento de profundidade D de um módulo |
+
+| **core_modules_catalog** | Catálogo global de módulos, profundidade e status de desenvolvimento (§8.12) |
+
+---
+
+### Histórico de marcos (produto)
+
+| Data | Marco |
+|------|--------|
+| Sem. 1–4 | Marco R0 — fundação monorepo |
+| Sem. 5–10 | Marco R1 — core MVP tenant (fase P1) |
+| Mai/2026 | Trilha §17 — `platform-admin` MVP (CRM + comms mock + insights) |
+| Mai/2026 | Marco R2 — fluxo de caixa, vendedores, relatórios, Asaas mock, Aprendiz LLM (fase P2) |
+| Mai/2026 | PRD v0.7 — estágios E0–E10, setores core, profundidade D0–D5, catálogo roadmap |
+| — | **Atual:** Marco R2.5/R3 — catálogo + seed + fiscal homologado + `rh-comissoes` |
 
 ---
 

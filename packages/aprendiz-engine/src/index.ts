@@ -5,7 +5,10 @@ export {
   resumirAprendizado,
   sugerirAutomacoesIniciais,
 } from "./cadastro";
-export { responderMensagemAprendiz } from "./respond";
+export {
+  responderMensagemAprendiz,
+  responderMensagemAprendizComLlm,
+} from "./respond";
 
 export interface AutomacaoTemplate {
   id: string;
