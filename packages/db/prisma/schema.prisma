@@ -28,8 +28,12 @@ model Organization {
   modulosAtivos  ModuloAtivo[]
   moduloDemanda  ModuloDemanda[]
   memberships    Membership[]
-  crmDeals       CrmDeal[]
-  crmNotes       PlatformCrmNote[]
+  crmDeals            CrmDeal[]
+  crmNotes            PlatformCrmNote[]
+  platformAccount     PlatformAccount?
+  platformCommsThreads PlatformCommsThread[]
+  platformActivities  PlatformActivity[]
+  platformCommsConsents PlatformCommsConsent[]
 
   @@schema("boilerplate")
   @@map("organizations")
@@ -46,8 +50,13 @@ model PlatformLead {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  crmDeals CrmDeal[]
-  crmNotes PlatformCrmNote[]
+  crmDeals              CrmDeal[]
+  crmNotes              PlatformCrmNote[]
+  platformAccount       PlatformAccount?
+  platformCommsThreads  PlatformCommsThread[]
+  platformActivities    PlatformActivity[]
+  platformCommsConsents PlatformCommsConsent[]
+  platformContacts      PlatformContact[]
 
   @@schema("boilerplate")
   @@map("platform_leads")
@@ -55,17 +64,19 @@ model PlatformLead {
 
 /// Oportunidade / vínculo pipeline (organização ou lead)
 model CrmDeal {
-  id             String   @id @default(uuid())
-  organizationId String?  @map("organization_id")
-  platformLeadId String?  @map("platform_lead_id")
-  phase          Int      @default(1)
-  pipelineStage  String   @map("pipeline_stage")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id                  String   @id @default(uuid())
+  organizationId      String?  @map("organization_id")
+  platformLeadId      String?  @map("platform_lead_id")
+  platformAccountId   String?  @map("platform_account_id")
+  phase               Int      @default(1)
+  pipelineStage       String   @map("pipeline_stage")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  platformLead PlatformLead? @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
-  notes        PlatformCrmNote[]
+  organization    Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platformLead    PlatformLead?   @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
+  platformAccount PlatformAccount? @relation(fields: [platformAccountId], references: [id], onDelete: SetNull)
+  notes           PlatformCrmNote[]
 
   @@schema("boilerplate")
   @@map("crm_deals")
@@ -86,6 +97,122 @@ model PlatformCrmNote {
 
   @@schema("boilerplate")
   @@map("platform_crm_notes")
+}
+
+/// Conta comercial da plataforma (lead ou organização) — PRD §17.3
+model PlatformAccount {
+  id               String   @id @default(uuid())
+  name             String
+  organizationId   String?  @unique @map("organization_id")
+  platformLeadId   String?  @unique @map("platform_lead_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platformLead   PlatformLead? @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
+  contacts       PlatformContact[]
+  crmDeals       CrmDeal[]
+
+  @@schema("boilerplate")
+  @@map("platform_accounts")
+}
+
+/// Contato (decisor / usuário futuro) — PRD §17.3
+model PlatformContact {
+  id                String   @id @default(uuid())
+  name              String
+  email             String?
+  phone             String?
+  role              String?
+  platformAccountId String?  @map("platform_account_id")
+  platformLeadId    String?  @map("platform_lead_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  platformAccount PlatformAccount? @relation(fields: [platformAccountId], references: [id], onDelete: Cascade)
+  platformLead    PlatformLead?    @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
+  consents        PlatformCommsConsent[]
+
+  @@schema("boilerplate")
+  @@map("platform_contacts")
+}
+
+/// Thread omnichannel (inbox) — PRD §17.4
+model PlatformCommsThread {
+  id                     String    @id @default(uuid())
+  subject                String
+  channel                String
+  status                 String    @default("open")
+  lastMessageAt          DateTime? @map("last_message_at")
+  organizationId         String?   @map("organization_id")
+  platformLeadId         String?   @map("platform_lead_id")
+  assignedPlatformUserId String?   @map("assigned_platform_user_id")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  messages     PlatformCommsMessage[]
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platformLead PlatformLead? @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
+  activities   PlatformActivity[]
+
+  @@index([organizationId])
+  @@index([platformLeadId])
+  @@schema("boilerplate")
+  @@map("platform_comms_threads")
+}
+
+model PlatformCommsMessage {
+  id        String   @id @default(uuid())
+  threadId  String   @map("thread_id")
+  direction String
+  body      String
+  fromLabel String?  @map("from_label")
+  toLabel   String?  @map("to_label")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  thread PlatformCommsThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@schema("boilerplate")
+  @@map("platform_comms_messages")
+}
+
+/// Opt-in LGPD por canal — PRD §17.4
+model PlatformCommsConsent {
+  id                String    @id @default(uuid())
+  channel           String
+  organizationId    String?   @map("organization_id")
+  platformLeadId    String?   @map("platform_lead_id")
+  platformContactId String?   @map("platform_contact_id")
+  consentedAt       DateTime  @default(now()) @map("consented_at")
+  revokedAt         DateTime? @map("revoked_at")
+
+  organization    Organization?   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platformLead    PlatformLead?   @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
+  platformContact PlatformContact? @relation(fields: [platformContactId], references: [id], onDelete: Cascade)
+
+  @@schema("boilerplate")
+  @@map("platform_comms_consents")
+}
+
+/// Atividade comercial (nota, ligação, mensagem) — PRD §17.3
+model PlatformActivity {
+  id               String   @id @default(uuid())
+  activityType     String   @map("activity_type")
+  body             String
+  organizationId   String?  @map("organization_id")
+  platformLeadId   String?  @map("platform_lead_id")
+  platformUserId   String?  @map("platform_user_id")
+  commsThreadId    String?  @map("comms_thread_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  organization   Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platformLead   PlatformLead?      @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
+  commsThread    PlatformCommsThread? @relation(fields: [commsThreadId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([platformLeadId])
+  @@schema("boilerplate")
+  @@map("platform_activities")
 }
 
 model User {
