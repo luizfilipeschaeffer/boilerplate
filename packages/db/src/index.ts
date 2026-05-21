@@ -1,13 +1,25 @@
-import { PrismaClient } from "@prisma/client";
-
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
-
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
-  });
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
-
-export { PrismaClient };
+export { prisma, PrismaClient } from "./client";
+export * from "./organization";
+export * from "./onboarding";
+export * from "./tenant/provision";
+export * from "./tenant/schema";
+export * from "./tenant/catalog";
+export * from "./tenant/clients";
+export * from "./tenant/sales";
+export * from "./tenant/stock";
+export * from "./tenant/ranking";
+export * from "./tenant/aprendiz";
+export * from "./tenant/aprendiz-messages";
+export * from "./tenant/missions";
+export * from "./tenant/sync-snapshot";
+export * from "./domain-events";
+export * from "./platform-user";
+export * from "./signup-draft";
+export * from "./signup-email-verification";
+export * from "./password-reset";
+export * from "./user-password";
+export * from "./crm";
+export * from "./billing-pricing";
+export * from "./platform-comms";
+export * from "./platform-insights";
+export * from "./platform-crm-ext";

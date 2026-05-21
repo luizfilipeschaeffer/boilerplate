@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { PwaRegister } from "@/components/pwa-register";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
@@ -19,6 +20,8 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Boilerplate",
   description: "Plataforma de gestão modular adaptativa",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Boilerplate" },
 };
 
 export default function RootLayout({
@@ -38,7 +41,10 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+        <Providers>
+          <PwaRegister />
+          {children}
+        </Providers>
       </body>
     </html>
   );

@@ -4,17 +4,29 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./organization": "./src/organization.ts",
+    "./platform-user": "./src/platform-user.ts"
   },
   "scripts": {
-    "lint": "tsc --noEmit",
-    "db:generate": "bun --env-file=../../.env prisma generate",
-    "db:push": "bun --env-file=../../.env prisma db push"
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "db:validate": "bun scripts/prisma-env.ts validate",
+    "db:generate": "bun scripts/prisma-env.ts generate",
+    "db:push": "bun scripts/prisma-env.ts db push",
+    "db:migrate-tenants": "bun --env-file=../../.env --env-file=../../.env.development ./scripts/migrate-tenants.ts",
+    "db:seed-platform-admin": "bun ./scripts/seed-platform-admin.ts",
+    "db:restart": "bun ./scripts/db-restart.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.9.0"
+    "@boilerplate/crm": "workspace:*",
+    "@boilerplate/module-registry": "workspace:*",
+    "@boilerplate/shared": "workspace:*",
+    "@prisma/client": "^6.9.0",
+    "bcryptjs": "^3.0.2"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.15.29",
     "prisma": "^6.9.0",
     "typescript": "^5.8.3"
   }

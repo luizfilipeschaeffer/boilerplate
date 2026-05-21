@@ -8,7 +8,7 @@
     "./types": "./src/types/index.ts"
   },
   "scripts": {
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

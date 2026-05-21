@@ -2,7 +2,7 @@
 
 **Versão:** 0.4 — Domínio fiscal modular (sub-módulos)  
 
-**Status:** Em implementação (fundação)  
+**Status:** Fase 0 concluída · Fase 1 concluída (core MVP + trilha platform-admin) · CI no GitHub Actions  
 
 **Stack:** Next.js **16.2.6** · PostgreSQL 16 (Docker, porta **5454**) · TypeScript · **Bun** (runtime + package manager) · Turborepo · tRPC · NextAuth v5 · shadcn/ui  
 
@@ -1534,47 +1534,47 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 ### Fase 0 — Fundação (semanas 1–4)
 
-- [ ] Monorepo Turborepo + **Bun workspaces** + `bun.lock`
+- [x] Monorepo Turborepo + **Bun workspaces** + `bun.lock`
 
-- [ ] **Next.js 16.2.6** fixado em `apps/web` e `apps/platform-admin`
+- [x] **Next.js 16.2.6** fixado em `apps/web` · `apps/platform-admin` (esqueleto em andamento)
 
-- [ ] Docker PostgreSQL (`infra/docker`, porta **5454**) + `DATABASE_URL` em `.env.local`
+- [x] Docker PostgreSQL (`infra/docker`, porta **5454**) + `DATABASE_URL` em `.env` / `.env.development`
 
-- [ ] shadcn init + blocks **`login-01`** e **`dashboard-01`**
+- [x] shadcn init + UI **login** e **dashboard** (base `example` / blocks `login-01` + `dashboard-01`)
 
-- [ ] Schema global (orgs, memberships, sectors, módulos ativos)
+- [x] Schema global (orgs, memberships, sectors, módulos ativos)
 
-- [ ] Provisionamento schema por tenant + ativação de módulos
+- [x] Provisionamento schema por tenant + ativação de módulos (`@boilerplate/db`)
 
-- [ ] NextAuth v5 + sessão `organizationId` + `sectorId`
+- [x] NextAuth v5 + sessão `organizationId` + `sectorId` (org real via Prisma)
 
-- [ ] tRPC router base + module-registry
+- [x] tRPC router base + module-registry
 
-- [ ] `packages/integrators` (registry + payment-mock + fiscal-noop)
+- [x] `packages/integrators` (registry + payment-mock + fiscal-noop)
 
-- [ ] `packages/billing` (PricingEngine + tabela de preços)
+- [x] `packages/billing` (PricingEngine + tabela de preços)
 
-- [ ] Nav dinâmico (módulos + setor)
+- [x] Nav dinâmico (módulos do DB; submenu Fiscal)
 
-- [ ] CI/CD básico
+- [x] CI/CD básico (GitHub Actions: `lint` + `build` + Prisma validate)
 
 ### Fase 1 — Core MVP (semanas 5–10) — somente Fase de negócio 1
 
-- [ ] Onboarding: **tipo de negócio** (10 perfis) + perguntas maturidade + **CNPJ**
+- [x] Onboarding: **tipo de negócio** (10 perfis) + perguntas maturidade + **CNPJ**
 
-- [ ] Engine `recomendarModulos(fase, tipo)` + `modulo_demanda`
+- [x] Engine `recomendarModulos(fase, tipo)` + `modulo_demanda`
 
-- [ ] `core-catalogo` (campos variáveis por tipo)
+- [x] `core-catalogo` (campos variáveis por tipo) — **implemented** (CRUD tenant)
 
-- [ ] `core-clientes`, `core-vendas`, `core-estoque-basico`, `core-ranking`
+- [x] `core-clientes`, `core-vendas`, `core-estoque-basico`, `core-ranking`
 
-- [ ] Domínio fiscal: `fiscal-core` + **scaffold** de todos os sub-módulos `fiscal-*` (§9.8)
+- [x] Domínio fiscal: `fiscal-core` + **scaffold** de todos os sub-módulos `fiscal-*` (§9.8)
 
-- [ ] **Aprendiz** MVP (templates + 1–2 automações)
+- [x] **Aprendiz** MVP (templates + 1–2 automações)
 
-- [ ] Event bus in-process + `domain_events`
+- [x] Event bus in-process + `domain_events`
 
-- [ ] **PWA** + fila offline (vendas)
+- [x] **PWA** + fila offline (vendas)
 
 ### Fase 2 — Crescimento (semanas 11–16)
 
@@ -1618,15 +1618,15 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 ### Trilha Paralela — Painel da Plataforma (§17)
 
-- [ ] `apps/platform-admin` + auth `platform_*` roles
+- [x] `apps/platform-admin` + auth `platform_*` roles (esqueleto MVP)
 
-- [ ] `platform-crm` — cadastro e pipeline de **clientes da plataforma**
+- [x] `platform-crm` — cadastro e pipeline de **clientes da plataforma**
 
-- [ ] `platform-comms` — inbox omnichannel (integradores WhatsApp, Telegram, e-mail)
+- [x] `platform-comms` — inbox omnichannel (integradores WhatsApp, Telegram, e-mail mock)
 
-- [ ] `platform-insights` — demanda de módulos, funil onboarding, health score por tenant
+- [x] `platform-insights` — demanda de módulos, funil onboarding, health score por tenant
 
-- [ ] Vínculo conversa ↔ organização ↔ diagnóstico (tipo + fase)
+- [x] Vínculo conversa ↔ organização ↔ diagnóstico (tipo + fase)
 
 ---
 

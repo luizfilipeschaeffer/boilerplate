@@ -2,9 +2,11 @@
 
 import * as React from "react";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LayoutGrid } from "lucide-react";
 
+import { isValidEmail } from "@/lib/mask-email";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,20 +17,35 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { INACTIVITY_LOGOUT_MINUTES } from "@/lib/inactivity-logout";
 
 export function LoginForm({
   className,
+  initialEmail = "",
+  inactivityLogout = false,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & {
+  initialEmail?: string;
+  inactivityLogout?: boolean;
+}) {
   const router = useRouter();
-  const [email, setEmail] = React.useState("");
+  const [email, setEmail] = React.useState(initialEmail);
   const [password, setPassword] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [info, setInfo] = React.useState<string | null>(
+    inactivityLogout
+      ? `Sessão encerrada após ${INACTIVITY_LOGOUT_MINUTES} minutos sem atividade.`
+      : null,
+  );
+
+  const emailNormalized = email.trim().toLowerCase();
+  const canRecoverPassword = isValidEmail(emailNormalized);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setInfo(null);
     setSubmitting(true);
 
     const res = await signIn("credentials", {
@@ -39,13 +56,13 @@ export function LoginForm({
 
     setSubmitting(false);
 
-    if (res?.error) {
+    if (res?.error || !res?.ok) {
       setError("Não foi possível entrar. Verifique e-mail e senha.");
       return;
     }
 
-    router.push("/dashboard");
     router.refresh();
+    router.push("/dashboard");
   }
 
   return (
@@ -90,7 +107,32 @@ export function LoginForm({
               required
               disabled={submitting}
             />
+            {canRecoverPassword ? (
+              <Button
+                type="button"
+                variant="link"
+                nativeButton={false}
+                render={
+                  <Link
+                    href={`/esqueci-senha?email=${encodeURIComponent(emailNormalized)}`}
+                  />
+                }
+                className="h-auto justify-start p-0 text-xs text-muted-foreground"
+              >
+                Não sei minha senha
+              </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Informe seu e-mail acima para recuperar o acesso.
+              </p>
+            )}
           </Field>
+
+          {info ? (
+            <p className="text-sm text-muted-foreground" role="status">
+              {info}
+            </p>
+          ) : null}
 
           {error ? <FieldError role="alert">{error}</FieldError> : null}
 

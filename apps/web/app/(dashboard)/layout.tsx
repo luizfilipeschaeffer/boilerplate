@@ -1,7 +1,12 @@
 import { auth } from "@/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { SyncProvider } from "@/components/sync-provider";
 import { getDashboardNav } from "@/lib/modules/active-modules";
+import { ensureModulesRegistered } from "@/lib/modules/init";
+import { resolveUserSetup } from "@/lib/session-setup";
 import { redirect } from "next/navigation";
+
+ensureModulesRegistered();
 
 export default async function DashboardLayout({
   children,
@@ -9,9 +14,14 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  if (!session) redirect("/login");
+  if (!session?.user?.id) redirect("/login");
 
-  const orgId = (session as { organizationId?: string }).organizationId;
+  const setup = await resolveUserSetup(session.user.id);
+  if (!setup.hasOrganization) redirect("/onboarding");
+
+  const orgId = setup.organizationId ?? session.organizationId;
+  if (!orgId) redirect("/onboarding");
+
   const navItems = await getDashboardNav(orgId);
 
   const user = {
@@ -20,8 +30,10 @@ export default async function DashboardLayout({
   };
 
   return (
-    <DashboardShell navItems={navItems} user={user}>
-      {children}
-    </DashboardShell>
+    <SyncProvider organizationId={orgId}>
+      <DashboardShell navItems={navItems} user={user}>
+        {children}
+      </DashboardShell>
+    </SyncProvider>
   );
 }

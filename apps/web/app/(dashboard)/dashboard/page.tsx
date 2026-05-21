@@ -1,8 +1,26 @@
-import { SectionCards } from "@/components/section-cards";
-import { getActiveModuleIds } from "@/lib/modules/active-modules";
+import { auth } from "@/auth";
+import { DashboardHome } from "@/components/dashboard-home";
+import { syncAndLoadMissions } from "@/app/actions/missions";
+import { getOrganizationById } from "@boilerplate/db";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  const modulos = await getActiveModuleIds();
+  const session = await auth();
+  if (!session?.user) redirect("/login");
 
-  return <SectionCards moduleCount={modulos.length} />;
+  const orgId = session.organizationId;
+  if (!orgId) redirect("/onboarding");
+
+  const org = await getOrganizationById(orgId);
+  if (!org) redirect("/onboarding");
+
+  const { completedIds } = await syncAndLoadMissions();
+
+  return (
+    <DashboardHome
+      userName={session.user.name ?? "Usuário"}
+      organizationName={org.name}
+      completedIds={completedIds}
+    />
+  );
 }

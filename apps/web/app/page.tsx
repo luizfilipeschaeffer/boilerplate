@@ -1,8 +1,11 @@
 import { auth } from "@/auth";
+import { resolveUserSetup } from "@/lib/session-setup";
 import { redirect } from "next/navigation";
 
 export default async function HomePage() {
   const session = await auth();
-  if (session) redirect("/dashboard");
-  redirect("/login");
+  if (!session?.user?.id) redirect("/login");
+
+  const { hasOrganization } = await resolveUserSetup(session.user.id);
+  redirect(hasOrganization ? "/dashboard" : "/onboarding");
 }

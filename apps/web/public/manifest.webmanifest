@@ -1,0 +1,11 @@
+{
+  "name": "Boilerplate",
+  "short_name": "Boilerplate",
+  "description": "Gestão modular — Fase 1",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#171717",
+  "lang": "pt-BR",
+  "icons": []
+}
