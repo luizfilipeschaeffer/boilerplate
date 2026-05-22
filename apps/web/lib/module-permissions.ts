@@ -37,6 +37,7 @@ export const MODULE_PERMISSION_MATRIX: Record<
   },
   "core-estoque-basico": {
     ver: ["dono", "gerente", "operador"],
+    editar: ["dono", "gerente"],
     registrar: ["dono", "gerente", "operador"],
   },
   "core-ranking": { ver: ["dono", "gerente", "vendedor"] },

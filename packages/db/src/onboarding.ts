@@ -1,12 +1,15 @@
 import {
   classificarFase,
-  modulosDemanda,
-  modulosParaAtivar,
-  recomendarModulos,
   type DiagnosticoInput,
 } from "@boilerplate/module-registry";
-import { validateModuleActivation } from "@boilerplate/module-registry";
+import {
+  computeProvisioningStatus,
+  expandModuleIds,
+  resolveActivationPackage,
+  trialEndFromNow,
+} from "./activation";
 import { prisma } from "./client";
+import { getDefaultPaymentIntegratorId } from "./platform-payment";
 import {
   createOrganizationWithTenant,
   getMembershipForUser,
@@ -14,12 +17,21 @@ import {
   resolveUniqueOrganizationSlug,
   setOrganizationModules,
 } from "./organization";
+import { recordProvisioningPlatformActivity } from "./provisioning-events";
 
 export type { DiagnosticoInput };
+
+export interface CompleteOnboardingOptions {
+  /** Fase escolhida pelo cliente (override); se omitida, usa classificarFase. */
+  declaredPhase?: number;
+  /** Segmento de mercado (slug). */
+  marketSegmentSlug?: string;
+}
 
 export async function completeOnboarding(
   userId: string,
   input: DiagnosticoInput & { organizationName: string },
+  opts?: CompleteOnboardingOptions,
 ) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
@@ -31,10 +43,29 @@ export async function completeOnboarding(
     throw new Error("Usuário já concluiu o onboarding");
   }
 
-  const fase = classificarFase(input);
-  const recomendacoes = recomendarModulos(fase, input.tipoNegocio, {
+  const diagnosedPhase = classificarFase(input);
+  const declaredPhase =
+    opts?.declaredPhase ?? input.declaredPhase ?? diagnosedPhase;
+  const phase = declaredPhase as 1 | 2 | 3 | 4;
+  const marketSegmentSlug =
+    opts?.marketSegmentSlug ??
+    input.segmentoAtuacao ??
+    "varejo";
+
+  const pkg = await resolveActivationPackage({
+    marketSegmentSlug,
+    phase,
+    tipoNegocio: input.tipoNegocio,
     possuiCnpj: input.possuiCnpj,
+    diagnostico: input,
   });
+
+  const paymentVerified = !pkg.requiresPaymentValidation;
+  const provisioningStatus = computeProvisioningStatus(pkg, paymentVerified);
+  const integratorId = await getDefaultPaymentIntegratorId();
+  const trialEndsAt = paymentVerified
+    ? trialEndFromNow(pkg.trialDays)
+    : null;
 
   const slug = await resolveUniqueOrganizationSlug(input.organizationName);
 
@@ -43,8 +74,14 @@ export async function completeOnboarding(
       name: input.organizationName,
       slug,
       tipoNegocio: input.tipoNegocio,
-      phase: fase,
-      segmentoAtuacao: input.segmentoAtuacao,
+      phase,
+      segmentoAtuacao: marketSegmentSlug,
+      marketSegmentSlug,
+      diagnosedPhase,
+      declaredPhase,
+      provisioningStatus,
+      paymentIntegratorId: integratorId,
+      trialEndsAt,
       hasCnpj: input.possuiCnpj,
       cnpj: input.cnpj,
       fiscalReady: input.possuiCnpj && (input.emiteNota ?? false),
@@ -52,34 +89,54 @@ export async function completeOnboarding(
     userId,
   );
 
-  const toActivate = modulosParaAtivar(recomendacoes);
-  const resolved = new Set<string>();
-
-  for (const moduleId of toActivate) {
-    const next = await expandModuleActivation(moduleId, [...resolved]);
-    for (const id of next) resolved.add(id);
+  let moduleIds = await expandModuleIds(pkg.moduleIds);
+  if (
+    provisioningStatus === "pre_active" ||
+    provisioningStatus === "pending_payment"
+  ) {
+    const coreOnly = [
+      "core-catalogo",
+      "core-clientes",
+      "core-vendas",
+      "aprendiz",
+    ];
+    moduleIds = moduleIds.filter((id) => coreOnly.includes(id));
+    if (moduleIds.length === 0) moduleIds = coreOnly;
   }
 
-  await setOrganizationModules(org.id, [...resolved]);
-  await registerModuloDemanda(org.id, modulosDemanda(recomendacoes));
+  await setOrganizationModules(org.id, moduleIds);
+  await registerModuloDemanda(org.id, pkg.demandaModuleIds);
+
+  await recordProvisioningPlatformActivity({
+    organizationId: org.id,
+    activityType: pkg.fallbackUsed
+      ? "tenant.modules_activated"
+      : "tenant.pre_activated",
+    body: pkg.fallbackUsed
+      ? `Ativação com pacote legado (segmento ${marketSegmentSlug}, fase P${phase})`
+      : `Pré-ativação segmento ${marketSegmentSlug} fase P${phase}${pkg.requiresPaymentValidation ? " — aguardando pagamento" : ""}`,
+  });
+
+  if (paymentVerified) {
+    await recordProvisioningPlatformActivity({
+      organizationId: org.id,
+      activityType: "tenant.trial_started",
+      body: `Trial de ${pkg.trialDays} dias iniciado`,
+    });
+  }
 
   return {
     organizationId: org.id,
     schemaName: org.schemaName,
     sectorId: "geral",
-    fase,
-    modulosAtivos: [...resolved],
-    recomendacoes,
+    fase: phase,
+    diagnosedPhase,
+    declaredPhase,
+    marketSegmentSlug,
+    provisioningStatus,
+    requiresPaymentValidation: pkg.requiresPaymentValidation,
+    modulosAtivos: moduleIds,
+    fallbackUsed: pkg.fallbackUsed,
+    bundlePrecoId: pkg.bundlePrecoId,
   };
-}
-
-async function expandModuleActivation(
-  moduleId: string,
-  current: string[],
-): Promise<string[]> {
-  const modulo = await validateModuleActivation(moduleId, current);
-  const next = new Set(current);
-  next.add(modulo.id);
-  if (modulo.parentModuleId) next.add(modulo.parentModuleId);
-  return [...next];
 }

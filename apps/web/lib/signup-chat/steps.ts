@@ -5,6 +5,12 @@ import {
   EMPTY_DIAGNOSTICO_DRAFT,
   draftToOnboardingInput,
 } from "@/lib/diagnostico/draft";
+import {
+  computeDiagnosedPhase,
+  FASE_OPTIONS,
+  faseConfirmPrompt,
+} from "@/lib/diagnostico/phase-labels";
+import { getMarketSegmentChoices } from "@/lib/diagnostico/segment-choices";
 import { TIPOS_NEGOCIO, VENDAS_MES_OPTIONS } from "@/lib/tipos-negocio";
 
 export { draftToOnboardingInput };
@@ -16,12 +22,15 @@ export type SignupStepId =
   | "emailCode"
   | "orgName"
   | "tipoNegocio"
+  | "marketSegment"
   | "temPontoFixo"
   | "vendasMes"
   | "temFuncionarios"
   | "possuiCnpj"
   | "cnpj"
   | "emiteNota"
+  | "faseConfirm"
+  | "faseEscolhida"
   | "summary";
 
 export type SignupDraft = DiagnosticoDraft;
@@ -116,6 +125,14 @@ export const SIGNUP_STEPS: SignupStepDef[] = [
     prompt:
       "Estou aprendendo o perfil do seu negócio. Em qual dessas opções ele se encaixa melhor?",
     choices: TIPOS_NEGOCIO.map((t) => ({ value: t.value, label: t.label })),
+    next: () => "marketSegment",
+  },
+  {
+    id: "marketSegment",
+    kind: "choices",
+    prompt:
+      "Em qual segmento de mercado seu negócio atua? Isso me ajuda a montar o pacote certo de ferramentas.",
+    choices: () => getMarketSegmentChoices(),
     next: () => "temPontoFixo",
   },
   {
@@ -179,6 +196,23 @@ export const SIGNUP_STEPS: SignupStepDef[] = [
       { value: "nao", label: "Ainda não" },
       { value: "nao_sei", label: "Não sei / estou começando" },
     ],
+    next: () => "faseConfirm",
+  },
+  {
+    id: "faseConfirm",
+    kind: "choices",
+    prompt: (d) => faseConfirmPrompt(d).replace(/\*\*/g, ""),
+    choices: [
+      { value: "confirmar", label: "Sim, está certo" },
+      { value: "ajustar", label: "Quero ajustar a fase" },
+    ],
+    next: (d) => (d.declaredPhase != null ? "summary" : "faseEscolhida"),
+  },
+  {
+    id: "faseEscolhida",
+    kind: "choices",
+    prompt: "Qual fase descreve melhor seu negócio hoje?",
+    choices: [...FASE_OPTIONS],
     next: () => "summary",
   },
   {
@@ -226,6 +260,8 @@ export function applyAnswer(
       return { ...draft, organizationName: v };
     case "tipoNegocio":
       return { ...draft, tipoNegocio: v as TipoNegocio };
+    case "marketSegment":
+      return { ...draft, marketSegmentSlug: v };
     case "temPontoFixo":
       return { ...draft, temPontoFixo: v === "sim" };
     case "vendasMes":
@@ -246,8 +282,20 @@ export function applyAnswer(
         ...draft,
         cnpj: v.toLowerCase() === "pular" ? "" : v,
       };
-    case "emiteNota":
-      return { ...draft, emiteNota: v as SignupDraft["emiteNota"] };
+    case "emiteNota": {
+      const next = { ...draft, emiteNota: v as SignupDraft["emiteNota"] };
+      const diagnosed = computeDiagnosedPhase(next);
+      return { ...next, diagnosedPhase: diagnosed };
+    }
+    case "faseConfirm": {
+      const diagnosed = draft.diagnosedPhase ?? computeDiagnosedPhase(draft);
+      if (v === "confirmar") {
+        return { ...draft, declaredPhase: diagnosed };
+      }
+      return { ...draft, declaredPhase: null };
+    }
+    case "faseEscolhida":
+      return { ...draft, declaredPhase: Number(v) };
     default:
       return draft;
   }

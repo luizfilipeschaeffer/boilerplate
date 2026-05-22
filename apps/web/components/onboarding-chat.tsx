@@ -5,7 +5,9 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, User } from "lucide-react";
 
+import { getMarketSegmentChoices } from "@/app/actions/market-segments";
 import { submitOnboarding } from "@/app/actions/onboarding";
+import { setMarketSegmentChoices } from "@/lib/diagnostico/segment-choices";
 import { AprendizAvatar } from "@/components/aprendiz/aprendiz-avatar";
 import { draftToOnboardingInput } from "@/lib/diagnostico/draft";
 import type { DiagnosticoDraft } from "@/lib/diagnostico/draft";
@@ -126,6 +128,13 @@ export function AprendizOnboardingChat({
     scrollToBottom();
   }, [messages, typing, scrollToBottom]);
 
+  React.useEffect(() => {
+    if (currentStep !== "marketSegment" && currentStep !== "tipoNegocio") return;
+    void getMarketSegmentChoices(draft.tipoNegocio).then((choices) => {
+      setMarketSegmentChoices(choices);
+    });
+  }, [currentStep, draft.tipoNegocio]);
+
   const step = getStep(currentStep);
   const choiceOptions =
     step.kind === "choices"
@@ -142,7 +151,7 @@ export function AprendizOnboardingChat({
     setFinished(true);
     try {
       const payload = draftToOnboardingInput(finalDraft);
-      await submitOnboarding({ ...payload, password });
+      const result = await submitOnboarding({ ...payload, password });
       const res = await signIn("credentials", {
         email: payload.email,
         password,
@@ -157,7 +166,11 @@ export function AprendizOnboardingChat({
         setFinished(false);
         return;
       }
-      router.push("/aprendiz?primeiroContato=1");
+      if (result.requiresPaymentValidation) {
+        router.push("/configuracoes/cobranca?primeiroAcesso=1");
+      } else {
+        router.push("/aprendiz?primeiroContato=1");
+      }
       router.refresh();
     } catch (e) {
       const msg =

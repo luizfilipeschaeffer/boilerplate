@@ -2,7 +2,7 @@
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
-import type { PlatformNavItem } from "@/lib/modules/platform-nav";
+import type { PlatformSidebarNavEntry } from "@/lib/modules/platform-sidebar-nav";
 import type { PlatformRole } from "@boilerplate/db";
 import {
   Sidebar,
@@ -16,11 +16,11 @@ import {
 import { Shield } from "lucide-react";
 
 export function AppSidebar({
-  navItems,
+  navEntries,
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
-  navItems: PlatformNavItem[];
+  navEntries: PlatformSidebarNavEntry[];
   user: { name: string; email: string; platformRole: PlatformRole };
 }) {
   return (
@@ -43,7 +43,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
+        <NavMain entries={navEntries} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

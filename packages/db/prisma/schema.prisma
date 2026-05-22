@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -18,6 +19,15 @@ model Organization {
   crmStage          String   @default("trial") @map("crm_stage")
   tipoNegocio       String   @map("tipo_negocio")
   segmentoAtuacao   String?  @map("segmento_atuacao")
+  marketSegmentSlug String?  @map("market_segment_slug")
+  diagnosedPhase    Int?     @map("diagnosed_phase")
+  declaredPhase     Int?     @map("declared_phase")
+  /// pending_payment | pre_active | trial | active | blocked
+  provisioningStatus String  @default("trial") @map("provisioning_status")
+  paymentIntegratorId String? @map("payment_integrator_id")
+  paymentCustomerRef  String? @map("payment_customer_ref")
+  paymentMethodVerifiedAt DateTime? @map("payment_method_verified_at")
+  trialEndsAt       DateTime? @map("trial_ends_at")
   hasCnpj           Boolean  @default(false) @map("has_cnpj")
   cnpj              String?
   fiscalReady       Boolean  @default(false) @map("fiscal_ready")
@@ -25,6 +35,7 @@ model Organization {
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
+  marketSegment     MarketSegment? @relation(fields: [marketSegmentSlug], references: [slug], onDelete: SetNull)
   modulosAtivos  ModuloAtivo[]
   moduloDemanda  ModuloDemanda[]
   memberships    Membership[]
@@ -36,7 +47,10 @@ model Organization {
   platformCommsThreads PlatformCommsThread[]
   platformActivities  PlatformActivity[]
   platformCommsConsents PlatformCommsConsent[]
+  tenantIntegrators   TenantIntegrator[]
 
+  @@index([marketSegmentSlug])
+  @@index([provisioningStatus])
   @@schema("boilerplate")
   @@map("organizations")
 }
@@ -253,6 +267,8 @@ model Membership {
   role            String   @default("dono")
   active          Boolean  @default(true)
   defaultBranchId String?  @map("default_branch_id")
+  /// Atalhos pessoais da paleta (Alt+P); null = herda o padrão do setor
+  commandPaletteShortcuts Json? @map("command_palette_shortcuts")
   createdAt       DateTime @default(now()) @map("created_at")
 
   user              User               @relation(fields: [userId], references: [id])
@@ -293,6 +309,8 @@ model Sector {
   coreSectorSlug  String? @map("core_sector_slug")
   /// IDs dos cards do painel inicial por setor (ex.: cash_flow, clients, stock_alerts)
   dashboardCards  Json    @default("[\"cash_flow\",\"clients\",\"stock_alerts\"]") @map("dashboard_cards")
+  /// IDs dos atalhos da paleta de comandos (Alt+P) por setor
+  commandPaletteShortcuts Json @default("[\"action:catalogo-novo\",\"action:cliente-novo\",\"action:venda-nova\"]") @map("command_palette_shortcuts")
 
   sectorModules           SectorModule[]
   membershipSectors       MembershipSector[]
@@ -402,15 +420,90 @@ model CoreModuleCatalog {
 
 /// Segmentos de mercado (estudo) — PRD §5.0.2
 model MarketSegment {
-  slug  String @id
-  name  String
-  ordem Int    @default(0)
+  slug                 String  @id
+  name                 String
+  ordem                Int     @default(0)
+  ativo                Boolean @default(true)
+  icone                String?
+  tipoNegocioSugeridos Json     @default("[]") @map("tipo_negocio_sugeridos")
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
 
-  sectorModules SegmentSectorModule[]
-  vitalModules  SegmentVitalModule[]
+  sectorModules   SegmentSectorModule[]
+  vitalModules    SegmentVitalModule[]
+  phaseConfigs    SegmentPhaseConfig[]
+  organizations   Organization[]
 
   @@schema("boilerplate")
   @@map("market_segments")
+}
+
+/// Matriz segmento × fase P → bundle/módulos e política de trial/pagamento
+model SegmentPhaseConfig {
+  id                        String   @id @default(uuid())
+  segmentSlug               String   @map("segment_slug")
+  phase                     Int
+  bundlePrecoId             String?  @map("bundle_preco_id")
+  moduleIds                 Json     @default("[]") @map("module_ids")
+  requiresPaymentValidation Boolean  @default(false) @map("requires_payment_validation")
+  trialDays                 Int      @default(14) @map("trial_days")
+  preActivateModules        Boolean  @default(true) @map("pre_activate_modules")
+  ativo                     Boolean  @default(true)
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  segment     MarketSegment @relation(fields: [segmentSlug], references: [slug], onDelete: Cascade)
+  bundlePreco BundlePreco?  @relation(fields: [bundlePrecoId], references: [id], onDelete: SetNull)
+
+  @@unique([segmentSlug, phase])
+  @@index([segmentSlug])
+  @@schema("boilerplate")
+  @@map("segment_phase_configs")
+}
+
+/// Gateways de pagamento habilitados na plataforma (credenciais em env)
+model PlatformPaymentGateway {
+  integratorId String   @id @map("integrator_id")
+  label        String
+  isDefault    Boolean  @default(false) @map("is_default")
+  configSchema Json     @default("{}") @map("config_schema")
+  ativo        Boolean  @default(true)
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@schema("boilerplate")
+  @@map("platform_payment_gateways")
+}
+
+/// Integrador escolhido pelo tenant (pagamento)
+model TenantIntegrator {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  integratorId   String   @map("integrator_id")
+  config         Json     @default("{}")
+  ativo          Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, integratorId])
+  @@index([organizationId])
+  @@schema("boilerplate")
+  @@map("tenant_integrators")
+}
+
+/// Auditoria de alterações em segmentos, fases, bundles e gateways
+model PlatformConfigAuditLog {
+  id                   String   @id @default(uuid())
+  entityType           String   @map("entity_type")
+  entityId             String   @map("entity_id")
+  action               String
+  actorPlatformUserId  String?  @map("actor_platform_user_id")
+  diff                 Json     @default("{}")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@schema("boilerplate")
+  @@map("platform_config_audit_logs")
 }
 
 model SegmentSectorModule {
@@ -519,6 +612,8 @@ model BundlePreco {
   precoMensalCentavos Int      @map("preco_mensal_centavos")
   ativo               Boolean  @default(true)
   updatedAt           DateTime @updatedAt @map("updated_at")
+
+  segmentPhaseConfigs SegmentPhaseConfig[]
 
   @@schema("boilerplate")
   @@map("bundle_precos")

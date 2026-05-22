@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { PlatformShell } from "@/components/platform-shell";
-import { getPlatformNavForRole } from "@/lib/modules/platform-nav";
+import { buildPlatformSidebarNav } from "@/lib/modules/platform-sidebar-nav";
 import { redirect } from "next/navigation";
 
 export default async function PlatformLayout({
@@ -11,7 +11,7 @@ export default async function PlatformLayout({
   const session = await auth();
   if (!session?.user?.platformRole) redirect("/login");
 
-  const navItems = getPlatformNavForRole(session.user.platformRole);
+  const navEntries = buildPlatformSidebarNav(session.user.platformRole);
   const user = {
     name: session.user.name ?? "Operador",
     email: session.user.email ?? "",
@@ -19,7 +19,7 @@ export default async function PlatformLayout({
   };
 
   return (
-    <PlatformShell navItems={navItems} user={user}>
+    <PlatformShell navEntries={navEntries} user={user}>
       {children}
     </PlatformShell>
   );

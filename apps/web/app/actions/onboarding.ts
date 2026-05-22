@@ -28,7 +28,11 @@ export type OnboardingSubmitInput = DiagnosticoInput & {
 
 export async function submitOnboarding(
   input: OnboardingSubmitInput,
-): Promise<{ ok: true }> {
+): Promise<{
+  ok: true;
+  requiresPaymentValidation: boolean;
+  provisioningStatus: string;
+}> {
   const session = await auth();
   if (!session?.user) {
     throw new Error("Não autenticado");
@@ -47,7 +51,10 @@ export async function submitOnboarding(
   }
 
   ensureModulesRegistered();
-  const onboarding = await completeOnboarding(user.id, input);
+  const onboarding = await completeOnboarding(user.id, input, {
+    marketSegmentSlug: input.segmentoAtuacao ?? "varejo",
+    declaredPhase: input.declaredPhase ?? undefined,
+  });
 
   await setUserPassword(email, input.password);
 
@@ -73,5 +80,9 @@ export async function submitOnboarding(
 
   revalidatePath("/dashboard");
 
-  return { ok: true };
+  return {
+    ok: true,
+    requiresPaymentValidation: onboarding.requiresPaymentValidation,
+    provisioningStatus: onboarding.provisioningStatus,
+  };
 }

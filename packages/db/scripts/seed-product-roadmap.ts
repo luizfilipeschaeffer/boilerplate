@@ -123,8 +123,14 @@ for (const seg of data.segments) {
   ordem += 10;
   await prisma.marketSegment.upsert({
     where: { slug: seg.slug },
-    create: { slug: seg.slug, name: seg.name, ordem },
-    update: { name: seg.name, ordem },
+    create: {
+      slug: seg.slug,
+      name: seg.name,
+      ordem,
+      ativo: true,
+      tipoNegocioSugeridos: [],
+    },
+    update: { name: seg.name, ordem, ativo: true },
   });
 
   for (const vital of seg.vitalModules) {
@@ -199,8 +205,14 @@ for (const c of data.changelog) {
 }
 
 const synced = await syncRegistryToCatalog();
+
+const { seedAllSegmentPhaseConfigs } = await import("../src/segment-phases");
+const { seedDefaultPaymentGateways } = await import("../src/platform-payment");
+const phaseConfigs = await seedAllSegmentPhaseConfigs();
+const gateways = await seedDefaultPaymentGateways();
+
 console.log(
-  `[seed-roadmap] OK — ${data.sectors.length} setores, ${data.modules.length} módulos, ${data.segments.length} segmentos, sync registry: ${synced}`,
+  `[seed-roadmap] OK — ${data.sectors.length} setores, ${data.modules.length} módulos, ${data.segments.length} segmentos, ${phaseConfigs} configs fase, ${gateways} gateways, sync registry: ${synced}`,
 );
 
 await prisma.$disconnect();

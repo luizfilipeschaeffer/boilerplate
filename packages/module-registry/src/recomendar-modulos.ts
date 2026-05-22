@@ -15,6 +15,8 @@ export interface ModuloRecomendacao {
 export interface DiagnosticoInput {
   tipoNegocio: TipoNegocio;
   segmentoAtuacao?: string | null;
+  /** Fase P escolhida pelo cliente (override); senão usa classificarFase. */
+  declaredPhase?: number | null;
   temPontoFixo: boolean;
   vendasMes: "ate50" | "50a200" | "200a1000" | "acima1000";
   temFuncionarios: boolean;

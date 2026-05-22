@@ -11,11 +11,27 @@ export type StockMovementType = "entrada" | "saida" | "ajuste";
 
 export interface StockMovementRow {
   id: string;
+  batch_id: string | null;
   catalog_item_id: string;
   movement_type: string;
   quantity: number;
   note: string | null;
   created_at: Date;
+}
+
+export interface StockMovementBatchLine {
+  id: string;
+  catalogItemId: string;
+  productName: string;
+  quantity: number;
+}
+
+export interface StockMovementBatch {
+  batchId: string;
+  movementType: StockMovementType;
+  note: string | null;
+  createdAt: Date;
+  lines: StockMovementBatchLine[];
 }
 
 export interface LowStockItem {
@@ -55,6 +71,53 @@ export async function listNearLowStockItems(
   );
 }
 
+export async function listStockMovementBatches(
+  schemaName: string,
+  limit = 150,
+): Promise<StockMovementBatch[]> {
+  assertSafeSchemaName(schemaName);
+  const movTable = tenantStockMovementsTable(schemaName);
+  const catalogTable = tenantCatalogTable(schemaName);
+  const rows = await prisma.$queryRawUnsafe<
+    StockMovementRow & { item_name: string }
+  >(
+    `SELECT m.id, m.batch_id, m.catalog_item_id, m.movement_type, m.quantity, m.note, m.created_at,
+            c.name AS item_name
+     FROM ${movTable} m
+     INNER JOIN ${catalogTable} c ON c.id = m.catalog_item_id
+     ORDER BY m.created_at DESC
+     LIMIT $1`,
+    limit,
+  );
+
+  const order: string[] = [];
+  const batches = new Map<string, StockMovementBatch>();
+
+  for (const row of rows) {
+    const batchId = row.batch_id ?? row.id;
+    let batch = batches.get(batchId);
+    if (!batch) {
+      batch = {
+        batchId,
+        movementType: row.movement_type as StockMovementType,
+        note: row.note,
+        createdAt: row.created_at,
+        lines: [],
+      };
+      batches.set(batchId, batch);
+      order.push(batchId);
+    }
+    batch.lines.push({
+      id: row.id,
+      catalogItemId: row.catalog_item_id,
+      productName: row.item_name,
+      quantity: row.quantity,
+    });
+  }
+
+  return order.map((id) => batches.get(id)!);
+}
+
 export async function adjustStock(
   schemaName: string,
   input: {
@@ -62,6 +125,7 @@ export async function adjustStock(
     movementType: StockMovementType;
     quantity: number;
     note?: string | null;
+    batchId?: string | null;
   },
 ): Promise<{ item: CatalogItemRow; movement: StockMovementRow }> {
   assertSafeSchemaName(schemaName);
@@ -94,10 +158,11 @@ export async function adjustStock(
   );
 
   const movements = await prisma.$queryRawUnsafe<StockMovementRow[]>(
-    `INSERT INTO ${movTable} (id, catalog_item_id, movement_type, quantity, note)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING id, catalog_item_id, movement_type, quantity, note, created_at`,
+    `INSERT INTO ${movTable} (id, batch_id, catalog_item_id, movement_type, quantity, note)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id, batch_id, catalog_item_id, movement_type, quantity, note, created_at`,
     movId,
+    input.batchId ?? null,
     item.id,
     input.movementType,
     qty,

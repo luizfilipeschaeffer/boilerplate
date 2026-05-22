@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { listContextOptionsAction } from "@/app/actions/context";
 import {
@@ -12,20 +11,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Building2, Layers } from "lucide-react";
+import { updateSessionContext } from "@/lib/auth/update-session-context";
 
-export function ContextSwitchers() {
-  const { data: session, update } = useSession();
+type ContextSwitchersProps = {
+  branchId?: string | null;
+  sectorId?: string;
+};
+
+export function ContextSwitchers({
+  branchId: initialBranchId,
+  sectorId: initialSectorId = "geral",
+}: ContextSwitchersProps) {
   const router = useRouter();
   const [options, setOptions] = React.useState<
     Awaited<ReturnType<typeof listContextOptionsAction>> | null
   >(null);
+  const [branchId, setBranchId] = React.useState(initialBranchId ?? "");
+  const [sectorId, setSectorId] = React.useState(initialSectorId);
+
+  React.useEffect(() => {
+    setBranchId(initialBranchId ?? "");
+    setSectorId(initialSectorId);
+  }, [initialBranchId, initialSectorId]);
 
   React.useEffect(() => {
     void listContextOptionsAction().then(setOptions);
   }, []);
-
-  const branchId = session?.branchId ?? options?.branchId ?? "";
-  const sectorId = session?.sectorId ?? options?.sectorId ?? "geral";
 
   if (
     !options ||
@@ -34,10 +45,11 @@ export function ContextSwitchers() {
     return null;
   }
 
-  const sectorSlug =
-    options.sectors.some((s) => s.slug === sectorId)
-      ? sectorId
-      : (options.sectors[0]?.slug ?? sectorId);
+  const resolvedBranchId =
+    branchId || options.branchId || options.branches[0]?.id || "";
+  const sectorSlug = options.sectors.some((s) => s.slug === sectorId)
+    ? sectorId
+    : (options.sectors[0]?.slug ?? sectorId);
 
   return (
     <div className="flex flex-col gap-2 px-2 py-2 group-data-[collapsible=icon]:hidden">
@@ -48,9 +60,10 @@ export function ContextSwitchers() {
             Filial
           </span>
           <Select
-            value={branchId || options.branches[0]?.id}
+            value={resolvedBranchId}
             onValueChange={async (id) => {
-              await update({ branchId: id });
+              setBranchId(id);
+              await updateSessionContext({ branchId: id });
               router.refresh();
             }}
           >
@@ -76,7 +89,8 @@ export function ContextSwitchers() {
           <Select
             value={sectorSlug}
             onValueChange={async (slug) => {
-              await update({ sectorId: slug });
+              setSectorId(slug);
+              await updateSessionContext({ sectorId: slug });
               router.refresh();
             }}
           >

@@ -9,7 +9,9 @@ import {
   confirmSignupEmailCode,
   sendSignupVerificationCode,
 } from "@/app/actions/email-verification";
+import { getMarketSegmentChoices } from "@/app/actions/market-segments";
 import { registerAndOnboard } from "@/app/actions/signup";
+import { setMarketSegmentChoices } from "@/lib/diagnostico/segment-choices";
 import { AprendizAvatar } from "@/components/aprendiz/aprendiz-avatar";
 import { cn } from "@/lib/utils";
 import { persistSignupDraft } from "@/app/actions/signup-draft";
@@ -244,12 +246,20 @@ export function AprendizCadastroChat({
     await showAprendiz(nextId, nextDraft);
   }
 
+  React.useEffect(() => {
+    if (currentStep !== "marketSegment" && currentStep !== "tipoNegocio") return;
+    void getMarketSegmentChoices(draft.tipoNegocio).then((choices) => {
+      setMarketSegmentChoices(choices);
+    });
+  }, [currentStep, draft.tipoNegocio]);
+
   async function finishSignup(finalDraft: SignupDraft) {
     setSubmitting(true);
     setFinished(true);
     try {
       const payload = draftToOnboardingInput(finalDraft);
-      const { automacoesAtivas } = await registerAndOnboard(payload);
+      const result = await registerAndOnboard(payload);
+      const { automacoesAtivas, requiresPaymentValidation } = result;
       const res = await signIn("credentials", {
         email: payload.email,
         password: "signup",
@@ -272,7 +282,11 @@ export function AprendizCadastroChat({
           : "Pronto! Sua conta está criada. Te espero no painel do Aprendiz — vou continuar aprendendo com você.",
       );
       await delay(800);
-      router.push("/aprendiz?primeiroContato=1");
+      if (requiresPaymentValidation) {
+        router.push("/configuracoes/cobranca?primeiroAcesso=1");
+      } else {
+        router.push("/aprendiz?primeiroContato=1");
+      }
       router.refresh();
     } catch (e) {
       const msg =

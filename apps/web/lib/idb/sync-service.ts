@@ -209,9 +209,19 @@ export async function pullTenantSync(
       if (data.sales.length > 0) {
         await putMany(organizationId, "sales", mapSales(data.sales));
       }
+
+      const localCatalog = await getAllFromStore<CachedCatalogItem>(
+        organizationId,
+        "catalog",
+      );
+      if (localCatalog.length === 0) {
+        syncInFlight = false;
+        notifyScheduleChange();
+        return pullTenantSync(organizationId, { full: true });
+      }
     }
 
-    lowStockIds = data.stock.lowIds;
+    lowStockIds = data.stock?.lowIds ?? [];
 
     if (data.ids) {
       await reconcileDeletions(organizationId, data.ids);

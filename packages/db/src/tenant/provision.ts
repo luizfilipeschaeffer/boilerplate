@@ -44,6 +44,7 @@ function tenantDdlStatements(schema: string): string[] {
     )`,
     `CREATE TABLE IF NOT EXISTS "${schema}"."stock_movements" (
       id TEXT PRIMARY KEY,
+      batch_id TEXT,
       catalog_item_id TEXT NOT NULL,
       movement_type TEXT NOT NULL,
       quantity INTEGER NOT NULL,
@@ -86,6 +87,7 @@ function tenantMigrateStatements(schema: string): string[] {
     `ALTER TABLE "${schema}"."catalog_items" ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT true`,
     `ALTER TABLE "${schema}"."catalog_items" ADD COLUMN IF NOT EXISTS stock_qty INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE "${schema}"."catalog_items" ADD COLUMN IF NOT EXISTS stock_min INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE "${schema}"."stock_movements" ADD COLUMN IF NOT EXISTS batch_id TEXT`,
     `CREATE TABLE IF NOT EXISTS "${schema}"."aprendiz_perfil" (
       id TEXT PRIMARY KEY DEFAULT 'principal',
       owner_name TEXT NOT NULL,

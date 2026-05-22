@@ -5,10 +5,13 @@ import { usePathname } from "next/navigation";
 const titles: Record<string, string> = {
   "/dashboard": "Início",
   "/estoque": "Estoque",
+  "/estoque/produtos": "Produtos em estoque",
+  "/estoque/movimentacao": "Movimentação",
   "/fluxo-caixa": "Fluxo de caixa",
   "/vendedores": "Vendedores",
   "/pedidos": "Pedidos",
   "/configuracoes": "Configurações",
+  "/configuracoes/empresa": "Minha empresa",
   "/configuracoes/filiais": "Filiais",
   "/configuracoes/membros": "Membros",
   "/configuracoes/setores": "Setores",

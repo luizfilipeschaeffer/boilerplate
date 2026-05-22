@@ -57,7 +57,10 @@ const diagnosticoSteps: OnboardingStepDef[] = DIAGNOSTICO_STEP_IDS.map(
       },
       next: (draft) => {
         const n = base.next(draft);
-        if (id === "emiteNota") return "password";
+        if (id === "faseEscolhida" || (id === "faseConfirm" && n === null)) {
+          return "password";
+        }
+        if (id === "emiteNota") return "faseConfirm";
         if (!n) return "summary";
         return n;
       },

@@ -64,7 +64,7 @@ export const FASE1_MISSIONS: MissionDef[] = [
     id: "ver_estoque",
     title: "Confira o estoque",
     description: "Veja como acompanhar quantidade do que você vende.",
-    href: "/estoque",
+    href: "/estoque/movimentacao",
     cta: "Ver estoque",
     kind: "visit",
   },

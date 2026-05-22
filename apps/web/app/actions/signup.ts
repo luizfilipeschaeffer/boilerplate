@@ -40,7 +40,12 @@ export async function checkSignupEmail(email: string): Promise<{
 
 export async function registerAndOnboard(
   input: RegisterInput,
-): Promise<{ email: string; automacoesAtivas: string[] }> {
+): Promise<{
+  email: string;
+  automacoesAtivas: string[];
+  requiresPaymentValidation: boolean;
+  provisioningStatus: string;
+}> {
   const email = input.email.trim().toLowerCase();
   const check = await checkSignupEmail(email);
   if (!check.canRegister) {
@@ -54,17 +59,24 @@ export async function registerAndOnboard(
   const user = await findOrCreateUserByEmail(email, input.name.trim());
 
   ensureModulesRegistered();
-  const onboarding = await completeOnboarding(user.id, {
-    organizationName: input.organizationName,
-    tipoNegocio: input.tipoNegocio,
-    segmentoAtuacao: input.segmentoAtuacao,
-    temPontoFixo: input.temPontoFixo,
-    vendasMes: input.vendasMes,
-    temFuncionarios: input.temFuncionarios,
-    emiteNota: input.emiteNota,
-    possuiCnpj: input.possuiCnpj,
-    cnpj: input.cnpj,
-  });
+  const onboarding = await completeOnboarding(
+    user.id,
+    {
+      organizationName: input.organizationName,
+      tipoNegocio: input.tipoNegocio,
+      segmentoAtuacao: input.segmentoAtuacao,
+      temPontoFixo: input.temPontoFixo,
+      vendasMes: input.vendasMes,
+      temFuncionarios: input.temFuncionarios,
+      emiteNota: input.emiteNota,
+      possuiCnpj: input.possuiCnpj,
+      cnpj: input.cnpj,
+    },
+    {
+      marketSegmentSlug: input.segmentoAtuacao ?? "varejo",
+      declaredPhase: input.declaredPhase ?? undefined,
+    },
+  );
 
   const perfil: AprendizPerfilCadastro = buildPerfilCadastro(
     input,
@@ -79,5 +91,10 @@ export async function registerAndOnboard(
 
   await deleteSignupDraft(email);
 
-  return { email, automacoesAtivas };
+  return {
+    email,
+    automacoesAtivas,
+    requiresPaymentValidation: onboarding.requiresPaymentValidation,
+    provisioningStatus: onboarding.provisioningStatus,
+  };
 }

@@ -125,7 +125,7 @@ export function registerAllModules(): void {
   scaffold("core-estoque-basico", "Estoque", {
     navOrdem: 40,
     dependencias: ["core-catalogo"],
-    routePath: "/estoque",
+    routePath: "/estoque/produtos",
     implementationStatus: "implemented",
     sectorSlug: "operacao",
     camada: "Operacional",

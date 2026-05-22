@@ -1,4 +1,4 @@
-import { prisma } from "./client";
+import { prisma, type Prisma } from "./client";
 import { ensureDefaultBranch } from "./branches";
 import { seedDefaultSectorModules } from "./sectors-admin";
 import { provisionTenantSchema } from "./tenant/provision";
@@ -96,6 +96,12 @@ export interface CreateOrganizationInput {
   tipoNegocio: string;
   phase: number;
   segmentoAtuacao?: string | null;
+  marketSegmentSlug?: string | null;
+  diagnosedPhase?: number | null;
+  declaredPhase?: number | null;
+  provisioningStatus?: string;
+  paymentIntegratorId?: string | null;
+  trialEndsAt?: Date | null;
   hasCnpj: boolean;
   cnpj?: string | null;
   fiscalReady: boolean;
@@ -107,19 +113,28 @@ export async function createOrganizationWithTenant(
 ) {
   const schemaName = schemaNameFromSlug(input.slug);
 
-  const org = await prisma.$transaction(async (tx) => {
+  const org = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const organizationData: Prisma.OrganizationUncheckedCreateInput = {
+      name: input.name,
+      slug: input.slug,
+      schemaName,
+      phase: input.phase,
+      tipoNegocio: input.tipoNegocio,
+      segmentoAtuacao: input.segmentoAtuacao,
+      marketSegmentSlug:
+        input.marketSegmentSlug ?? input.segmentoAtuacao ?? null,
+      diagnosedPhase: input.diagnosedPhase ?? input.phase,
+      declaredPhase: input.declaredPhase ?? input.phase,
+      provisioningStatus: input.provisioningStatus ?? "trial",
+      paymentIntegratorId: input.paymentIntegratorId ?? null,
+      trialEndsAt: input.trialEndsAt ?? null,
+      hasCnpj: input.hasCnpj,
+      cnpj: input.cnpj,
+      fiscalReady: input.fiscalReady,
+    };
+
     const organization = await tx.organization.create({
-      data: {
-        name: input.name,
-        slug: input.slug,
-        schemaName,
-        phase: input.phase,
-        tipoNegocio: input.tipoNegocio,
-        segmentoAtuacao: input.segmentoAtuacao,
-        hasCnpj: input.hasCnpj,
-        cnpj: input.cnpj,
-        fiscalReady: input.fiscalReady,
-      },
+      data: organizationData,
     });
 
     const sector = await tx.sector.create({
@@ -146,7 +161,7 @@ export async function createOrganizationWithTenant(
         organizationId: organization.id,
         role: "dono",
         defaultBranchId: branch.id,
-      },
+      } satisfies Prisma.MembershipUncheckedCreateInput,
     });
 
     await tx.membershipSector.create({

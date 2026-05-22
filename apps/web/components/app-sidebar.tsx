@@ -77,11 +77,15 @@ export function AppSidebar({
   navItems,
   user,
   role = "dono",
+  branchId,
+  sectorId = "geral",
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   navItems: NavItem[];
   user: { name: string; email: string };
   role?: string;
+  branchId?: string | null;
+  sectorId?: string;
 }) {
   const mainNavItems = navItems.filter(
     (item) => !item.href.startsWith("/configuracoes"),
@@ -95,6 +99,7 @@ export function AppSidebar({
       icon: <LayoutDashboard className="size-4" />,
     },
     mapIcon: moduleIcon,
+    role,
   });
 
   return (
@@ -115,7 +120,7 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-        <ContextSwitchers />
+        <ContextSwitchers branchId={branchId} sectorId={sectorId} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain entries={entries} />

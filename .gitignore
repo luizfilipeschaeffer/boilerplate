@@ -9,6 +9,7 @@ dist
 .DS_Store
 coverage
 .vercel
+packages/db/src/generated
 
 
 .env

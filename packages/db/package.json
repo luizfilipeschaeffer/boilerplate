@@ -20,6 +20,8 @@
   },
   "dependencies": {
     "@boilerplate/crm": "workspace:*",
+    "@boilerplate/billing": "workspace:*",
+    "@boilerplate/integrators": "workspace:*",
     "@boilerplate/module-registry": "workspace:*",
     "@boilerplate/shared": "workspace:*",
     "@prisma/client": "^6.9.0",

@@ -136,7 +136,7 @@ export default async function OrganizacaoDetailPage({
             )}
           </CardContent>
         </Card>
-      </Card>
+      </div>
 
       <Card>
         <CardHeader>
