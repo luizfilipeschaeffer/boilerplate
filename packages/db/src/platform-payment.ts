@@ -41,6 +41,12 @@ const DEFAULT_GATEWAYS: PlatformPaymentGatewayRow[] = [
 ];
 
 export async function seedDefaultPaymentGateways(): Promise<number> {
+  const { seedPaymentGatewaysFromCatalog, loadPlatformCatalogJson } =
+    await import("./platform-integrators");
+  const catalog = loadPlatformCatalogJson();
+  const fromCatalog = await seedPaymentGatewaysFromCatalog(catalog.integrators);
+  if (fromCatalog > 0) return fromCatalog;
+
   for (const g of DEFAULT_GATEWAYS) {
     await prisma.platformPaymentGateway.upsert({
       where: { integratorId: g.integratorId },

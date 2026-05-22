@@ -48,7 +48,11 @@ const MODULE_ACCESS: Record<PlatformModuleId, PlatformRole[]> = {
     "platform_comercial",
     "platform_suporte",
   ],
-  "platform-integradores": ["platform_admin"],
+  "platform-integradores": [
+    "platform_admin",
+    "platform_produto",
+    "platform_engenharia",
+  ],
   "platform-roadmap": [
     "platform_admin",
     "platform_produto",

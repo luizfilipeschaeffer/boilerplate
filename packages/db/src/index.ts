@@ -44,6 +44,7 @@ export * from "./activation";
 export * from "./segment-phases";
 export * from "./platform-audit";
 export * from "./platform-payment";
+export * from "./platform-integrators";
 export * from "./provisioning";
 export * from "./provisioning-events";
 export * from "./billing-payment";

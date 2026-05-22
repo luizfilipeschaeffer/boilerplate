@@ -1,0 +1,278 @@
+{
+  "integrators": [
+    {
+      "id": "payment-mock",
+      "label": "Mock (desenvolvimento)",
+      "tipo": "payment",
+      "provider": "Interno",
+      "description": "Simula cobrança e webhooks em ambiente local.",
+      "implementationStatus": "implemented",
+      "modulosSuportados": ["*"],
+      "packagePath": "packages/integrators",
+      "deliveryMarco": "R1",
+      "ordem": 10,
+      "gateway": { "isDefault": true, "configSchema": {}, "ativo": true }
+    },
+    {
+      "id": "payment-asaas",
+      "label": "Asaas",
+      "tipo": "payment",
+      "provider": "Asaas",
+      "description": "Assinaturas e cobrança recorrente via API Asaas.",
+      "implementationStatus": "implemented",
+      "modulosSuportados": ["*"],
+      "packagePath": "packages/integrators",
+      "deliveryMarco": "R2",
+      "ordem": 20,
+      "gateway": { "isDefault": false, "configSchema": { "envKey": "ASAAS_API_KEY" }, "ativo": true }
+    },
+    {
+      "id": "payment-stripe",
+      "label": "Stripe",
+      "tipo": "payment",
+      "provider": "Stripe",
+      "description": "Scaffold de adapter; checkout e webhooks a conectar.",
+      "implementationStatus": "scaffold",
+      "modulosSuportados": ["*"],
+      "packagePath": "packages/integrators",
+      "deliveryMarco": "R3",
+      "ordem": 30,
+      "gateway": { "isDefault": false, "configSchema": { "envKey": "STRIPE_SECRET_KEY" }, "ativo": true }
+    },
+    {
+      "id": "payment-mercadopago",
+      "label": "Mercado Pago",
+      "tipo": "payment",
+      "provider": "Mercado Pago",
+      "description": "Scaffold de adapter para mercado brasileiro.",
+      "implementationStatus": "scaffold",
+      "modulosSuportados": ["*"],
+      "packagePath": "packages/integrators",
+      "deliveryMarco": "R3",
+      "ordem": 40,
+      "gateway": { "isDefault": false, "configSchema": { "envKey": "MERCADOPAGO_ACCESS_TOKEN" }, "ativo": true }
+    },
+    {
+      "id": "payment-pagseguro",
+      "label": "PagSeguro",
+      "tipo": "payment",
+      "provider": "PagBank",
+      "description": "Gateway nacional — planejado.",
+      "implementationStatus": "planned",
+      "modulosSuportados": ["*"],
+      "packagePath": "packages/integrators",
+      "deliveryMarco": "R4",
+      "ordem": 50
+    },
+    {
+      "id": "fiscal-noop",
+      "label": "Fiscal (noop)",
+      "tipo": "fiscal",
+      "provider": "Interno",
+      "description": "Stub fiscal para desenvolvimento sem emissor externo.",
+      "implementationStatus": "implemented",
+      "modulosSuportados": ["fiscal-core"],
+      "packagePath": "packages/integrators",
+      "deliveryMarco": "R1",
+      "ordem": 100
+    },
+    {
+      "id": "fiscal-focus-nfe",
+      "label": "Focus NFe",
+      "tipo": "fiscal",
+      "provider": "Focus NFe",
+      "description": "Emissão NFC-e, NF-e e eventos via API Focus.",
+      "implementationStatus": "planned",
+      "modulosSuportados": ["fiscal-core", "fiscal-nfce", "fiscal-nfe"],
+      "packagePath": "packages/integrators/fiscal",
+      "deliveryMarco": "R3",
+      "ordem": 110
+    },
+    {
+      "id": "fiscal-nfe-io",
+      "label": "NFE.io",
+      "tipo": "fiscal",
+      "provider": "NFE.io",
+      "description": "Provedor alternativo de documentos fiscais.",
+      "implementationStatus": "planned",
+      "modulosSuportados": ["fiscal-core", "fiscal-nfce", "fiscal-nfe"],
+      "packagePath": "packages/integrators/fiscal",
+      "deliveryMarco": "R4",
+      "ordem": 120
+    },
+    {
+      "id": "email-resend-mock",
+      "label": "E-mail (mock)",
+      "tipo": "messaging",
+      "provider": "Interno",
+      "description": "Envio simulado para platform-comms.",
+      "implementationStatus": "implemented",
+      "modulosSuportados": ["platform-comms"],
+      "packagePath": "packages/integrators",
+      "deliveryMarco": "R2",
+      "ordem": 200
+    },
+    {
+      "id": "messaging-resend",
+      "label": "Resend",
+      "tipo": "messaging",
+      "provider": "Resend",
+      "description": "E-mail transacional em produção.",
+      "implementationStatus": "planned",
+      "modulosSuportados": ["platform-comms"],
+      "packagePath": "packages/integrators/messaging",
+      "deliveryMarco": "R3",
+      "ordem": 210
+    },
+    {
+      "id": "messaging-twilio-sms",
+      "label": "Twilio SMS",
+      "tipo": "messaging",
+      "provider": "Twilio",
+      "description": "SMS e notificações.",
+      "implementationStatus": "planned",
+      "modulosSuportados": ["platform-comms"],
+      "packagePath": "packages/integrators/messaging",
+      "deliveryMarco": "R4",
+      "ordem": 220
+    },
+    {
+      "id": "social-whatsapp-mock",
+      "label": "WhatsApp (mock)",
+      "tipo": "social",
+      "provider": "Interno",
+      "description": "Canal WhatsApp simulado no CRM/comms.",
+      "implementationStatus": "implemented",
+      "modulosSuportados": ["platform-comms"],
+      "packagePath": "packages/integrators",
+      "deliveryMarco": "R2",
+      "ordem": 300
+    },
+    {
+      "id": "social-telegram-mock",
+      "label": "Telegram (mock)",
+      "tipo": "social",
+      "provider": "Interno",
+      "description": "Bot Telegram simulado.",
+      "implementationStatus": "implemented",
+      "modulosSuportados": ["platform-comms"],
+      "packagePath": "packages/integrators",
+      "deliveryMarco": "R2",
+      "ordem": 310
+    },
+    {
+      "id": "social-meta-whatsapp",
+      "label": "WhatsApp Business API",
+      "tipo": "social",
+      "provider": "Meta",
+      "description": "Cloud API oficial Meta para atendimento.",
+      "implementationStatus": "planned",
+      "modulosSuportados": ["platform-comms"],
+      "packagePath": "packages/integrators/social",
+      "deliveryMarco": "R4",
+      "ordem": 320
+    },
+    {
+      "id": "webhook-generic",
+      "label": "Webhook genérico",
+      "tipo": "webhook",
+      "provider": "Interno",
+      "description": "Entrada e saída de eventos HTTP normalizados.",
+      "implementationStatus": "planned",
+      "modulosSuportados": ["*"],
+      "packagePath": "packages/integrators/webhook",
+      "deliveryMarco": "R3",
+      "ordem": 400
+    }
+  ],
+  "moduloPrecos": [
+    { "moduleId": "core-catalogo", "precoMensalCentavos": 0, "faseMinima": 1, "cobrancaAvulsa": false, "ativo": true },
+    { "moduleId": "core-clientes", "precoMensalCentavos": 0, "faseMinima": 1, "cobrancaAvulsa": false, "ativo": true },
+    { "moduleId": "core-vendas", "precoMensalCentavos": 0, "faseMinima": 1, "cobrancaAvulsa": false, "ativo": true },
+    { "moduleId": "core-estoque-basico", "precoMensalCentavos": 0, "faseMinima": 1, "cobrancaAvulsa": false, "ativo": true },
+    { "moduleId": "core-ranking", "precoMensalCentavos": 0, "faseMinima": 1, "cobrancaAvulsa": false, "ativo": true },
+    { "moduleId": "core-crm", "precoMensalCentavos": 2900, "faseMinima": 2, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "fiscal-core", "precoMensalCentavos": 0, "faseMinima": 1, "cobrancaAvulsa": false, "ativo": true },
+    { "moduleId": "fiscal-nfce", "precoMensalCentavos": 3500, "faseMinima": 1, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "fiscal-nfe", "precoMensalCentavos": 4000, "faseMinima": 1, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "fiscal-cte", "precoMensalCentavos": 4500, "faseMinima": 1, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "fiscal-mdfe", "precoMensalCentavos": 2500, "faseMinima": 1, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "fiscal-ciot", "precoMensalCentavos": 2000, "faseMinima": 1, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "fiscal-sped", "precoMensalCentavos": 3000, "faseMinima": 1, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "fiscal-rural", "precoMensalCentavos": 3500, "faseMinima": 1, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "fiscal-contabil", "precoMensalCentavos": 0, "faseMinima": 2, "cobrancaAvulsa": true, "ativo": false },
+    { "moduleId": "aprendiz", "precoMensalCentavos": 0, "faseMinima": 1, "cobrancaAvulsa": false, "ativo": true },
+    { "moduleId": "fin-fluxo-caixa", "precoMensalCentavos": 2900, "faseMinima": 2, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "ops-vendedores", "precoMensalCentavos": 1900, "faseMinima": 2, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "rel-basico", "precoMensalCentavos": 1900, "faseMinima": 2, "cobrancaAvulsa": true, "ativo": true },
+    { "moduleId": "segment-moda", "precoMensalCentavos": 0, "faseMinima": 2, "cobrancaAvulsa": false, "ativo": true },
+    { "moduleId": "segment-alimentacao", "precoMensalCentavos": 0, "faseMinima": 2, "cobrancaAvulsa": false, "ativo": true }
+  ],
+  "planos": [
+    {
+      "id": "essencial",
+      "nome": "Essencial",
+      "precoMensalCentavos": 4900,
+      "faseMinima": 1,
+      "faseMaxima": 2,
+      "modulosInclusos": [
+        "core-catalogo",
+        "core-clientes",
+        "core-vendas",
+        "core-estoque-basico",
+        "core-ranking"
+      ],
+      "ativo": true
+    },
+    {
+      "id": "profissional",
+      "nome": "Profissional",
+      "precoMensalCentavos": 12900,
+      "faseMinima": 3,
+      "faseMaxima": 3,
+      "modulosInclusos": [
+        "core-catalogo",
+        "core-clientes",
+        "core-vendas",
+        "core-estoque-basico",
+        "core-ranking",
+        "fiscal-nfce",
+        "fiscal-sped"
+      ],
+      "ativo": true
+    },
+    {
+      "id": "escala",
+      "nome": "Escala",
+      "precoMensalCentavos": 29900,
+      "faseMinima": 4,
+      "faseMaxima": 4,
+      "modulosInclusos": [
+        "core-catalogo",
+        "core-clientes",
+        "core-vendas",
+        "core-estoque-basico",
+        "core-ranking",
+        "fiscal-nfce",
+        "fiscal-sped"
+      ],
+      "ativo": true
+    }
+  ],
+  "bundles": [
+    {
+      "id": "varejo-fiscal",
+      "nome": "Varejo Fiscal",
+      "moduleIds": ["fiscal-nfce", "fiscal-sped"],
+      "precoMensalCentavos": 5500,
+      "ativo": true
+    },
+    {
+      "id": "transporte-fiscal",
+      "nome": "Transporte Fiscal",
+      "moduleIds": ["fiscal-cte", "fiscal-mdfe", "fiscal-ciot"],
+      "precoMensalCentavos": 8900,
+      "ativo": true
+    }
+  ]
+}

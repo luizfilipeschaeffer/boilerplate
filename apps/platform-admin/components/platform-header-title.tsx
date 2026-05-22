@@ -15,6 +15,7 @@ const titles: Record<string, string> = {
   "/segmentos/ativacoes": "Ativações e trials",
   "/segmentos": "Segmentos de negócio",
   "/integradores/gateways": "Gateways de pagamento",
+  "/integradores": "Integradores",
   "/organizacoes": "Organizações",
 };
 

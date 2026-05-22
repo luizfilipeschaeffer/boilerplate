@@ -46,8 +46,12 @@ export function GatewaysView({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Credenciais ficam em variáveis de ambiente. Ative os gateways disponíveis
-        para tenants e para cobrança interna.
+        Gateways de pagamento habilitados na plataforma. Credenciais ficam em
+        variáveis de ambiente. Veja o{" "}
+        <a href="/integradores" className="underline hover:text-foreground">
+          catálogo completo de integradores
+        </a>
+        .
       </p>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="grid gap-3 md:grid-cols-2">

@@ -10,6 +10,7 @@ import {
   Package,
   Store,
   Users,
+  Plug,
   Wallet,
 } from "lucide-react";
 
@@ -66,10 +67,10 @@ export const ALL_PLATFORM_NAV: PlatformNavItem[] = [
   },
   {
     id: "platform-integradores",
-    label: "Gateways",
-    href: "/integradores/gateways",
+    label: "Integradores",
+    href: "/integradores",
     ordem: 48,
-    icon: <Wallet className="size-4" />,
+    icon: <Plug className="size-4" />,
   },
   {
     id: "platform-roadmap",

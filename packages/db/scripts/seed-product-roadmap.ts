@@ -207,12 +207,12 @@ for (const c of data.changelog) {
 const synced = await syncRegistryToCatalog();
 
 const { seedAllSegmentPhaseConfigs } = await import("../src/segment-phases");
-const { seedDefaultPaymentGateways } = await import("../src/platform-payment");
+const { seedPlatformCatalogFromJson } = await import("../src/platform-integrators");
 const phaseConfigs = await seedAllSegmentPhaseConfigs();
-const gateways = await seedDefaultPaymentGateways();
+const catalog = await seedPlatformCatalogFromJson();
 
 console.log(
-  `[seed-roadmap] OK — ${data.sectors.length} setores, ${data.modules.length} módulos, ${data.segments.length} segmentos, ${phaseConfigs} configs fase, ${gateways} gateways, sync registry: ${synced}`,
+  `[seed-roadmap] OK — ${data.sectors.length} setores, ${data.modules.length} módulos, ${data.segments.length} segmentos, ${phaseConfigs} configs fase, ${catalog.integrators} integradores, ${catalog.gateways} gateways, ${catalog.planos} planos, ${catalog.bundles} bundles, sync registry: ${synced}`,
 );
 
 await prisma.$disconnect();

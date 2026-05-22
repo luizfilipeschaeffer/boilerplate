@@ -459,6 +459,27 @@ model SegmentPhaseConfig {
   @@map("segment_phase_configs")
 }
 
+/// Catálogo de integradores (implementados e planejados) — seed via platform-catalog.json
+model PlatformIntegratorCatalog {
+  id                   String   @id
+  label                String
+  tipo                 String
+  provider             String?
+  description          String?
+  /// implemented | scaffold | planned
+  implementationStatus String   @default("planned") @map("implementation_status")
+  modulosSuportados    Json     @default("[]") @map("modulos_suportados")
+  packagePath          String?  @map("package_path")
+  deliveryMarco        String?  @map("delivery_marco")
+  ordem                Int      @default(0)
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@index([tipo])
+  @@index([implementationStatus])
+  @@schema("boilerplate")
+  @@map("platform_integrator_catalog")
+}
+
 /// Gateways de pagamento habilitados na plataforma (credenciais em env)
 model PlatformPaymentGateway {
   integratorId String   @id @map("integrator_id")
