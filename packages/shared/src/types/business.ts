@@ -22,3 +22,17 @@ export type FiscalCapability =
   | "nfse";
 
 export type ImplementationStatus = "scaffold" | "implemented" | "deprecated";
+
+export type DeliveryMarco = "R0" | "R1" | "R2" | "R3" | "R4";
+
+export type CoreSectorSlug =
+  | "comercial"
+  | "operacao"
+  | "financeiro"
+  | "fiscal"
+  | "analytics"
+  | "pessoas"
+  | "logistica"
+  | "atendimento"
+  | "tecnologia"
+  | "compliance";

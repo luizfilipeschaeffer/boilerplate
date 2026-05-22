@@ -7,6 +7,7 @@ import {
   linkLeadToOrganization,
   listActivitiesForRecord,
   listContactsForRecord,
+  listPlatformCrmTimeline,
   type PlatformRole,
 } from "@boilerplate/db";
 import type {
@@ -87,6 +88,11 @@ export async function createPlatformLeadAction(input: CreateLeadInput) {
 export async function loadCrmNotesAction(id: string, kind: CrmRecordKind) {
   await auth();
   return repo().listNotes(id, kind);
+}
+
+export async function loadCrmTimelineAction(id: string, kind: CrmRecordKind) {
+  await auth();
+  return listPlatformCrmTimeline(id, kind);
 }
 
 export async function loadCrmContactsAction(id: string, kind: CrmRecordKind) {

@@ -1,1 +1,5 @@
-export { default } from "@/modules/platform-modulos/modulos-page";
+import { redirect } from "next/navigation";
+
+export default function ModulosIndexPage() {
+  redirect("/modulos/catalogo");
+}

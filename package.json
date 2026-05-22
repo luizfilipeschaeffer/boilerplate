@@ -7,7 +7,10 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "ci": "bun run db:generate && bun run db:validate && bun run lint && bun run build",
+    "check:vercel": "bun scripts/pre-deploy-check.ts",
+    "check:vercel:web": "bun scripts/pre-deploy-check.ts -- --web",
+    "check:vercel:admin": "bun scripts/pre-deploy-check.ts -- --admin",
+    "ci": "bun run db:validate && bun run lint && bun run build",
     "db:validate": "bun run --filter @boilerplate/db db:validate",
     "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "db:down": "docker compose -f infra/docker/docker-compose.yml down",
@@ -15,6 +18,7 @@
     "db:push": "bun run --filter @boilerplate/db db:push",
     "db:migrate-tenants": "bun run --filter @boilerplate/db db:migrate-tenants",
     "db:seed-platform-admin": "bun run --filter @boilerplate/db db:seed-platform-admin",
+    "db:seed-roadmap": "bun run --filter @boilerplate/db db:seed-roadmap",
     "db:restart": "bun run --filter @boilerplate/db db:restart"
   },
   "devDependencies": {

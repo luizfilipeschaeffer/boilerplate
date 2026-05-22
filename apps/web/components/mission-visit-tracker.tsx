@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { markMissionVisit } from "@/app/actions/missions";
 import type { MissionId } from "@/lib/missions/catalog";
+import { markMissionCelebratePending } from "@/lib/missions/dashboard-storage";
 
 /** Marca missão de “visita” ao abrir a tela. */
 export function MissionVisitTracker({ missionId }: { missionId: MissionId }) {
@@ -12,7 +13,9 @@ export function MissionVisitTracker({ missionId }: { missionId: MissionId }) {
   React.useEffect(() => {
     if (sent.current) return;
     sent.current = true;
-    void markMissionVisit(missionId);
+    void markMissionVisit(missionId).then((result) => {
+      if (result?.allDone) markMissionCelebratePending();
+    });
   }, [missionId]);
 
   return null;

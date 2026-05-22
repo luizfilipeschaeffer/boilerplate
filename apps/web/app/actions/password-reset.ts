@@ -8,6 +8,7 @@ import {
   setUserPassword,
   verifyPasswordResetCode,
 } from "@boilerplate/db";
+import { revalidateMemberPagesForEmail } from "@/lib/revalidate-member-pages";
 import { sendPasswordResetEmail } from "@/lib/email/resend";
 
 const GENERIC_SENT_MESSAGE =
@@ -98,5 +99,6 @@ export async function completePasswordReset(
   }
 
   await setUserPassword(normalized, newPassword);
+  await revalidateMemberPagesForEmail(normalized);
   return { ok: true };
 }

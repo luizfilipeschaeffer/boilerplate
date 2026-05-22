@@ -1,7 +1,7 @@
 "use client";
 
 import type { CrmBoardRecord } from "@boilerplate/crm";
-import { activityTypeLabel } from "@boilerplate/db";
+import { activityTypeLabel } from "@boilerplate/db/platform-crm-ext-labels";
 import { useCallback, useEffect, useState } from "react";
 import {
   addCrmActivityAction,

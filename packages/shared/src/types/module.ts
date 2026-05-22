@@ -1,4 +1,6 @@
 import type {
+  CoreSectorSlug,
+  DeliveryMarco,
   FiscalCapability,
   Fase,
   ImplementationStatus,
@@ -23,6 +25,12 @@ export interface ModuleDefinition {
   fiscalCapability?: FiscalCapability;
   tiposNegocioElegiveis?: TipoNegocio[];
   implementationStatus: ImplementationStatus;
+  sectorSlug?: CoreSectorSlug;
+  camada?: string;
+  depthCurrent?: number;
+  depthTarget?: number;
+  depthTargetMarco?: DeliveryMarco;
+  deliveryMarco?: DeliveryMarco;
   navItems: NavItem[];
   routes: { path: string; label: string }[];
 }

@@ -10,6 +10,8 @@ declare module "next-auth" {
     };
     organizationId?: string;
     sectorId?: string;
+    branchId?: string;
+    role?: string;
     needsOnboarding?: boolean;
   }
 }
@@ -19,6 +21,8 @@ declare module "next-auth/jwt" {
     userId?: string;
     organizationId?: string;
     sectorId?: string;
+    branchId?: string;
+    role?: string;
     needsOnboarding?: boolean;
   }
 }

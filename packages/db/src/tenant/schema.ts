@@ -64,3 +64,8 @@ export function tenantSellersTable(schemaName: string): string {
   assertSafeSchemaName(schemaName);
   return `"${schemaName}"."sellers"`;
 }
+
+export function tenantPaymentMethodsTable(schemaName: string): string {
+  assertSafeSchemaName(schemaName);
+  return `"${schemaName}"."payment_methods"`;
+}

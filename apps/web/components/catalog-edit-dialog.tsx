@@ -1,5 +1,6 @@
 "use client";
 
+import type { CategoryDto } from "@/app/actions/categories";
 import { CatalogForm, type CatalogFormValues } from "@/components/catalog-form";
 import {
   Dialog,
@@ -14,11 +15,13 @@ export function CatalogEditDialog({
   onOpenChange,
   itemId,
   initialValues,
+  categories = [],
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   itemId: string;
   initialValues: CatalogFormValues;
+  categories?: CategoryDto[];
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -34,6 +37,7 @@ export function CatalogEditDialog({
           layout="stack"
           itemId={itemId}
           initialValues={initialValues}
+          categories={categories}
           submitLabel="Salvar alterações"
           onSuccess={() => onOpenChange(false)}
         />

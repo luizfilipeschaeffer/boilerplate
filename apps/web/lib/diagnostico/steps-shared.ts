@@ -1,29 +1,40 @@
 import type { TipoNegocio } from "@boilerplate/shared";
 import type { DiagnosticoDraft } from "@/lib/diagnostico/draft";
+import type { ChoiceOption } from "@/lib/chat/choice-option";
+import {
+  computeDiagnosedPhase,
+  faseEscolhidaPrompt,
+  FASE_OPTIONS,
+} from "@/lib/diagnostico/phase-labels";
+import { getMarketSegmentChoices } from "@/lib/diagnostico/segment-choices";
 import { TIPOS_NEGOCIO, VENDAS_MES_OPTIONS } from "@/lib/tipos-negocio";
 
 export type DiagnosticoStepId =
   | "orgName"
   | "tipoNegocio"
+  | "marketSegment"
   | "temPontoFixo"
   | "vendasMes"
   | "temFuncionarios"
   | "possuiCnpj"
   | "cnpj"
-  | "emiteNota";
+  | "emiteNota"
+  | "faseEscolhida";
 
 export const DIAGNOSTICO_STEP_IDS: DiagnosticoStepId[] = [
   "orgName",
   "tipoNegocio",
+  "marketSegment",
   "temPontoFixo",
   "vendasMes",
   "temFuncionarios",
   "possuiCnpj",
   "cnpj",
   "emiteNota",
+  "faseEscolhida",
 ];
 
-export type ChoiceOption = { value: string; label: string };
+export type { ChoiceOption };
 
 export type DiagnosticoStepDef = {
   id: DiagnosticoStepId;
@@ -60,6 +71,14 @@ export const DIAGNOSTICO_STEPS: DiagnosticoStepDef[] = [
     prompt:
       "Em qual dessas opções seu negócio se encaixa melhor?",
     choices: TIPOS_NEGOCIO.map((t) => ({ value: t.value, label: t.label })),
+    next: () => "marketSegment",
+  },
+  {
+    id: "marketSegment",
+    kind: "choices",
+    prompt:
+      "Em qual segmento de mercado seu negócio atua? Isso ajuda a montar o pacote certo de ferramentas.",
+    choices: () => getMarketSegmentChoices(),
     next: () => "temPontoFixo",
   },
   {
@@ -123,6 +142,13 @@ export const DIAGNOSTICO_STEPS: DiagnosticoStepDef[] = [
       { value: "nao", label: "Ainda não" },
       { value: "nao_sei", label: "Não sei / estou começando" },
     ],
+    next: () => "faseEscolhida",
+  },
+  {
+    id: "faseEscolhida",
+    kind: "choices",
+    prompt: (d) => faseEscolhidaPrompt(d).replace(/\*\*/g, ""),
+    choices: [...FASE_OPTIONS],
     next: () => null,
   },
 ];
@@ -158,6 +184,8 @@ export function applyDiagnosticoAnswer(
       return { ...draft, organizationName: v };
     case "tipoNegocio":
       return { ...draft, tipoNegocio: v as TipoNegocio };
+    case "marketSegment":
+      return { ...draft, marketSegmentSlug: v };
     case "temPontoFixo":
       return { ...draft, temPontoFixo: v === "sim" };
     case "vendasMes":
@@ -178,8 +206,13 @@ export function applyDiagnosticoAnswer(
         ...draft,
         cnpj: v.toLowerCase() === "pular" ? "" : v,
       };
-    case "emiteNota":
-      return { ...draft, emiteNota: v as DiagnosticoDraft["emiteNota"] };
+    case "emiteNota": {
+      const next = { ...draft, emiteNota: v as DiagnosticoDraft["emiteNota"] };
+      const diagnosed = computeDiagnosedPhase(next);
+      return { ...next, diagnosedPhase: diagnosed };
+    }
+    case "faseEscolhida":
+      return { ...draft, declaredPhase: Number(v) };
     default:
       return draft;
   }

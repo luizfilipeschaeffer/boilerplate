@@ -1,11 +1,18 @@
 "use client";
 
-import type { CommsChannel, CommsThreadSummary } from "@boilerplate/db";
-import { COMMS_CHANNEL_LABELS } from "@boilerplate/db";
+import type { CommsThreadSummary } from "@boilerplate/db";
+import {
+  COMMS_CHANNEL_LABELS,
+  type CommsChannel,
+} from "@boilerplate/db/platform-comms-labels";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createCommsThreadAction } from "./actions";
+import {
+  SetHeaderActions,
+  SetHeaderInfo,
+} from "@/components/header-actions-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -89,20 +96,30 @@ export function CommsInboxClient({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-sm text-muted-foreground">{contextLabel}</p>
-          {(filterOrgId || filterLeadId) && (
-            <Link
-              href="/comms"
-              className="text-xs text-primary underline-offset-4 hover:underline"
-            >
-              Limpar filtro
-            </Link>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <>
+      <SetHeaderInfo>
+        Inbox omnichannel — MVP com e-mail mock e vínculo ao CRM (tipo + fase).
+      </SetHeaderInfo>
+      {canEdit ? (
+        <SetHeaderActions>
+          <Button type="button" size="sm" onClick={() => setShowNew((v) => !v)}>
+            {showNew ? "Cancelar" : "Nova conversa"}
+          </Button>
+        </SetHeaderActions>
+      ) : null}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-sm text-muted-foreground">{contextLabel}</p>
+            {(filterOrgId || filterLeadId) && (
+              <Link
+                href="/comms"
+                className="text-xs text-primary underline-offset-4 hover:underline"
+              >
+                Limpar filtro
+              </Link>
+            )}
+          </div>
           <Select
             value={channelFilter}
             onValueChange={(v) => setChannelFilter(v ?? "all")}
@@ -119,13 +136,7 @@ export function CommsInboxClient({
               ))}
             </SelectContent>
           </Select>
-          {canEdit ? (
-            <Button type="button" onClick={() => setShowNew((v) => !v)}>
-              {showNew ? "Cancelar" : "Nova conversa"}
-            </Button>
-          ) : null}
         </div>
-      </div>
 
       {showNew && canEdit ? (
         <Card>
@@ -275,6 +286,7 @@ export function CommsInboxClient({
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

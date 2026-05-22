@@ -1,6 +1,7 @@
 "use client";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { DashboardCommandPalette } from "@/components/dashboard-command-palette";
 import { DebugBar, DebugBarSpacer } from "@/components/debug-bar";
 import { DebugModeProvider } from "@/components/debug-mode-provider";
 import { InactivityLogoutGuard } from "@/components/inactivity-logout-guard";
@@ -17,17 +18,38 @@ const sidebarStyle = {
 export function DashboardShell({
   children,
   navItems,
+  activeModuleIds,
   user,
+  role = "dono",
+  branchId,
+  sectorId = "geral",
 }: {
   children: React.ReactNode;
   navItems: NavItem[];
+  activeModuleIds: string[];
   user: { name: string; email: string };
+  role?: string;
+  branchId?: string | null;
+  sectorId?: string;
 }) {
   return (
     <DebugModeProvider>
       <InactivityLogoutGuard />
+      <DashboardCommandPalette
+        navItems={navItems}
+        activeModuleIds={activeModuleIds}
+        role={role}
+        sectorSlug={sectorId}
+      />
       <SidebarProvider style={sidebarStyle}>
-        <AppSidebar variant="inset" navItems={navItems} user={user} />
+        <AppSidebar
+          variant="inset"
+          navItems={navItems}
+          user={user}
+          role={role}
+          branchId={branchId}
+          sectorId={sectorId}
+        />
         <SidebarInset>
           <HeaderActionsProvider>
             <div className="flex min-h-0 flex-1 flex-col">

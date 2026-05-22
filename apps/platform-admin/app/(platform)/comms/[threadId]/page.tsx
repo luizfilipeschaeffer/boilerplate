@@ -1,15 +1,21 @@
-import { getCommsThread } from "@boilerplate/db";
 import { auth } from "@/auth";
+import { canAccessPlatformModule } from "@/lib/rbac";
 import type { PlatformRole } from "@boilerplate/db";
 import { notFound } from "next/navigation";
-import { CommsThreadClient } from "@/modules/platform-comms/comms-thread-client";
+import { CommsWorkspace } from "@/modules/platform-comms/comms-workspace";
+import { loadCommsWorkspaceData } from "@/modules/platform-comms/load-comms-workspace-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function CommsThreadPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ threadId: string }>;
+  searchParams: Promise<{
+    organizationId?: string;
+    platformLeadId?: string;
+  }>;
 }) {
   const { threadId } = await params;
   const session = await auth();
@@ -17,9 +23,33 @@ export default async function CommsThreadPage({
   const canEdit = ["platform_admin", "platform_comercial", "platform_suporte"].includes(
     role,
   );
+  const filterParams = await searchParams;
 
-  const thread = await getCommsThread(threadId);
-  if (!thread) notFound();
+  if (!canAccessPlatformModule(role, "platform-comms")) {
+    return (
+      <p className="px-4 text-sm text-muted-foreground">Sem permissão.</p>
+    );
+  }
 
-  return <CommsThreadClient thread={thread} canEdit={canEdit} />;
+  const data = await loadCommsWorkspaceData(session?.user?.id, {
+    threadId,
+    organizationId: filterParams.organizationId,
+    platformLeadId: filterParams.platformLeadId,
+  });
+
+  if (!data.activeThread) notFound();
+
+  return (
+    <CommsWorkspace
+      threads={data.threads}
+      activeThread={data.activeThread}
+      canEdit={canEdit}
+      currentUserId={session?.user?.id}
+      filterOrgId={filterParams.organizationId}
+      filterLeadId={filterParams.platformLeadId}
+      organizations={data.organizations}
+      leads={data.leads}
+      platformUsers={data.platformUsers}
+    />
+  );
 }

@@ -4,11 +4,18 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PackagePlus } from "lucide-react";
 
+import type { CategoryDto } from "@/app/actions/categories";
 import { CatalogAddDialog } from "@/components/catalog-add-dialog";
 import { SetHeaderActions } from "@/components/header-actions-context";
 import { Button } from "@/components/ui/button";
 
-export function CatalogoHeaderToolbar() {
+export function CatalogoHeaderToolbar({
+  categories = [],
+  onCatalogChanged,
+}: {
+  categories?: CategoryDto[];
+  onCatalogChanged?: () => void;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -35,7 +42,12 @@ export function CatalogoHeaderToolbar() {
           <span className="sm:hidden">Adicionar</span>
         </Button>
       </SetHeaderActions>
-      <CatalogAddDialog open={open} onOpenChange={handleOpenChange} />
+      <CatalogAddDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        categories={categories}
+        onSuccess={onCatalogChanged}
+      />
     </>
   );
 }

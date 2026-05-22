@@ -1,10 +1,17 @@
 import type { NavItem } from "@boilerplate/shared";
 import type { ReactNode } from "react";
 
+import {
+  canViewEstoque,
+  ESTOQUE_ROUTES,
+} from "@/lib/estoque-access";
+
 export type SidebarNavLink = {
   type: "link";
   title: string;
   url: string;
+  /** Identificador estável (ex.: module id) — evita keys duplicadas quando url coincide */
+  id: string;
   icon?: ReactNode;
 };
 
@@ -35,17 +42,28 @@ export function buildSidebarNavEntries(
   options: {
     home?: SidebarNavLink;
     mapIcon: (moduleId: string) => ReactNode;
+    role?: string;
   },
 ): SidebarNavEntry[] {
   const fiscalChildren: SidebarNavLink[] = [];
   const topLevel: SidebarNavLink[] = [];
+  const topLevelUrls = new Set<string>();
+  const role = options.role ?? "dono";
+  let hasEstoqueModule = false;
 
   for (const item of navItems) {
     if (item.href === "/dashboard") continue;
 
     const moduleId = moduleIdFromNavItem(item);
+
+    if (moduleId === "core-estoque-basico") {
+      hasEstoqueModule = true;
+      continue;
+    }
+
     const link: SidebarNavLink = {
       type: "link",
+      id: moduleId,
       title: item.label,
       url: item.href,
       icon: options.mapIcon(moduleId),
@@ -54,20 +72,29 @@ export function buildSidebarNavEntries(
     if (isFiscalChildModuleId(moduleId)) {
       fiscalChildren.push(link);
     } else if (moduleId !== "fiscal-core") {
+      if (topLevelUrls.has(item.href)) continue;
+      topLevelUrls.add(item.href);
       topLevel.push(link);
     }
   }
 
   topLevel.sort(
     (a, b) =>
-      (navItems.find((n) => n.href === a.url)?.ordem ?? 0) -
-      (navItems.find((n) => n.href === b.url)?.ordem ?? 0),
+      (navItems.find((n) => moduleIdFromNavItem(n) === a.id)?.ordem ?? 0) -
+      (navItems.find((n) => moduleIdFromNavItem(n) === b.id)?.ordem ?? 0),
   );
 
-  fiscalChildren.sort(
+  const fiscalChildUrls = new Set<string>();
+  const dedupedFiscalChildren = fiscalChildren.filter((link) => {
+    if (fiscalChildUrls.has(link.url)) return false;
+    fiscalChildUrls.add(link.url);
+    return true;
+  });
+
+  dedupedFiscalChildren.sort(
     (a, b) =>
-      (navItems.find((n) => n.href === a.url)?.ordem ?? 0) -
-      (navItems.find((n) => n.href === b.url)?.ordem ?? 0),
+      (navItems.find((n) => moduleIdFromNavItem(n) === a.id)?.ordem ?? 0) -
+      (navItems.find((n) => moduleIdFromNavItem(n) === b.id)?.ordem ?? 0),
   );
 
   const entries: SidebarNavEntry[] = [];
@@ -76,7 +103,52 @@ export function buildSidebarNavEntries(
     entries.push(options.home);
   }
 
-  entries.push(...topLevel);
+  let estoqueGroup: SidebarNavGroup | null = null;
+  if (hasEstoqueModule && canViewEstoque(role)) {
+    const estoqueCore = navItems.find(
+      (n) => moduleIdFromNavItem(n) === "core-estoque-basico",
+    );
+    estoqueGroup = {
+      type: "group",
+      title: estoqueCore?.label ?? "Estoque",
+      icon: options.mapIcon("core-estoque-basico"),
+      items: [
+        {
+          type: "link",
+          id: "estoque-produtos",
+          title: "Produtos",
+          url: ESTOQUE_ROUTES.produtos,
+          icon: options.mapIcon("core-catalogo"),
+        },
+        {
+          type: "link",
+          id: "estoque-movimentacao",
+          title: "Movimentação",
+          url: ESTOQUE_ROUTES.movimentacao,
+          icon: options.mapIcon("core-estoque-basico"),
+        },
+      ],
+    };
+  }
+
+  const estoqueOrdem =
+    navItems.find((n) => moduleIdFromNavItem(n) === "core-estoque-basico")
+      ?.ordem ?? 40;
+  let estoqueInserted = false;
+
+  for (const link of topLevel) {
+    const linkOrdem =
+      navItems.find((n) => moduleIdFromNavItem(n) === link.id)?.ordem ?? 0;
+    if (estoqueGroup && !estoqueInserted && linkOrdem > estoqueOrdem) {
+      entries.push(estoqueGroup);
+      estoqueInserted = true;
+    }
+    entries.push(link);
+  }
+
+  if (estoqueGroup && !estoqueInserted) {
+    entries.push(estoqueGroup);
+  }
 
   if (fiscalChildren.length > 0) {
     const fiscalCore = navItems.find(
@@ -87,7 +159,7 @@ export function buildSidebarNavEntries(
       title: fiscalCore?.label ?? "Fiscal",
       url: fiscalCore?.href ?? "/fiscal-core",
       icon: options.mapIcon("fiscal-core"),
-      items: fiscalChildren,
+      items: dedupedFiscalChildren,
     });
   }
 

@@ -35,9 +35,7 @@ export function LoginForm({
     setSubmitting(false);
 
     if (res?.error || !res?.ok) {
-      setError(
-        "E-mail ou senha incorretos. Em dev, rode: bun run db:seed-platform-admin",
-      );
+      setError("E-mail ou senha incorretos.");
       return;
     }
 

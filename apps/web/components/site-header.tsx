@@ -1,4 +1,5 @@
 import { HeaderActionsSlot } from "@/components/header-actions-context";
+import { HeaderInfoSlot } from "@/components/header-info-slot";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -12,6 +13,7 @@ export function SiteHeader({ title = "Início" }: { title?: string }) {
           className="mx-2 h-4 data-vertical:self-auto"
         />
         <h1 className="min-w-0 truncate text-base font-medium">{title}</h1>
+        <HeaderInfoSlot />
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <HeaderActionsSlot />
         </div>

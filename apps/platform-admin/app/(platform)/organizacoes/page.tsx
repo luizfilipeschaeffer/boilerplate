@@ -52,7 +52,14 @@ export default async function OrganizacoesPage() {
               <TableBody>
                 {orgs.map((org) => (
                   <TableRow key={org.id}>
-                    <TableCell className="font-medium">{org.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link
+                        href={`/organizacoes/${org.id}`}
+                        className="hover:underline"
+                      >
+                        {org.name}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {org.tipoNegocio ?? "—"}
                     </TableCell>

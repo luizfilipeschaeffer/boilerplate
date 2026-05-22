@@ -74,6 +74,15 @@ export async function listPlanosBase(): Promise<PlanoBaseRow[]> {
   }));
 }
 
+export async function planoBaseExists(id: string): Promise<boolean> {
+  const count = await prisma.planoBase.count({ where: { id } });
+  return count > 0;
+}
+
+export async function deletePlanoBase(id: string): Promise<void> {
+  await prisma.planoBase.delete({ where: { id } });
+}
+
 export async function upsertPlanoBase(input: PlanoBaseRow): Promise<void> {
   await prisma.planoBase.upsert({
     where: { id: input.id },
@@ -106,6 +115,15 @@ export async function listBundlePrecos(): Promise<BundlePrecoRow[]> {
     precoMensalCentavos: r.precoMensalCentavos,
     ativo: r.ativo,
   }));
+}
+
+export async function bundlePrecoExists(id: string): Promise<boolean> {
+  const count = await prisma.bundlePreco.count({ where: { id } });
+  return count > 0;
+}
+
+export async function deleteBundlePreco(id: string): Promise<void> {
+  await prisma.bundlePreco.delete({ where: { id } });
 }
 
 export async function upsertBundlePreco(input: BundlePrecoRow): Promise<void> {

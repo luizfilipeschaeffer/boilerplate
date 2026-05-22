@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "bun --env-file=../../.env --env-file=../../.env.development --env-file=.env.development next dev --turbopack -H 0.0.0.0",
+    "dev": "bun --env-file=../../.env --env-file=../../.env.development --env-file=.env.development next dev --turbopack -H 192.168.60.60",
     "build": "bun --env-file=../../.env --env-file=../../.env.development --env-file=.env.development next build",
     "start": "bun --env-file=../../.env --env-file=../../.env.development --env-file=.env.development next start",
     "lint": "eslint ."
@@ -12,6 +12,8 @@
     "@base-ui/react": "^1.4.1",
     "@boilerplate/aprendiz-engine": "workspace:*",
     "@boilerplate/billing": "workspace:*",
+    "@boilerplate/crm": "workspace:*",
+    "@boilerplate/crm-ui": "workspace:*",
     "@boilerplate/db": "workspace:*",
     "@boilerplate/fiscal-engine": "workspace:*",
     "@boilerplate/integrators": "workspace:*",

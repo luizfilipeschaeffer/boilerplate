@@ -47,7 +47,10 @@ export async function createSaleAction(data: {
   idempotencyKey?: string | null;
 }) {
   const ctx = await requireTenantContext();
-  const sale = await createSale(ctx.schemaName, data);
+  const sale = await createSale(ctx.schemaName, {
+    ...data,
+    branchId: ctx.branchId,
+  });
   await emitAndPersist({
     type: "venda.confirmada",
     organizationId: ctx.organizationId,

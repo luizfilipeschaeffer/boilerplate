@@ -1,5 +1,20 @@
 import type { NextConfig } from "next";
 
+function addOriginHost(hosts: Set<string>, segment: string): void {
+  const value = segment.trim();
+  if (!value) return;
+  try {
+    const url = value.includes("://") ? new URL(value) : new URL(`http://${value}`);
+    hosts.add(url.host);
+    hosts.add(url.hostname);
+  } catch {
+    const host = value.replace(/^https?:\/\//, "").split("/")[0] ?? value;
+    hosts.add(host);
+    const [hostname] = host.split(":");
+    if (hostname) hosts.add(hostname);
+  }
+}
+
 function parseDevOriginHosts(): string[] {
   const hosts = new Set<string>();
   for (const raw of [
@@ -7,17 +22,9 @@ function parseDevOriginHosts(): string[] {
     process.env.NEXT_PUBLIC_APP_URL,
     process.env.AUTH_URL,
   ]) {
-    const value = raw?.trim();
-    if (!value) continue;
-    try {
-      const url = value.includes("://") ? new URL(value) : new URL(`http://${value}`);
-      hosts.add(url.host);
-      hosts.add(url.hostname);
-    } catch {
-      const host = value.replace(/^https?:\/\//, "").split("/")[0] ?? value;
-      hosts.add(host);
-      const [hostname] = host.split(":");
-      if (hostname) hosts.add(hostname);
+    if (!raw?.trim()) continue;
+    for (const segment of raw.split(",")) {
+      addOriginHost(hosts, segment);
     }
   }
   return [...hosts];

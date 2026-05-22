@@ -33,6 +33,7 @@ type SyncApiResponse = {
     price_cents: number | null;
     stock_qty: number;
     stock_min: number;
+    category_id?: string | null;
     active: boolean;
     updated_at: string;
   }[];
@@ -116,6 +117,7 @@ function mapCatalog(rows: SyncApiResponse["catalog"]): CachedCatalogItem[] {
     priceCents: r.price_cents,
     stockQty: r.stock_qty,
     stockMin: r.stock_min,
+    categoryId: r.category_id ?? null,
     active: r.active ?? true,
     updatedAt: r.updated_at,
   }));
@@ -209,9 +211,19 @@ export async function pullTenantSync(
       if (data.sales.length > 0) {
         await putMany(organizationId, "sales", mapSales(data.sales));
       }
+
+      const localCatalog = await getAllFromStore<CachedCatalogItem>(
+        organizationId,
+        "catalog",
+      );
+      if (localCatalog.length === 0) {
+        syncInFlight = false;
+        notifyScheduleChange();
+        return pullTenantSync(organizationId, { full: true });
+      }
     }
 
-    lowStockIds = data.stock.lowIds;
+    lowStockIds = data.stock?.lowIds ?? [];
 
     if (data.ids) {
       await reconcileDeletions(organizationId, data.ids);

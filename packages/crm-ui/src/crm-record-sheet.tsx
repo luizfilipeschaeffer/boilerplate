@@ -2,10 +2,14 @@
 
 import type {
   CrmBoardRecord,
+  CrmLeadDetail,
+  CrmLeadDuplicate,
   CrmNote,
   CrmPipelineStage,
   CrmRecordKind,
+  CrmTimelineEntry,
   CreateLeadInput,
+  UpdateLeadInput,
 } from "@boilerplate/crm";
 import type { Fase } from "@boilerplate/shared";
 import {
@@ -16,6 +20,8 @@ import {
   formatTipoNegocio,
 } from "@boilerplate/crm";
 import { useCallback, useEffect, useState } from "react";
+import { CrmLeadDetailPanel } from "./crm-lead-detail-panel";
+import { CrmTimelinePanel } from "./crm-timeline-panel";
 
 export function CrmRecordSheet({
   record,
@@ -24,11 +30,21 @@ export function CrmRecordSheet({
   canEdit,
   moduleLabels,
   availableModuleIds,
+  pipelineStages,
+  stageLabels,
+  hidePhaseControls = false,
+  recordKindLabels,
   onLoadNotes,
+  onLoadTimeline,
   onAddNote,
   onUpdatePhase,
   onUpdateStage,
   onUpdateModules,
+  onLoadLeadDetail,
+  onSaveLeadDetail,
+  onLoadLeadDuplicates,
+  onMergeLeads,
+  onLoadCrmOwners,
 }: {
   record: CrmBoardRecord | null;
   open: boolean;
@@ -36,7 +52,12 @@ export function CrmRecordSheet({
   canEdit: boolean;
   moduleLabels: Record<string, string>;
   availableModuleIds?: string[];
+  pipelineStages?: string[];
+  stageLabels?: Record<string, string>;
+  hidePhaseControls?: boolean;
+  recordKindLabels?: Partial<Record<CrmRecordKind, string>>;
   onLoadNotes: (id: string, kind: CrmRecordKind) => Promise<CrmNote[]>;
+  onLoadTimeline?: (id: string, kind: CrmRecordKind) => Promise<CrmTimelineEntry[]>;
   onAddNote: (id: string, kind: CrmRecordKind, body: string) => Promise<void>;
   onUpdatePhase: (id: string, kind: CrmRecordKind, phase: Fase) => Promise<void>;
   onUpdateStage: (
@@ -45,11 +66,35 @@ export function CrmRecordSheet({
     stage: CrmPipelineStage,
   ) => Promise<void>;
   onUpdateModules?: (organizationId: string, moduleIds: string[]) => Promise<void>;
+  onLoadLeadDetail?: (leadId: string) => Promise<CrmLeadDetail>;
+  onSaveLeadDetail?: (leadId: string, input: UpdateLeadInput) => Promise<void>;
+  onLoadLeadDuplicates?: (leadId: string) => Promise<CrmLeadDuplicate[]>;
+  onMergeLeads?: (targetId: string, sourceId: string) => Promise<void>;
+  onLoadCrmOwners?: () => Promise<{ userId: string; name: string }[]>;
 }) {
-  const [tab, setTab] = useState<"resumo" | "modulos" | "notas">("resumo");
+  const stageOptions = pipelineStages ?? CRM_PIPELINE_STAGES;
+  const stageLabelMap: Record<string, string> = stageLabels
+    ? stageLabels
+    : (CRM_STAGE_LABELS as Record<string, string>);
+  const kindLabel =
+    record == null
+      ? ""
+      : record.kind === "lead"
+        ? (recordKindLabels?.lead ?? "Lead")
+        : (recordKindLabels?.organization ?? "Organização");
+  const [tab, setTab] = useState<
+    "resumo" | "modulos" | "notas" | "timeline" | "lead"
+  >("resumo");
+  const showLeadTab =
+    record?.kind === "lead" &&
+    onLoadLeadDetail &&
+    onLoadLeadDuplicates &&
+    onLoadCrmOwners;
   const [notes, setNotes] = useState<CrmNote[]>([]);
+  const [timeline, setTimeline] = useState<CrmTimelineEntry[]>([]);
   const [noteBody, setNoteBody] = useState("");
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [loadingTimeline, setLoadingTimeline] = useState(false);
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -64,13 +109,25 @@ export function CrmRecordSheet({
     }
   }, [record, onLoadNotes]);
 
+  const loadTimeline = useCallback(async () => {
+    if (!record || !onLoadTimeline) return;
+    setLoadingTimeline(true);
+    try {
+      const list = await onLoadTimeline(record.id, record.kind);
+      setTimeline(list);
+    } finally {
+      setLoadingTimeline(false);
+    }
+  }, [record, onLoadTimeline]);
+
   useEffect(() => {
     if (open && record) {
       setTab("resumo");
       setSelectedModules([...record.moduleIds]);
       void loadNotes();
+      if (onLoadTimeline) void loadTimeline();
     }
-  }, [open, record, loadNotes]);
+  }, [open, record, loadNotes, loadTimeline, onLoadTimeline]);
 
   if (!open || !record) return null;
 
@@ -92,7 +149,7 @@ export function CrmRecordSheet({
           <div>
             <h2 className="font-semibold">{record.title}</h2>
             <p className="text-xs text-muted-foreground">
-              {record.kind === "lead" ? "Lead" : "Organização"} ·{" "}
+              {kindLabel} ·{" "}
               {formatTipoNegocio(
                 typeof record.meta.tipoNegocio === "string"
                   ? record.meta.tipoNegocio
@@ -115,6 +172,12 @@ export function CrmRecordSheet({
               { id: "resumo" as const, label: "Resumo" },
               ...(showModules ? [{ id: "modulos" as const, label: "Módulos" }] : []),
               { id: "notas" as const, label: "Notas" },
+              ...(onLoadTimeline
+                ? [{ id: "timeline" as const, label: "Timeline" }]
+                : []),
+              ...(showLeadTab
+                ? [{ id: "lead" as const, label: "Gestão" }]
+                : []),
             ]
           ).map((t) => (
               <button
@@ -135,29 +198,31 @@ export function CrmRecordSheet({
         <div className="flex-1 overflow-y-auto p-4">
           {tab === "resumo" ? (
             <div className="flex flex-col gap-4 text-sm">
-              <label className="flex flex-col gap-1">
-                <span className="text-muted-foreground">Fase</span>
-                <select
-                  className="rounded-md border bg-background px-2 py-1.5"
-                  value={record.phase}
-                  disabled={!canEdit || saving}
-                  onChange={async (e) => {
-                    const phase = Number(e.target.value) as Fase;
-                    setSaving(true);
-                    try {
-                      await onUpdatePhase(record.id, record.kind, phase);
-                    } finally {
-                      setSaving(false);
-                    }
-                  }}
-                >
-                  {FASES.map((f) => (
-                    <option key={f} value={f}>
-                      {FASE_LABELS[f]}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {!hidePhaseControls ? (
+                <label className="flex flex-col gap-1">
+                  <span className="text-muted-foreground">Fase</span>
+                  <select
+                    className="rounded-md border bg-background px-2 py-1.5"
+                    value={record.phase}
+                    disabled={!canEdit || saving}
+                    onChange={async (e) => {
+                      const phase = Number(e.target.value) as Fase;
+                      setSaving(true);
+                      try {
+                        await onUpdatePhase(record.id, record.kind, phase);
+                      } finally {
+                        setSaving(false);
+                      }
+                    }}
+                  >
+                    {FASES.map((f) => (
+                      <option key={f} value={f}>
+                        {FASE_LABELS[f]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               <label className="flex flex-col gap-1">
                 <span className="text-muted-foreground">Pipeline</span>
                 <select
@@ -177,9 +242,9 @@ export function CrmRecordSheet({
                     }
                   }}
                 >
-                  {CRM_PIPELINE_STAGES.map((s) => (
+                  {stageOptions.map((s) => (
                     <option key={s} value={s}>
-                      {CRM_STAGE_LABELS[s]}
+                      {stageLabelMap[s] ?? s}
                     </option>
                   ))}
                 </select>
@@ -280,6 +345,7 @@ export function CrmRecordSheet({
                         await onAddNote(record.id, record.kind, noteBody.trim());
                         setNoteBody("");
                         await loadNotes();
+                        if (onLoadTimeline) await loadTimeline();
                       } finally {
                         setSaving(false);
                       }
@@ -290,6 +356,18 @@ export function CrmRecordSheet({
                 </>
               ) : null}
             </div>
+          ) : tab === "timeline" && onLoadTimeline ? (
+            <CrmTimelinePanel entries={timeline} loading={loadingTimeline} />
+          ) : tab === "lead" && showLeadTab && record ? (
+            <CrmLeadDetailPanel
+              leadId={record.id}
+              canEdit={canEdit && !!onSaveLeadDetail && !!onMergeLeads}
+              loadDetail={onLoadLeadDetail}
+              loadDuplicates={onLoadLeadDuplicates}
+              loadOwners={onLoadCrmOwners}
+              onSave={onSaveLeadDetail ?? (async () => {})}
+              onMerge={onMergeLeads ?? (async () => {})}
+            />
           ) : null}
         </div>
       </aside>
@@ -300,13 +378,21 @@ export function CrmRecordSheet({
 export function CreateLeadForm({
   onSubmit,
   onCancel,
+  onCheckDuplicates,
 }: {
   onSubmit: (input: CreateLeadInput) => Promise<void>;
   onCancel: () => void;
+  onCheckDuplicates?: (input: {
+    email?: string | null;
+    phone?: string | null;
+    cnpj?: string | null;
+  }) => Promise<CrmLeadDuplicate[]>;
 }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [dupes, setDupes] = useState<CrmLeadDuplicate[]>([]);
 
   return (
     <form
@@ -319,9 +405,11 @@ export function CreateLeadForm({
           await onSubmit({
             name: name.trim(),
             email: email.trim() || null,
+            phone: phone.trim() || null,
           });
           setName("");
           setEmail("");
+          setPhone("");
         } finally {
           setSaving(false);
         }
@@ -341,6 +429,26 @@ export function CreateLeadForm({
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
+      <input
+        className="rounded-md border px-2 py-1 text-sm"
+        placeholder="Telefone"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        onBlur={async () => {
+          if (!onCheckDuplicates) return;
+          const list = await onCheckDuplicates({
+            email: email.trim() || null,
+            phone: phone.trim() || null,
+          });
+          setDupes(list);
+        }}
+      />
+      {dupes.length > 0 ? (
+        <p className="text-xs text-amber-700 dark:text-amber-400">
+          Possível duplicata: {dupes.map((d) => d.name).join(", ")}. Você pode
+          criar mesmo assim e mesclar depois na aba Gestão.
+        </p>
+      ) : null}
       <div className="flex gap-2">
         <button
           type="submit"

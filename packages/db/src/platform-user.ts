@@ -28,6 +28,17 @@ export async function findPlatformUserByEmail(email: string) {
   });
 }
 
+export async function listPlatformUsersForComms(excludeUserId?: string) {
+  return prisma.platformUser.findMany({
+    where: {
+      active: true,
+      ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
+    },
+    orderBy: [{ name: "asc" }, { email: "asc" }],
+    select: { id: true, name: true, email: true, role: true },
+  });
+}
+
 export async function upsertPlatformUser(input: {
   email: string;
   name?: string;
@@ -64,4 +75,27 @@ export async function listOrganizationsForAdmin() {
       _count: { select: { memberships: true } },
     },
   });
+}
+
+export async function getOrganizationAdminDetail(organizationId: string) {
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    include: {
+      modulosAtivos: true,
+      branches: { orderBy: [{ isDefault: "desc" }, { name: "asc" }] },
+      sellerInvites: {
+        where: { acceptedAt: null },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      },
+      _count: { select: { memberships: true } },
+    },
+  });
+  if (!org) return null;
+  const sectors = await prisma.sector.findMany({
+    where: { organizationId },
+    include: { sectorModules: true },
+    orderBy: { name: "asc" },
+  });
+  return { ...org, sectors };
 }

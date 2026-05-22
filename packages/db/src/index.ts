@@ -1,14 +1,30 @@
 export { prisma, PrismaClient } from "./client";
 export * from "./organization";
+export * from "./organization-settings";
 export * from "./onboarding";
 export * from "./tenant/provision";
 export * from "./tenant/schema";
 export * from "./tenant/catalog";
+export * from "./tenant/categories";
+export * from "./tenant/suppliers";
+export * from "./tenant/purchase-orders";
 export * from "./tenant/clients";
+export * from "./branches";
+export * from "./sectors-admin";
+export * from "./sector-dashboard";
+export * from "./command-palette-shortcuts";
+export * from "./member-account-status";
+export * from "./membership-sectors";
+export * from "./membership-access";
+export * from "./seller-invites";
+export * from "./seller-invite-accept";
 export * from "./tenant/sales";
+export * from "./tenant/orders";
+export * from "./tenant/payment-methods";
 export * from "./tenant/stock";
 export * from "./tenant/ranking";
 export * from "./tenant/cash-flow";
+export * from "./tenant/dashboard-metrics";
 export * from "./tenant/sellers";
 export * from "./tenant/reports";
 export * from "./tenant/aprendiz";
@@ -19,6 +35,7 @@ export * from "./domain-events";
 export * from "./platform-user";
 export * from "./signup-draft";
 export * from "./signup-email-verification";
+export * from "./login-email-verification";
 export * from "./password-reset";
 export * from "./user-password";
 export * from "./crm";
@@ -26,3 +43,21 @@ export * from "./billing-pricing";
 export * from "./platform-comms";
 export * from "./platform-insights";
 export * from "./platform-crm-ext";
+export * from "./product-roadmap";
+export * from "./activation";
+export * from "./segment-phases";
+export * from "./platform-audit";
+export * from "./platform-payment";
+export type * from "./platform-integrators.types";
+export type { PlatformCatalogJson } from "./platform-integrators";
+export {
+  loadPlatformCatalogJson,
+  listPlatformIntegratorCatalog,
+  seedPlatformCatalogFromJson,
+  seedPlatformIntegratorCatalog,
+  seedPaymentGatewaysFromCatalog,
+  seedPricingFromCatalog,
+} from "./platform-integrators";
+export * from "./provisioning";
+export * from "./provisioning-events";
+export * from "./billing-payment";

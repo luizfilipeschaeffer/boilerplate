@@ -40,6 +40,25 @@ registerIntegrator({
 });
 
 registerIntegrator({
+  id: "payment-stripe",
+  tipo: "payment",
+  modulosSuportados: ["*"],
+});
+
+registerIntegrator({
+  id: "payment-mercadopago",
+  tipo: "payment",
+  modulosSuportados: ["*"],
+});
+
+export * from "./payment-types";
+export {
+  getPaymentAdapter,
+  listPaymentAdapterIds,
+} from "./payment-registry";
+export { paymentMockAdapter } from "./payment-mock";
+
+registerIntegrator({
   id: "fiscal-noop",
   tipo: "fiscal",
   modulosSuportados: ["fiscal-core"],

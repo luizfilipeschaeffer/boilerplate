@@ -1,7 +1,11 @@
 import { auth } from "@/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { ProvisioningBanner } from "@/components/provisioning-banner";
 import { SyncProvider } from "@/components/sync-provider";
-import { getDashboardNav } from "@/lib/modules/active-modules";
+import {
+  getActiveModuleIds,
+  getDashboardNav,
+} from "@/lib/modules/active-modules";
 import { ensureModulesRegistered } from "@/lib/modules/init";
 import { resolveUserSetup } from "@/lib/session-setup";
 import { redirect } from "next/navigation";
@@ -22,7 +26,13 @@ export default async function DashboardLayout({
   const orgId = setup.organizationId ?? session.organizationId;
   if (!orgId) redirect("/onboarding");
 
-  const navItems = await getDashboardNav(orgId);
+  const sectorId = session.sectorId ?? "geral";
+  const userRole = session.role ?? "dono";
+
+  const [navItems, activeModuleIds] = await Promise.all([
+    getDashboardNav(orgId, sectorId, userRole, session.user.id),
+    getActiveModuleIds(orgId, sectorId, userRole, session.user.id),
+  ]);
 
   const user = {
     name: session.user?.name ?? "Usuário",
@@ -31,7 +41,15 @@ export default async function DashboardLayout({
 
   return (
     <SyncProvider organizationId={orgId}>
-      <DashboardShell navItems={navItems} user={user}>
+      <DashboardShell
+        navItems={navItems}
+        activeModuleIds={activeModuleIds}
+        user={user}
+        role={userRole}
+        branchId={session.branchId}
+        sectorId={sectorId}
+      >
+        <ProvisioningBanner />
         {children}
       </DashboardShell>
     </SyncProvider>

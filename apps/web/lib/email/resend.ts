@@ -1,7 +1,9 @@
 import { Resend } from "resend";
-import { passwordResetEmailCopyUrl } from "@/lib/app-url";
+import { loginUrlWithEmail, passwordResetEmailCopyUrl } from "@/lib/app-url";
 import {
+  buildMemberInviteEmailHtml,
   buildPasswordResetEmailHtml,
+  buildLoginVerificationEmailHtml,
   buildSignupVerificationEmailHtml,
   buildWelcomePasswordEmailHtml,
 } from "@/lib/email/templates";
@@ -40,6 +42,22 @@ async function sendHtmlEmail(input: {
   }
 }
 
+/** Código para entrar no painel sem senha. */
+export async function sendLoginVerificationEmail(input: {
+  to: string;
+  name: string;
+  code: string;
+}): Promise<void> {
+  await sendHtmlEmail({
+    to: input.to,
+    subject: `${input.code} — seu código de acesso`,
+    html: buildLoginVerificationEmailHtml({
+      name: input.name,
+      code: input.code,
+    }),
+  });
+}
+
 /** Código de verificação no cadastro com o Aprendiz. */
 export async function sendSignupVerificationEmail(input: {
   to: string;
@@ -52,6 +70,39 @@ export async function sendSignupVerificationEmail(input: {
     html: buildSignupVerificationEmailHtml({
       name: input.name,
       code: input.code,
+    }),
+  });
+}
+
+/** Convite de membro à organização (login + criar senha quando necessário). */
+export async function sendMemberInviteEmail(input: {
+  to: string;
+  name: string;
+  organizationName: string;
+  roleLabel: string;
+  needsPasswordSetup: boolean;
+  setupCode?: string;
+}): Promise<void> {
+  const loginUrl = loginUrlWithEmail(input.to);
+  const setupUrl =
+    input.needsPasswordSetup && input.setupCode
+      ? passwordResetEmailCopyUrl(input.to, input.setupCode)
+      : undefined;
+
+  await sendHtmlEmail({
+    to: input.to,
+    subject: input.needsPasswordSetup
+      ? `Convite — ${input.organizationName}: crie sua senha de acesso`
+      : `Convite — você foi adicionado em ${input.organizationName}`,
+    html: buildMemberInviteEmailHtml({
+      name: input.name,
+      email: input.to,
+      organizationName: input.organizationName,
+      roleLabel: input.roleLabel,
+      loginUrl,
+      needsPasswordSetup: input.needsPasswordSetup,
+      setupUrl,
+      code: input.setupCode,
     }),
   });
 }

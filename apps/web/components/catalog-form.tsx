@@ -16,12 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CatalogCategorySelect } from "@/components/catalog-category-select";
+import type { CategoryDto } from "@/app/actions/categories";
 
 export type CatalogFormValues = {
   name: string;
   itemType: "produto" | "servico";
   sku: string;
   price: string;
+  categoryId?: string | null;
 };
 
 function parsePriceCents(price: string): number | null {
@@ -37,12 +40,14 @@ export function CatalogForm({
   initialValues,
   onSuccess,
   submitLabel = "Salvar item",
+  categories = [],
 }: {
   layout?: "grid" | "stack";
   itemId?: string;
   initialValues?: CatalogFormValues;
   onSuccess?: () => void;
   submitLabel?: string;
+  categories?: CategoryDto[];
 }) {
   const { requestSync } = useSyncContext();
   const isEdit = Boolean(itemId);
@@ -52,6 +57,9 @@ export function CatalogForm({
   );
   const [sku, setSku] = React.useState(initialValues?.sku ?? "");
   const [price, setPrice] = React.useState(initialValues?.price ?? "");
+  const [categoryId, setCategoryId] = React.useState<string | null>(
+    initialValues?.categoryId ?? null,
+  );
   const [pending, setPending] = React.useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -63,6 +71,7 @@ export function CatalogForm({
         itemType,
         sku: sku.trim() || null,
         priceCents: parsePriceCents(price),
+        categoryId,
       };
       if (isEdit && itemId) {
         await updateCatalogAction(itemId, payload);
@@ -75,6 +84,7 @@ export function CatalogForm({
         setSku("");
         setPrice("");
         setItemType("produto");
+        setCategoryId(null);
       }
       onSuccess?.();
     } finally {
@@ -120,6 +130,16 @@ export function CatalogForm({
           <FieldLabel>SKU (opcional)</FieldLabel>
           <Input value={sku} onChange={(e) => setSku(e.target.value)} />
         </Field>
+        {categories.length > 0 ? (
+          <Field className={isStack ? undefined : "md:col-span-2"}>
+            <FieldLabel>Categoria</FieldLabel>
+            <CatalogCategorySelect
+              categories={categories}
+              value={categoryId}
+              onChange={setCategoryId}
+            />
+          </Field>
+        ) : null}
         <Field className={isStack ? undefined : "md:col-span-2"}>
           <FieldLabel>Preço (R$)</FieldLabel>
           <Input

@@ -1,3 +1,5 @@
+import { createIdempotencyKey } from "@/lib/idempotency-key";
+
 const STORAGE_KEY = "boilerplate-offline-sales-v1";
 
 export type OfflineSalePayload = {
@@ -26,7 +28,7 @@ export function enqueueOfflineSale(payload: OfflineSalePayload): void {
   const queue = getOfflineSalesQueue();
   queue.push({
     ...payload,
-    idempotencyKey: payload.idempotencyKey ?? crypto.randomUUID(),
+    idempotencyKey: payload.idempotencyKey ?? createIdempotencyKey(),
     queuedAt: new Date().toISOString(),
   });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));

@@ -6,8 +6,12 @@ import {
   Building2,
   LayoutDashboard,
   MessageSquare,
+  Layers,
   Package,
+  Store,
   Users,
+  Plug,
+  Wallet,
 } from "lucide-react";
 
 export type PlatformNavItem = {
@@ -18,7 +22,7 @@ export type PlatformNavItem = {
   icon: React.ReactNode;
 };
 
-const ALL_NAV: PlatformNavItem[] = [
+export const ALL_PLATFORM_NAV: PlatformNavItem[] = [
   {
     id: "dashboard",
     label: "Início",
@@ -55,6 +59,27 @@ const ALL_NAV: PlatformNavItem[] = [
     icon: <Package className="size-4" />,
   },
   {
+    id: "platform-segmentos",
+    label: "Segmentos",
+    href: "/segmentos",
+    ordem: 46,
+    icon: <Store className="size-4" />,
+  },
+  {
+    id: "platform-integradores",
+    label: "Integradores",
+    href: "/integradores",
+    ordem: 48,
+    icon: <Plug className="size-4" />,
+  },
+  {
+    id: "platform-roadmap",
+    label: "Roadmap",
+    href: "/roadmap",
+    ordem: 47,
+    icon: <Layers className="size-4" />,
+  },
+  {
     id: "organizacoes",
     label: "Organizações",
     href: "/organizacoes",
@@ -64,5 +89,7 @@ const ALL_NAV: PlatformNavItem[] = [
 ];
 
 export function getPlatformNavForRole(role: PlatformRole): PlatformNavItem[] {
-  return ALL_NAV.filter((item) => canAccessPlatformModule(role, item.id));
+  return ALL_PLATFORM_NAV.filter((item) =>
+    canAccessPlatformModule(role, item.id),
+  );
 }

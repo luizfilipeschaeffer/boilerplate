@@ -1,5 +1,6 @@
 import type { TipoNegocio } from "@boilerplate/shared";
 import type { DiagnosticoInput } from "@boilerplate/db";
+import { resolveDeclaredPhase } from "@/lib/diagnostico/phase-labels";
 
 /** Campos de diagnóstico do negócio (cadastro + onboarding). */
 /** Campos já respondidos no cadastro conversacional (evita perguntas repetidas). */
@@ -7,12 +8,15 @@ export type CadastroAnswered = Partial<
   Record<
     | "orgName"
     | "tipoNegocio"
+    | "marketSegment"
     | "temPontoFixo"
     | "vendasMes"
     | "temFuncionarios"
     | "possuiCnpj"
     | "cnpj"
-    | "emiteNota",
+    | "emiteNota"
+    | "faseConfirm"
+    | "faseEscolhida",
     boolean
   >
 >;
@@ -22,6 +26,9 @@ export type DiagnosticoDraft = {
   email: string;
   organizationName: string;
   tipoNegocio: TipoNegocio;
+  marketSegmentSlug: string;
+  diagnosedPhase: number | null;
+  declaredPhase: number | null;
   temPontoFixo: boolean;
   vendasMes: DiagnosticoInput["vendasMes"];
   temFuncionarios: boolean;
@@ -36,6 +43,9 @@ export const EMPTY_DIAGNOSTICO_DRAFT: DiagnosticoDraft = {
   email: "",
   organizationName: "",
   tipoNegocio: "varejo",
+  marketSegmentSlug: "varejo",
+  diagnosedPhase: null,
+  declaredPhase: null,
   temPontoFixo: false,
   vendasMes: "ate50",
   temFuncionarios: false,
@@ -53,6 +63,9 @@ export function cadastroAnsweredFromPayload(
   return {
     orgName: org,
     tipoNegocio: typeof payload.tipoNegocio === "string",
+    marketSegment:
+      typeof payload.marketSegmentSlug === "string" &&
+      payload.marketSegmentSlug.length > 0,
     temPontoFixo: "temPontoFixo" in payload,
     vendasMes: typeof payload.vendasMes === "string",
     temFuncionarios: "temFuncionarios" in payload,
@@ -94,6 +107,14 @@ export function mergeDiagnosticoDraft(
       typeof p.tipoNegocio === "string"
         ? (p.tipoNegocio as TipoNegocio)
         : base.tipoNegocio,
+    marketSegmentSlug:
+      typeof p.marketSegmentSlug === "string"
+        ? p.marketSegmentSlug
+        : base.marketSegmentSlug,
+    diagnosedPhase:
+      typeof p.diagnosedPhase === "number" ? p.diagnosedPhase : base.diagnosedPhase,
+    declaredPhase:
+      typeof p.declaredPhase === "number" ? p.declaredPhase : base.declaredPhase,
     temPontoFixo:
       typeof p.temPontoFixo === "boolean" ? p.temPontoFixo : base.temPontoFixo,
     vendasMes:
@@ -122,12 +143,14 @@ export function wasAnsweredInCadastro(
   return Boolean(draft.cadastroAnswered?.[step]);
 }
 
-export function draftToOnboardingInput(draft: DiagnosticoDraft) {
+/** Campos de diagnóstico sem resolver fase (evita ciclo com computeDiagnosedPhase). */
+export function draftToDiagnosticoInput(
+  draft: DiagnosticoDraft,
+): DiagnosticoInput {
   return {
-    name: draft.name.trim(),
-    email: draft.email.trim().toLowerCase(),
-    organizationName: draft.organizationName.trim(),
     tipoNegocio: draft.tipoNegocio,
+    segmentoAtuacao: draft.marketSegmentSlug,
+    declaredPhase: draft.declaredPhase,
     temPontoFixo: draft.temPontoFixo,
     vendasMes: draft.vendasMes,
     temFuncionarios: draft.temFuncionarios,
@@ -139,6 +162,16 @@ export function draftToOnboardingInput(draft: DiagnosticoDraft) {
         : draft.emiteNota === "nao"
           ? false
           : null,
+  };
+}
+
+export function draftToOnboardingInput(draft: DiagnosticoDraft) {
+  return {
+    name: draft.name.trim(),
+    email: draft.email.trim().toLowerCase(),
+    organizationName: draft.organizationName.trim(),
+    ...draftToDiagnosticoInput(draft),
+    declaredPhase: resolveDeclaredPhase(draft),
   };
 }
 

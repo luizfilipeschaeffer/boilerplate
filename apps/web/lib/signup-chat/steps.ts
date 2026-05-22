@@ -5,6 +5,14 @@ import {
   EMPTY_DIAGNOSTICO_DRAFT,
   draftToOnboardingInput,
 } from "@/lib/diagnostico/draft";
+import { signupFinishLoginInstructions } from "@/lib/auth/login-with-code";
+import {
+  computeDiagnosedPhase,
+  faseEscolhidaPrompt,
+  FASE_OPTIONS,
+} from "@/lib/diagnostico/phase-labels";
+import type { ChoiceOption } from "@/lib/chat/choice-option";
+import { getMarketSegmentChoices } from "@/lib/diagnostico/segment-choices";
 import { TIPOS_NEGOCIO, VENDAS_MES_OPTIONS } from "@/lib/tipos-negocio";
 
 export { draftToOnboardingInput };
@@ -16,12 +24,14 @@ export type SignupStepId =
   | "emailCode"
   | "orgName"
   | "tipoNegocio"
+  | "marketSegment"
   | "temPontoFixo"
   | "vendasMes"
   | "temFuncionarios"
   | "possuiCnpj"
   | "cnpj"
   | "emiteNota"
+  | "faseEscolhida"
   | "summary";
 
 export type SignupDraft = DiagnosticoDraft;
@@ -30,7 +40,7 @@ export const INITIAL_SIGNUP_DRAFT: SignupDraft = { ...EMPTY_DIAGNOSTICO_DRAFT };
 
 export type StepKind = "text" | "email" | "code" | "choices" | "info";
 
-export type ChoiceOption = { value: string; label: string };
+export type { ChoiceOption };
 
 export type SignupStepDef = {
   id: SignupStepId;
@@ -116,6 +126,14 @@ export const SIGNUP_STEPS: SignupStepDef[] = [
     prompt:
       "Estou aprendendo o perfil do seu negócio. Em qual dessas opções ele se encaixa melhor?",
     choices: TIPOS_NEGOCIO.map((t) => ({ value: t.value, label: t.label })),
+    next: () => "marketSegment",
+  },
+  {
+    id: "marketSegment",
+    kind: "choices",
+    prompt:
+      "Em qual segmento de mercado seu negócio atua? Isso me ajuda a montar o pacote certo de ferramentas.",
+    choices: () => getMarketSegmentChoices(),
     next: () => "temPontoFixo",
   },
   {
@@ -179,13 +197,20 @@ export const SIGNUP_STEPS: SignupStepDef[] = [
       { value: "nao", label: "Ainda não" },
       { value: "nao_sei", label: "Não sei / estou começando" },
     ],
+    next: () => "faseEscolhida",
+  },
+  {
+    id: "faseEscolhida",
+    kind: "choices",
+    prompt: (d) => faseEscolhidaPrompt(d).replace(/\*\*/g, ""),
+    choices: [...FASE_OPTIONS],
     next: () => "summary",
   },
   {
     id: "summary",
     kind: "info",
     prompt: (d) =>
-      `Obrigado, ${firstName(d.name)}! Já aprendi bastante sobre você e sobre “${d.organizationName.trim()}”. Vou criar sua conta e guardar tudo — daqui a pouco te encontro no painel do Aprendiz.`,
+      `${signupFinishLoginInstructions(d.email).replace(/\*\*/g, "")} Estou guardando tudo que aprendi sobre “${d.organizationName.trim()}”.`,
     next: () => null,
   },
 ];
@@ -226,6 +251,8 @@ export function applyAnswer(
       return { ...draft, organizationName: v };
     case "tipoNegocio":
       return { ...draft, tipoNegocio: v as TipoNegocio };
+    case "marketSegment":
+      return { ...draft, marketSegmentSlug: v };
     case "temPontoFixo":
       return { ...draft, temPontoFixo: v === "sim" };
     case "vendasMes":
@@ -246,8 +273,13 @@ export function applyAnswer(
         ...draft,
         cnpj: v.toLowerCase() === "pular" ? "" : v,
       };
-    case "emiteNota":
-      return { ...draft, emiteNota: v as SignupDraft["emiteNota"] };
+    case "emiteNota": {
+      const next = { ...draft, emiteNota: v as SignupDraft["emiteNota"] };
+      const diagnosed = computeDiagnosedPhase(next);
+      return { ...next, diagnosedPhase: diagnosed };
+    }
+    case "faseEscolhida":
+      return { ...draft, declaredPhase: Number(v) };
     default:
       return draft;
   }

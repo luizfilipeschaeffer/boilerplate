@@ -22,12 +22,19 @@ export function useCachedStore<T extends { id: string }>(
 
   const load = React.useCallback(() => {
     if (!organizationId) {
+      setLoading(false);
       return Promise.resolve();
     }
-    return getAllFromStore<T>(organizationId, store).then((rows) => {
-      setData(rows);
-      setLoading(false);
-    });
+    return getAllFromStore<T>(organizationId, store)
+      .then((rows) => {
+        setData(rows);
+      })
+      .catch(() => {
+        setData([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [organizationId, store]);
 
   React.useEffect(() => {

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
+import { NavSettings } from "@/components/nav-settings";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
@@ -33,13 +34,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { ContextSwitchers } from "@/components/context-switchers";
 import { buildSidebarNavEntries } from "@/lib/modules/sidebar-nav";
 
 const iconByModule: Record<string, React.ReactNode> = {
   "core-catalogo": <Package className="size-4" />,
   "core-clientes": <Users className="size-4" />,
-  "core-crm": <Users className="size-4" />,
+  "core-crm": <BarChart3 className="size-4" />,
   "core-vendas": <ShoppingCart className="size-4" />,
+  "core-pedidos": <ShoppingCart className="size-4" />,
   "core-estoque-basico": <Warehouse className="size-4" />,
   "core-ranking": <BarChart3 className="size-4" />,
   "fin-fluxo-caixa": <Wallet className="size-4" />,
@@ -66,22 +69,37 @@ function moduleIcon(id: string) {
   return <Package className="size-4" />;
 }
 
+function canManageSettings(role: string) {
+  return role === "dono" || role === "gerente";
+}
+
 export function AppSidebar({
   navItems,
   user,
+  role = "dono",
+  branchId,
+  sectorId = "geral",
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   navItems: NavItem[];
   user: { name: string; email: string };
+  role?: string;
+  branchId?: string | null;
+  sectorId?: string;
 }) {
-  const entries = buildSidebarNavEntries(navItems, {
+  const mainNavItems = navItems.filter(
+    (item) => !item.href.startsWith("/configuracoes"),
+  );
+  const entries = buildSidebarNavEntries(mainNavItems, {
     home: {
       type: "link",
+      id: "dashboard",
       title: "Início",
       url: "/dashboard",
       icon: <LayoutDashboard className="size-4" />,
     },
     mapIcon: moduleIcon,
+    role,
   });
 
   return (
@@ -102,11 +120,13 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <ContextSwitchers branchId={branchId} sectorId={sectorId} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain entries={entries} />
       </SidebarContent>
       <SidebarFooter>
+        {canManageSettings(role) ? <NavSettings /> : null}
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>

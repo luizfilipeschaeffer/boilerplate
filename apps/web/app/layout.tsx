@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { auth } from "@/auth";
 import { Providers } from "@/components/providers";
 import { PwaRegister } from "@/components/pwa-register";
 import { cn } from "@/lib/utils";
@@ -24,11 +25,13 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "Boilerplate" },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html
       lang="pt-BR"
@@ -41,7 +44,7 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
-        <Providers>
+        <Providers session={session}>
           <PwaRegister />
           {children}
         </Providers>
