@@ -140,6 +140,10 @@ bun run check:vercel:admin
 
 O GitHub Actions na branch `dev` roda o mesmo fluxo em push/PR.
 
+### Prisma na Vercel (query engine)
+
+Se o login/API falhar com `PrismaClientInitializationError` / `rhel-openssl-3.0.x`, o bundle serverless não incluiu o engine. O monorepo já define `binaryTargets` no schema e `outputFileTracingIncludes` nos `next.config.ts` dos apps. Após alterar isso, faça **redeploy** (build limpo na Vercel).
+
 ## Estrutura (alvo)
 
 ```
