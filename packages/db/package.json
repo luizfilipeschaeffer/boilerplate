@@ -12,9 +12,10 @@
     "./platform-integrators.types": "./src/platform-integrators.types.ts"
   },
   "scripts": {
+    "build": "bun scripts/generate-client.ts",
     "lint": "tsc --noEmit -p tsconfig.json",
     "db:validate": "bun scripts/prisma-env.ts validate",
-    "db:generate": "bun scripts/prisma-env.ts generate",
+    "db:generate": "bun scripts/generate-client.ts",
     "db:push": "bun scripts/prisma-env.ts db push",
     "db:migrate-tenants": "bun --env-file=../../.env --env-file=../../.env.development ./scripts/migrate-tenants.ts",
     "db:seed-platform-admin": "bun ./scripts/seed-platform-admin.ts",
