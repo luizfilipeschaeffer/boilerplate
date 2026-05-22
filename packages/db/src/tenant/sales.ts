@@ -55,6 +55,7 @@ export async function listSales(
   const sales = await prisma.$queryRawUnsafe<SaleRow[]>(
     `SELECT id, client_id, seller_id, status, payment_method, total_cents, idempotency_key, created_at
      FROM ${salesTable}
+     WHERE status = 'confirmada' OR status IS NULL
      ORDER BY created_at DESC
      LIMIT $1`,
     limit,
@@ -93,6 +94,7 @@ export async function createSale(
     paymentMethod: PaymentMethod;
     lines: { catalogItemId: string; quantity: number }[];
     idempotencyKey?: string | null;
+    branchId?: string | null;
   },
 ): Promise<SaleWithItems> {
   assertSafeSchemaName(schemaName);
@@ -153,11 +155,12 @@ export async function createSale(
   }
 
   await prisma.$executeRawUnsafe(
-    `INSERT INTO ${salesTable} (id, client_id, seller_id, status, payment_method, total_cents, idempotency_key)
-     VALUES ($1, $2, $3, 'confirmada', $4, $5, $6)`,
+    `INSERT INTO ${salesTable} (id, client_id, seller_id, branch_id, status, payment_method, total_cents, idempotency_key)
+     VALUES ($1, $2, $3, $4, 'confirmada', $5, $6, $7)`,
     saleId,
     input.clientId ?? null,
     input.sellerId ?? null,
+    input.branchId ?? null,
     input.paymentMethod,
     totalCents,
     input.idempotencyKey ?? null,

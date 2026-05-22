@@ -15,6 +15,7 @@
     "db:push": "bun run --filter @boilerplate/db db:push",
     "db:migrate-tenants": "bun run --filter @boilerplate/db db:migrate-tenants",
     "db:seed-platform-admin": "bun run --filter @boilerplate/db db:seed-platform-admin",
+    "db:seed-roadmap": "bun run --filter @boilerplate/db db:seed-roadmap",
     "db:restart": "bun run --filter @boilerplate/db db:restart"
   },
   "devDependencies": {

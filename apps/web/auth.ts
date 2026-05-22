@@ -6,6 +6,8 @@ import {
 } from "@boilerplate/db/organization";
 import {
   findUserByEmailForAuth,
+  listSectorsAccessibleToUser,
+  userCanAccessSector,
   verifyUserPassword,
 } from "@boilerplate/db";
 import { authConfig } from "./auth.config";
@@ -14,17 +16,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   callbacks: {
     ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         const u = user as {
           id: string;
           organizationId?: string | null;
           sectorId?: string | null;
+          branchId?: string | null;
+          role?: string | null;
           needsOnboarding?: boolean;
         };
         token.userId = u.id;
         token.organizationId = u.organizationId ?? undefined;
         token.sectorId = u.sectorId ?? undefined;
+        token.branchId = u.branchId ?? undefined;
+        token.role = u.role ?? undefined;
         token.needsOnboarding = u.needsOnboarding ?? false;
       }
 
@@ -33,11 +39,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const membership = await getMembershipForUser(userId);
         if (membership) {
           token.organizationId = membership.organizationId;
+          token.role = membership.role;
           token.needsOnboarding = false;
-          if (!token.sectorId) token.sectorId = "geral";
+          if (!token.branchId && membership.defaultBranchId) {
+            token.branchId = membership.defaultBranchId;
+          }
+          if (!token.sectorId) {
+            const firstSector =
+              membership.membershipSectors[0]?.sector?.slug ?? "geral";
+            token.sectorId = firstSector;
+          }
         } else if (!user) {
           token.organizationId = undefined;
           token.needsOnboarding = true;
+        }
+      }
+
+      if (trigger === "update" && session) {
+        const s = session as { branchId?: string; sectorId?: string };
+        if (s.branchId !== undefined) token.branchId = s.branchId;
+        if (s.sectorId !== undefined && userId && token.organizationId) {
+          const allowed = await userCanAccessSector(
+            userId,
+            token.organizationId as string,
+            s.sectorId,
+          );
+          if (allowed) {
+            token.sectorId = s.sectorId;
+          } else {
+            const sectors = await listSectorsAccessibleToUser(
+              userId,
+              token.organizationId as string,
+            );
+            if (sectors[0]) token.sectorId = sectors[0].slug;
+          }
         }
       }
 
@@ -57,12 +92,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!email) return null;
 
         const existing = await findUserByEmailForAuth(email);
-        if (existing?.passwordHash) {
-          const valid = await verifyUserPassword(
-            password,
-            existing.passwordHash,
-          );
-          if (!valid) return null;
+
+        if (existing) {
+          if (!existing.passwordHash) {
+            const pendingMembership = await getMembershipForUser(existing.id);
+            if (pendingMembership) return null;
+          } else {
+            const valid = await verifyUserPassword(
+              password,
+              existing.passwordHash,
+            );
+            if (!valid) return null;
+          }
         }
 
         const user = existing ?? (await findOrCreateUserByEmail(email));
@@ -77,12 +118,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           };
         }
 
+        if (!membership.active) {
+          return null;
+        }
+
+        const sectorSlug =
+          membership.membershipSectors[0]?.sector?.slug ?? "geral";
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           organizationId: membership.organizationId,
-          sectorId: "geral",
+          sectorId: sectorSlug,
+          branchId: membership.defaultBranchId ?? undefined,
+          role: membership.role,
           needsOnboarding: false,
         };
       },

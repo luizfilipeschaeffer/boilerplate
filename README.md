@@ -44,6 +44,28 @@ bun run dev
 # Platform-admin: http://localhost:3002 — use o e-mail/senha do seed acima
 ```
 
+### Rede local (celular / outro PC)
+
+1. No `.env.development` da raiz, use o IP da máquina (ex. `192.168.3.3`):
+
+   ```env
+   NEXT_PUBLIC_APP_URL=http://192.168.3.3:3000
+   DEV_ALLOWED_ORIGIN=http://192.168.3.3:3000,http://localhost:3000
+   NEXT_PUBLIC_PLATFORM_ADMIN_URL=http://192.168.3.3:3002
+   ```
+
+2. Copie os exemplos por app (ajuste o IP se mudar):
+
+   - `apps/web/.env.development.example` → `apps/web/.env.development`
+   - `apps/platform-admin/.env.development.example` → `apps/platform-admin/.env.development`
+
+3. `bun run dev` já escuta em `192.168.3.3` (todas as interfaces). Acesse:
+
+   - Tenant: http://192.168.3.3:3000
+   - Admin: http://192.168.3.3:3002
+
+4. Se não abrir de outro aparelho, libere as portas **3000** e **3002** no Firewall do Windows para rede privada.
+
 ## PostgreSQL (Docker)
 
 - Host: `localhost`

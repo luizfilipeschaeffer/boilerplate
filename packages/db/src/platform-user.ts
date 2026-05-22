@@ -65,3 +65,26 @@ export async function listOrganizationsForAdmin() {
     },
   });
 }
+
+export async function getOrganizationAdminDetail(organizationId: string) {
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    include: {
+      modulosAtivos: true,
+      branches: { orderBy: [{ isDefault: "desc" }, { name: "asc" }] },
+      sellerInvites: {
+        where: { acceptedAt: null },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      },
+      _count: { select: { memberships: true } },
+    },
+  });
+  if (!org) return null;
+  const sectors = await prisma.sector.findMany({
+    where: { organizationId },
+    include: { sectorModules: true },
+    orderBy: { name: "asc" },
+  });
+  return { ...org, sectors };
+}

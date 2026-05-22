@@ -1,5 +1,6 @@
 "use client";
 
+import { SetHeaderInfo } from "@/components/header-actions-context";
 import { StockPanel } from "@/components/stock-panel";
 import { useCachedStore } from "@/hooks/use-cached-store";
 import { buildStockFromCatalog, getLowStockIds } from "@/lib/idb/sync-service";
@@ -30,15 +31,17 @@ export function EstoqueCachedView() {
     [catalog],
   );
 
+  const headerInfo = React.useMemo(() => {
+    const base = "Entrada, saída e alerta de estoque baixo.";
+    if (lowCount > 0) {
+      return `${base} ${lowCount} item(ns) abaixo do mínimo no momento.`;
+    }
+    return base;
+  }, [lowCount]);
+
   return (
     <div className="flex flex-col gap-6 px-4 lg:px-6">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">Estoque</h2>
-        <p className="text-sm text-muted-foreground">
-          Entrada, saída e alerta de estoque baixo
-          {lowCount > 0 ? ` — ${lowCount} item(ns) abaixo do mínimo` : ""}
-        </p>
-      </div>
+      <SetHeaderInfo>{headerInfo}</SetHeaderInfo>
       <Card>
         <CardHeader>
           <CardTitle>Movimentação</CardTitle>

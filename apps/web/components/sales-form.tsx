@@ -4,6 +4,7 @@ import * as React from "react";
 import { createSaleAction } from "@/app/actions/sales";
 import { useSyncContext } from "@/components/sync-provider";
 import type { SalesFormData } from "@/components/vendas-header-toolbar";
+import { createIdempotencyKey } from "@/lib/idempotency-key";
 import { enqueueOfflineSale } from "@/lib/offline/sales-queue";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -56,7 +57,7 @@ export function SalesForm({
           quantity: Math.max(1, parseInt(quantity, 10) || 1),
         },
       ],
-      idempotencyKey: crypto.randomUUID(),
+      idempotencyKey: createIdempotencyKey(),
     };
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {

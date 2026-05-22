@@ -104,6 +104,7 @@
         "@boilerplate/shared": "workspace:*",
       },
       "devDependencies": {
+        "@types/node": "^22.15.29",
         "typescript": "^5.8.3",
       },
     },
@@ -174,6 +175,7 @@
       "name": "@boilerplate/integrators",
       "version": "0.0.1",
       "devDependencies": {
+        "@types/node": "^22.15.29",
         "typescript": "^5.8.3",
       },
     },

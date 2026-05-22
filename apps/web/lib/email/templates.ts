@@ -235,6 +235,86 @@ export function buildWelcomePasswordEmailHtml(input: {
   });
 }
 
+export function buildCtaButton(label: string, href: string): string {
+  return `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0 20px;">
+      <tr>
+        <td align="center">
+          <a href="${escapeHtml(href)}" target="_blank" style="display:inline-block;background-color:${THEME.accent};color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:14px 28px;border-radius:${THEME.radiusSm};mso-padding-alt:0;">${escapeHtml(label)}</a>
+        </td>
+      </tr>
+    </table>`;
+}
+
+export function buildMemberInviteEmailHtml(input: {
+  name: string;
+  email: string;
+  organizationName: string;
+  roleLabel: string;
+  loginUrl: string;
+  needsPasswordSetup: boolean;
+  setupUrl?: string;
+  code?: string;
+}): string {
+  const name = escapeHtml(firstNameFrom(input.name));
+  const org = escapeHtml(input.organizationName);
+  const role = escapeHtml(input.roleLabel);
+  const email = escapeHtml(input.email);
+
+  const loginBlock = buildInfoBox(
+    `<strong>E-mail de login:</strong> ${email}<br/><strong>Papel:</strong> ${role}<br/><strong>Organização:</strong> ${org}`,
+  );
+
+  const parts = [
+    buildParagraph(`Olá, <strong>${name}</strong>!`),
+    buildParagraph(
+      `Você foi convidado para acessar o painel da organização <strong>${org}</strong> como <strong>${role}</strong>.`,
+    ),
+    loginBlock,
+  ];
+
+  if (input.needsPasswordSetup && input.code && input.setupUrl) {
+    parts.push(
+      buildParagraph(
+        "Como este é seu primeiro acesso, <strong>crie sua senha</strong> com o código abaixo ou pelo botão:",
+      ),
+      buildOtpBlock({
+        code: input.code,
+        copyUrl: input.setupUrl,
+        copyHint:
+          "O link abre a página de criação de senha com o código já preenchido.",
+        validityMinutes: 15,
+      }),
+      buildCtaButton("Criar minha senha", input.setupUrl),
+    );
+  } else {
+    parts.push(
+      buildParagraph(
+        "Sua conta já possui senha cadastrada. Use o botão abaixo para entrar com seu e-mail e senha atuais.",
+      ),
+    );
+  }
+
+  parts.push(
+    buildCtaButton("Acessar o painel", input.loginUrl),
+    buildInfoBox(
+      "<strong>Dica:</strong> nos próximos acessos, use sempre o mesmo e-mail de login. Se esquecer a senha, utilize “Esqueci minha senha” na tela de entrada.",
+    ),
+  );
+
+  return buildEmailLayout({
+    preheader: input.needsPasswordSetup
+      ? `Convite ${org} — crie sua senha para entrar`
+      : `Convite ${org} — acesse o painel`,
+    eyebrow: "Convite · Equipe",
+    title: input.needsPasswordSetup
+      ? "Bem-vindo — crie sua senha"
+      : "Você foi adicionado à equipe",
+    footerLabel: "Boilerplate",
+    bodyHtml: parts.join(""),
+  });
+}
+
 export function buildPasswordResetEmailHtml(input: {
   name: string;
   code: string;

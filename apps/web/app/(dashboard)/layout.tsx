@@ -22,7 +22,12 @@ export default async function DashboardLayout({
   const orgId = setup.organizationId ?? session.organizationId;
   if (!orgId) redirect("/onboarding");
 
-  const navItems = await getDashboardNav(orgId);
+  const navItems = await getDashboardNav(
+    orgId,
+    session.sectorId ?? "geral",
+    session.role ?? "dono",
+    session.user.id,
+  );
 
   const user = {
     name: session.user?.name ?? "Usuário",
@@ -31,7 +36,11 @@ export default async function DashboardLayout({
 
   return (
     <SyncProvider organizationId={orgId}>
-      <DashboardShell navItems={navItems} user={user}>
+      <DashboardShell
+        navItems={navItems}
+        user={user}
+        role={session.role ?? "dono"}
+      >
         {children}
       </DashboardShell>
     </SyncProvider>

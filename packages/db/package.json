@@ -15,6 +15,7 @@
     "db:push": "bun scripts/prisma-env.ts db push",
     "db:migrate-tenants": "bun --env-file=../../.env --env-file=../../.env.development ./scripts/migrate-tenants.ts",
     "db:seed-platform-admin": "bun ./scripts/seed-platform-admin.ts",
+    "db:seed-roadmap": "bun ./scripts/seed-product-roadmap.ts",
     "db:restart": "bun ./scripts/db-restart.ts"
   },
   "dependencies": {

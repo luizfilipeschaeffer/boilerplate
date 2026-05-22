@@ -6,6 +6,7 @@ import {
   setUserPassword,
 } from "@boilerplate/db";
 import { auth } from "@/auth";
+import { revalidateMemberPagesForEmail } from "@/lib/revalidate-member-pages";
 import { requireTenantContext } from "@/lib/tenant-context";
 import { revalidatePath } from "next/cache";
 
@@ -37,6 +38,7 @@ export async function setAccountPassword(
   const { schemaName, organizationId } = await requireTenantContext();
 
   await setUserPassword(email, newPassword);
+  await revalidateMemberPagesForEmail(email);
 
   await completeTenantMission({
     schemaName,

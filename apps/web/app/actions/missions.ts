@@ -58,10 +58,14 @@ export async function syncAndLoadMissions(): Promise<{
   return { completedIds };
 }
 
-export async function markMissionVisit(missionId: MissionId): Promise<void> {
+export async function markMissionVisit(missionId: MissionId): Promise<{
+  doneCount: number;
+  total: number;
+  allDone: boolean;
+} | null> {
   const { schemaName, organizationId } = await requireTenantContext();
   const mission = FASE1_MISSIONS.find((m) => m.id === missionId);
-  if (!mission || mission.kind !== "visit") return;
+  if (!mission || mission.kind !== "visit") return null;
 
   await completeTenantMission({
     schemaName,
@@ -71,4 +75,14 @@ export async function markMissionVisit(missionId: MissionId): Promise<void> {
   });
 
   revalidatePath("/dashboard");
+
+  const completedIds = await listCompletedMissionIds(schemaName);
+  const doneCount = FASE1_MISSIONS.filter((m) =>
+    completedIds.includes(m.id),
+  ).length;
+  return {
+    doneCount,
+    total: FASE1_MISSIONS.length,
+    allDone: doneCount === FASE1_MISSIONS.length,
+  };
 }

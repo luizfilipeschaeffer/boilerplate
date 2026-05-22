@@ -6,6 +6,7 @@ import {
   Building2,
   LayoutDashboard,
   MessageSquare,
+  Layers,
   Package,
   Users,
 } from "lucide-react";
@@ -53,6 +54,13 @@ const ALL_NAV: PlatformNavItem[] = [
     href: "/modulos",
     ordem: 45,
     icon: <Package className="size-4" />,
+  },
+  {
+    id: "platform-roadmap",
+    label: "Roadmap",
+    href: "/roadmap",
+    ordem: 47,
+    icon: <Layers className="size-4" />,
   },
   {
     id: "organizacoes",

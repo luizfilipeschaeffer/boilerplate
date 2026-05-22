@@ -5,6 +5,8 @@ export type SidebarNavLink = {
   type: "link";
   title: string;
   url: string;
+  /** Identificador estável (ex.: module id) — evita keys duplicadas quando url coincide */
+  id: string;
   icon?: ReactNode;
 };
 
@@ -39,6 +41,7 @@ export function buildSidebarNavEntries(
 ): SidebarNavEntry[] {
   const fiscalChildren: SidebarNavLink[] = [];
   const topLevel: SidebarNavLink[] = [];
+  const topLevelUrls = new Set<string>();
 
   for (const item of navItems) {
     if (item.href === "/dashboard") continue;
@@ -46,6 +49,7 @@ export function buildSidebarNavEntries(
     const moduleId = moduleIdFromNavItem(item);
     const link: SidebarNavLink = {
       type: "link",
+      id: moduleId,
       title: item.label,
       url: item.href,
       icon: options.mapIcon(moduleId),
@@ -54,20 +58,29 @@ export function buildSidebarNavEntries(
     if (isFiscalChildModuleId(moduleId)) {
       fiscalChildren.push(link);
     } else if (moduleId !== "fiscal-core") {
+      if (topLevelUrls.has(item.href)) continue;
+      topLevelUrls.add(item.href);
       topLevel.push(link);
     }
   }
 
   topLevel.sort(
     (a, b) =>
-      (navItems.find((n) => n.href === a.url)?.ordem ?? 0) -
-      (navItems.find((n) => n.href === b.url)?.ordem ?? 0),
+      (navItems.find((n) => moduleIdFromNavItem(n) === a.id)?.ordem ?? 0) -
+      (navItems.find((n) => moduleIdFromNavItem(n) === b.id)?.ordem ?? 0),
   );
 
-  fiscalChildren.sort(
+  const fiscalChildUrls = new Set<string>();
+  const dedupedFiscalChildren = fiscalChildren.filter((link) => {
+    if (fiscalChildUrls.has(link.url)) return false;
+    fiscalChildUrls.add(link.url);
+    return true;
+  });
+
+  dedupedFiscalChildren.sort(
     (a, b) =>
-      (navItems.find((n) => n.href === a.url)?.ordem ?? 0) -
-      (navItems.find((n) => n.href === b.url)?.ordem ?? 0),
+      (navItems.find((n) => moduleIdFromNavItem(n) === a.id)?.ordem ?? 0) -
+      (navItems.find((n) => moduleIdFromNavItem(n) === b.id)?.ordem ?? 0),
   );
 
   const entries: SidebarNavEntry[] = [];
@@ -87,7 +100,7 @@ export function buildSidebarNavEntries(
       title: fiscalCore?.label ?? "Fiscal",
       url: fiscalCore?.href ?? "/fiscal-core",
       icon: options.mapIcon("fiscal-core"),
-      items: fiscalChildren,
+      items: dedupedFiscalChildren,
     });
   }
 

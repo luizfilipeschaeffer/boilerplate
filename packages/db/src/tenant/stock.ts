@@ -38,6 +38,23 @@ export async function listLowStockItems(
   );
 }
 
+/** Acima do mínimo, mas dentro de 25% de distância (arredondado para cima). */
+export async function listNearLowStockItems(
+  schemaName: string,
+): Promise<LowStockItem[]> {
+  assertSafeSchemaName(schemaName);
+  const table = tenantCatalogTable(schemaName);
+  return prisma.$queryRawUnsafe<LowStockItem[]>(
+    `SELECT id, name, stock_qty, stock_min
+     FROM ${table}
+     WHERE item_type = 'produto'
+       AND stock_min > 0
+       AND stock_qty > stock_min
+       AND stock_qty <= stock_min + GREATEST(1, CEIL(stock_min * 0.25))
+     ORDER BY stock_qty ASC`,
+  );
+}
+
 export async function adjustStock(
   schemaName: string,
   input: {

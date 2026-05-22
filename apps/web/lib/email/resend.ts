@@ -1,6 +1,7 @@
 import { Resend } from "resend";
-import { passwordResetEmailCopyUrl } from "@/lib/app-url";
+import { loginUrlWithEmail, passwordResetEmailCopyUrl } from "@/lib/app-url";
 import {
+  buildMemberInviteEmailHtml,
   buildPasswordResetEmailHtml,
   buildSignupVerificationEmailHtml,
   buildWelcomePasswordEmailHtml,
@@ -52,6 +53,39 @@ export async function sendSignupVerificationEmail(input: {
     html: buildSignupVerificationEmailHtml({
       name: input.name,
       code: input.code,
+    }),
+  });
+}
+
+/** Convite de membro à organização (login + criar senha quando necessário). */
+export async function sendMemberInviteEmail(input: {
+  to: string;
+  name: string;
+  organizationName: string;
+  roleLabel: string;
+  needsPasswordSetup: boolean;
+  setupCode?: string;
+}): Promise<void> {
+  const loginUrl = loginUrlWithEmail(input.to);
+  const setupUrl =
+    input.needsPasswordSetup && input.setupCode
+      ? passwordResetEmailCopyUrl(input.to, input.setupCode)
+      : undefined;
+
+  await sendHtmlEmail({
+    to: input.to,
+    subject: input.needsPasswordSetup
+      ? `Convite — ${input.organizationName}: crie sua senha de acesso`
+      : `Convite — você foi adicionado em ${input.organizationName}`,
+    html: buildMemberInviteEmailHtml({
+      name: input.name,
+      email: input.to,
+      organizationName: input.organizationName,
+      roleLabel: input.roleLabel,
+      loginUrl,
+      needsPasswordSetup: input.needsPasswordSetup,
+      setupUrl,
+      code: input.setupCode,
     }),
   });
 }

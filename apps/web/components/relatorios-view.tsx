@@ -51,7 +51,22 @@ export function RelatoriosView() {
   }, [from, to]);
 
   React.useEffect(() => {
-    void load();
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await getBasicReportAction(undefined, undefined);
+        if (!cancelled) {
+          setReport(data);
+          setFrom(data.range.from);
+          setTo(data.range.to);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

@@ -6,6 +6,7 @@ export type PlatformModuleId =
   | "platform-comms"
   | "platform-insights"
   | "platform-modulos"
+  | "platform-roadmap"
   | "organizacoes";
 
 const MODULE_ACCESS: Record<PlatformModuleId, PlatformRole[]> = {
@@ -33,6 +34,12 @@ const MODULE_ACCESS: Record<PlatformModuleId, PlatformRole[]> = {
     "platform_engenharia",
   ],
   "platform-modulos": [
+    "platform_admin",
+    "platform_produto",
+    "platform_engenharia",
+    "platform_comercial",
+  ],
+  "platform-roadmap": [
     "platform_admin",
     "platform_produto",
     "platform_engenharia",

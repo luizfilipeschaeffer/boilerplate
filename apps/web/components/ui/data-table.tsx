@@ -20,10 +20,12 @@ export function DataTable<TData>({
   table,
   emptyMessage = "Nenhum resultado.",
   className,
+  onRowClick,
 }: {
   table: TanstackTable<TData>;
   emptyMessage?: string;
   className?: string;
+  onRowClick?: (row: TData) => void;
 }) {
   const rows = table.getRowModel().rows;
 
@@ -52,6 +54,12 @@ export function DataTable<TData>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() ? "selected" : undefined}
+                className={onRowClick ? "cursor-pointer" : undefined}
+                onClick={
+                  onRowClick
+                    ? () => onRowClick(row.original)
+                    : undefined
+                }
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

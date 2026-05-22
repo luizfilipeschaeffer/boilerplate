@@ -18,16 +18,23 @@ export function DashboardShell({
   children,
   navItems,
   user,
+  role = "dono",
 }: {
   children: React.ReactNode;
   navItems: NavItem[];
   user: { name: string; email: string };
+  role?: string;
 }) {
   return (
     <DebugModeProvider>
       <InactivityLogoutGuard />
       <SidebarProvider style={sidebarStyle}>
-        <AppSidebar variant="inset" navItems={navItems} user={user} />
+        <AppSidebar
+          variant="inset"
+          navItems={navItems}
+          user={user}
+          role={role}
+        />
         <SidebarInset>
           <HeaderActionsProvider>
             <div className="flex min-h-0 flex-1 flex-col">

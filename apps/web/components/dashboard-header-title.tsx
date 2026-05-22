@@ -4,6 +4,15 @@ import { usePathname } from "next/navigation";
 
 const titles: Record<string, string> = {
   "/dashboard": "Início",
+  "/estoque": "Estoque",
+  "/fluxo-caixa": "Fluxo de caixa",
+  "/vendedores": "Vendedores",
+  "/pedidos": "Pedidos",
+  "/configuracoes": "Configurações",
+  "/configuracoes/filiais": "Filiais",
+  "/configuracoes/membros": "Membros",
+  "/configuracoes/setores": "Setores",
+  "/configuracoes/pagamentos": "Formas de pagamento",
 };
 
 export function useDashboardHeaderTitle(fallback = "Início") {

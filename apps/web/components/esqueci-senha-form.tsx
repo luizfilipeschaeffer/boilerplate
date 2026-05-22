@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { maskEmail } from "@/lib/mask-email";
 
 type Step = "code" | "password" | "done";
@@ -64,7 +65,8 @@ export function EsqueciSenhaForm({
   React.useEffect(() => {
     if (!autoCopy || initialCode.length !== 6) return;
     let timeoutId: ReturnType<typeof setTimeout>;
-    void navigator.clipboard.writeText(initialCode).then(() => {
+    void copyTextToClipboard(initialCode).then((ok) => {
+      if (!ok) return;
       setCopied(true);
       timeoutId = setTimeout(() => setCopied(false), 2500);
     });
@@ -73,13 +75,13 @@ export function EsqueciSenhaForm({
 
   async function handleCopyCode() {
     if (code.length !== 6) return;
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
+    const ok = await copyTextToClipboard(code);
+    if (!ok) {
       setError("Não foi possível copiar. Selecione o código manualmente.");
+      return;
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   }
 
   async function handleVerifyCode(e: React.FormEvent) {
@@ -148,8 +150,10 @@ export function EsqueciSenhaForm({
 
           {step === "code" ? (
             <form
+              method="post"
               onSubmit={(e) => void handleVerifyCode(e)}
               className="flex flex-col gap-6"
+              noValidate
             >
               <Field>
                 <FieldLabel htmlFor="reset-code">Código de 6 dígitos</FieldLabel>
@@ -220,7 +224,9 @@ export function EsqueciSenhaForm({
 
           {step === "password" ? (
             <form
+              method="post"
               onSubmit={(e) => void handleSetPassword(e)}
+              noValidate
               className="flex flex-col gap-6"
             >
               <p className="text-center text-sm text-muted-foreground">

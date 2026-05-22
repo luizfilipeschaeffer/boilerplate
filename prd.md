@@ -2,7 +2,7 @@
 
 **Versão:** 0.7 — Core por setor, evolução E0–E10 e profundidade de módulo  
 
-**Status:** Marco **R0** ✅ · **R1** ✅ · **R2** (tenant P1–P2) ✅ · Trilha `platform-admin` ✅ · **Próximo:** Marco **R3** — Fiscal e equipe  
+**Status:** Marco **R0** ✅ · **R1** ✅ · **R2** (tenant P1–P2) ✅ · **R2.5** (catálogo + `/evolucao` + `/roadmap`) ✅ · Trilha `platform-admin` ✅ · **Próximo:** Marco **R3** — Fiscal e equipe  
 
 **Stack:** Next.js **16.2.6** · PostgreSQL 16 (Docker, porta **5454**, schema global `boilerplate`) · TypeScript · **Bun** · Turborepo · tRPC · NextAuth v5 · shadcn/ui  
 
@@ -1808,8 +1808,8 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 | `segment-moda`, `segment-alimentacao`, Asaas mock, Aprendiz LLM | R2 | ✅ |
 | `core-crm` (tenant) | R2+ | ⏳ **scaffold** |
 | Emissão fiscal homologada | R3 | ⏳ Planejado |
-| Catálogo global + profundidade D + seed roadmap | R2.5 | ⏳ PRD v0.7 — implementação em andamento |
-| UI `/roadmap` + `/evolucao` (admin + tenant) | R3 | ⏳ Planejado |
+| Catálogo global + profundidade D + seed roadmap | R2.5 | ✅ `db:seed-roadmap` + §8.12 |
+| UI `/roadmap` + `/evolucao` (admin + tenant) | R2.5 | ✅ `platform-admin` + `apps/web` |
 | `apps/platform-admin` | §17 | ✅ CRM, comms mock, insights, `/modulos` |
 | Modelo E0–E10 + core por setor no PRD | Doc | ✅ v0.7 |
 
@@ -1887,12 +1887,14 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 - [x] Vendas confirmadas → lançamento automático no fluxo de caixa (`recordSaleCashInflow`)
 
-### Marco R2.5 — Catálogo de produto (prep R3)
+### Marco R2.5 — Catálogo de produto (prep R3) — **concluído**
 
-- [ ] Schema `core_sectors`, `core_modules_catalog`, `market_segments`, `segment_*`, `module_depth_changelog` (§8.12)
-- [ ] `seed-product-roadmap.ts` + `product-roadmap.json` (setores, profundidades D, 40 segmentos, changelog R1/R2)
-- [ ] `sectorSlug` + `depthCurrent` / `depthTarget` no `module-registry`
-- [ ] PRD v0.7 publicado ✅
+- [x] Schema `core_sectors`, `core_modules_catalog`, `market_segments`, `segment_*`, `module_depth_changelog` (§8.12)
+- [x] `seed-product-roadmap.ts` + `product-roadmap.json` (setores, profundidades D, 40 segmentos, changelog R1/R2)
+- [x] `sectorSlug` + `depthCurrent` / `depthTarget` no `module-registry` + `syncRegistryToCatalog()`
+- [x] `platform-admin` → `/roadmap` (por setor, changelog, resumo)
+- [x] Tenant → `/evolucao` (progresso por setor, próximas melhorias, feed público)
+- [x] PRD v0.7 publicado ✅
 
 ### Marco R3 — Fiscal e Equipe (semanas 17–24) — fase P3
 
@@ -1906,17 +1908,24 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 - [ ] `fiscal-cte` + `fiscal-ciot` + `fiscal-mdfe` (transportadora)
 
+- [x] `core-pedidos` — pré-venda na tabela `sales` (status rascunho/pedido), conversão em venda confirmada, formas de pagamento por pedido
+- [x] `ops-multi-loja` (MVP R3) — filiais por organização, `branchId` na sessão, vendas/pedidos por filial
+- [x] Setores tenant — `sector_modules`, seletor de setor na sidebar, nav filtrado por setor
+- [x] `ops-vendedores` D3 — convite por e-mail, vínculo `sellers.user_id` ↔ `users`, papel `vendedor`
+- [ ] Configurações tenant — CRUD setores, formas de pagamento, módulos por setor (UI `/configuracoes`)
+- [ ] `platform-admin` `/organizacoes/[id]` — detalhe com módulos por setor core, filiais e setores
+
 - [ ] `rh-comissoes`
 
 - [ ] Aprendiz v2 (camada 2 — execução autônoma)
 
 - [ ] Gatilhos de sugestão de módulo
-- [ ] `platform-admin` rota `/roadmap` (setor, profundidade, changelog)
-- [ ] Tenant `/evolucao` — evolução visível ao cliente
+- [x] `platform-admin` rota `/roadmap` (setor, profundidade, changelog) — entregue em R2.5
+- [x] Tenant `/evolucao` — evolução visível ao cliente — entregue em R2.5
 
 ### Marco R4 — Escala (semanas 25–36) — fase P4
 
-- [ ] `ops-multi-loja`
+- [ ] `ops-multi-loja` (consolidação BI / visão por unidade — além do MVP R3)
 
 - [ ] `bi-dashboards`
 
@@ -2234,7 +2243,8 @@ Objetivo: o time interno e o cliente enxergarem **onde estamos** e **para onde v
 | Mai/2026 | Trilha §17 — `platform-admin` MVP (CRM + comms mock + insights) |
 | Mai/2026 | Marco R2 — fluxo de caixa, vendedores, relatórios, Asaas mock, Aprendiz LLM (fase P2) |
 | Mai/2026 | PRD v0.7 — estágios E0–E10, setores core, profundidade D0–D5, catálogo roadmap |
-| — | **Atual:** Marco R2.5/R3 — catálogo + seed + fiscal homologado + `rh-comissoes` |
+| Mai/2026 | Marco R2.5 — catálogo global, seed roadmap, `/roadmap`, `/evolucao` |
+| — | **Atual:** Marco R3 — fiscal homologado + `rh-comissoes` + Aprendiz v2 |
 
 ---
 

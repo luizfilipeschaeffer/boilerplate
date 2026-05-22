@@ -28,6 +28,8 @@ model Organization {
   modulosAtivos  ModuloAtivo[]
   moduloDemanda  ModuloDemanda[]
   memberships    Membership[]
+  branches       Branch[]
+  sellerInvites  SellerInvite[]
   crmDeals            CrmDeal[]
   crmNotes            PlatformCrmNote[]
   platformAccount     PlatformAccount?
@@ -245,29 +247,214 @@ model PlatformUser {
 }
 
 model Membership {
-  id             String   @id @default(uuid())
-  userId         String   @map("user_id")
-  organizationId String   @map("organization_id")
-  role           String   @default("dono")
-  createdAt      DateTime @default(now()) @map("created_at")
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  organizationId  String   @map("organization_id")
+  role            String   @default("dono")
+  active          Boolean  @default(true)
+  defaultBranchId String?  @map("default_branch_id")
+  createdAt       DateTime @default(now()) @map("created_at")
 
-  user         User         @relation(fields: [userId], references: [id])
-  organization Organization @relation(fields: [organizationId], references: [id])
+  user              User               @relation(fields: [userId], references: [id])
+  organization      Organization       @relation(fields: [organizationId], references: [id])
+  defaultBranch     Branch?            @relation(fields: [defaultBranchId], references: [id], onDelete: SetNull)
+  membershipSectors       MembershipSector[]
+  membershipSectorModules MembershipSectorModule[]
 
   @@unique([userId, organizationId])
   @@schema("boilerplate")
   @@map("memberships")
 }
 
-model Sector {
-  id             String @id @default(uuid())
-  organizationId String @map("organization_id")
+model Branch {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
   name           String
-  slug           String @default("geral")
+  slug           String
+  active         Boolean  @default(true)
+  isDefault      Boolean  @default(false) @map("is_default")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships  Membership[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@schema("boilerplate")
+  @@map("branches")
+}
+
+model Sector {
+  id              String  @id @default(uuid())
+  organizationId  String  @map("organization_id")
+  name            String
+  slug            String  @default("geral")
+  coreSectorSlug  String? @map("core_sector_slug")
+  /// IDs dos cards do painel inicial por setor (ex.: cash_flow, clients, stock_alerts)
+  dashboardCards  Json    @default("[\"cash_flow\",\"clients\",\"stock_alerts\"]") @map("dashboard_cards")
+
+  sectorModules           SectorModule[]
+  membershipSectors       MembershipSector[]
+  membershipSectorModules MembershipSectorModule[]
 
   @@unique([organizationId, slug])
   @@schema("boilerplate")
   @@map("sectors")
+}
+
+model SectorModule {
+  id       String @id @default(uuid())
+  sectorId String @map("sector_id")
+  moduleId String @map("module_id")
+
+  sector Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  @@unique([sectorId, moduleId])
+  @@index([sectorId])
+  @@schema("boilerplate")
+  @@map("sector_modules")
+}
+
+model MembershipSector {
+  membershipId String @map("membership_id")
+  sectorId     String @map("sector_id")
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  sector     Sector     @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  @@id([membershipId, sectorId])
+  @@schema("boilerplate")
+  @@map("membership_sectors")
+}
+
+/// Módulos e permissões explícitas do membro em um setor (vazio = herda setor + papel).
+model MembershipSectorModule {
+  membershipId String @map("membership_id")
+  sectorId     String @map("sector_id")
+  moduleId     String @map("module_id")
+  permissions  Json?  @map("permissions")
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  sector     Sector     @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  @@id([membershipId, sectorId, moduleId])
+  @@index([membershipId, sectorId])
+  @@schema("boilerplate")
+  @@map("membership_sector_modules")
+}
+
+model SellerInvite {
+  id             String    @id @default(uuid())
+  organizationId String    @map("organization_id")
+  tenantSellerId String    @map("tenant_seller_id")
+  email          String
+  token          String    @unique
+  expiresAt      DateTime  @map("expires_at")
+  acceptedAt     DateTime? @map("accepted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([token])
+  @@schema("boilerplate")
+  @@map("seller_invites")
+}
+
+/// Setores universais do produto — PRD §5.0 / §8.12
+model CoreSector {
+  slug     String @id
+  name     String
+  camada   String
+  presenca String
+  ordem    Int    @default(0)
+
+  modules CoreModuleCatalog[]
+
+  @@schema("boilerplate")
+  @@map("core_sectors")
+}
+
+/// Catálogo global de módulos de produto — PRD §8.12
+model CoreModuleCatalog {
+  id                   String  @id
+  name                 String
+  sectorSlug           String  @map("sector_slug")
+  faseMinima           Int     @default(1) @map("fase_minima")
+  implementationStatus String  @default("scaffold") @map("implementation_status")
+  depthCurrent         Int     @default(0) @map("depth_current")
+  depthTarget          Int     @default(3) @map("depth_target")
+  depthTargetMarco     String? @map("depth_target_marco")
+  deliveryMarco        String? @map("delivery_marco")
+  registrySync         Boolean @default(true) @map("registry_sync")
+  depthRubric          Json?   @map("depth_rubric")
+  depthNotes           String? @map("depth_notes")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  sector    CoreSector             @relation(fields: [sectorSlug], references: [slug])
+  changelog ModuleDepthChangelog[]
+
+  @@index([sectorSlug])
+  @@schema("boilerplate")
+  @@map("core_modules_catalog")
+}
+
+/// Segmentos de mercado (estudo) — PRD §5.0.2
+model MarketSegment {
+  slug  String @id
+  name  String
+  ordem Int    @default(0)
+
+  sectorModules SegmentSectorModule[]
+  vitalModules  SegmentVitalModule[]
+
+  @@schema("boilerplate")
+  @@map("market_segments")
+}
+
+model SegmentSectorModule {
+  id                String @id @default(uuid())
+  segmentSlug       String @map("segment_slug")
+  sectorSlug        String @map("sector_slug")
+  marketModuleLabel String @map("market_module_label")
+
+  segment MarketSegment @relation(fields: [segmentSlug], references: [slug], onDelete: Cascade)
+
+  @@unique([segmentSlug, sectorSlug, marketModuleLabel])
+  @@schema("boilerplate")
+  @@map("segment_sector_modules")
+}
+
+model SegmentVitalModule {
+  id              String @id @default(uuid())
+  segmentSlug     String @map("segment_slug")
+  vitalModuleLabel String @map("vital_module_label")
+
+  segment MarketSegment @relation(fields: [segmentSlug], references: [slug], onDelete: Cascade)
+
+  @@unique([segmentSlug, vitalModuleLabel])
+  @@schema("boilerplate")
+  @@map("segment_vital_modules")
+}
+
+/// Histórico de evolução de profundidade D — PRD §5.0.1
+model ModuleDepthChangelog {
+  id            String   @id @default(uuid())
+  moduleId      String   @map("module_id")
+  title         String
+  publicSummary String   @map("public_summary")
+  depthFrom     Int      @map("depth_from")
+  depthTo       Int      @map("depth_to")
+  deliveryMarco String?  @map("delivery_marco")
+  showToTenants Boolean  @default(true) @map("show_to_tenants")
+  releasedAt    DateTime @default(now()) @map("released_at")
+
+  module CoreModuleCatalog @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId, releasedAt])
+  @@schema("boilerplate")
+  @@map("module_depth_changelog")
 }
 
 model ModuloAtivo {

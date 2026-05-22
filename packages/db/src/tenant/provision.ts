@@ -163,7 +163,43 @@ function tenantMigrateStatements(schema: string): string[] {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`,
     `ALTER TABLE "${schema}"."sales" ADD COLUMN IF NOT EXISTS seller_id TEXT`,
+    `ALTER TABLE "${schema}"."sales" ADD COLUMN IF NOT EXISTS branch_id TEXT`,
+    `ALTER TABLE "${schema}"."sales" ADD COLUMN IF NOT EXISTS notes TEXT`,
+    `ALTER TABLE "${schema}"."sales" ADD COLUMN IF NOT EXISTS allowed_payment_methods JSONB`,
+    `ALTER TABLE "${schema}"."sales" ADD COLUMN IF NOT EXISTS converted_at TIMESTAMPTZ`,
+    `ALTER TABLE "${schema}"."sellers" ADD COLUMN IF NOT EXISTS user_id TEXT`,
+    `CREATE TABLE IF NOT EXISTS "${schema}"."payment_methods" (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      label TEXT NOT NULL,
+      active BOOLEAN NOT NULL DEFAULT true,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
   ];
+}
+
+export async function seedDefaultPaymentMethods(schemaName: string): Promise<void> {
+  assertSafeSchemaName(schemaName);
+  const table = `"${schemaName}"."payment_methods"`;
+  const defaults = [
+    { id: "pm-dinheiro", code: "dinheiro", label: "Dinheiro", sort: 10 },
+    { id: "pm-pix", code: "pix", label: "PIX", sort: 20 },
+    { id: "pm-cc", code: "cartao_credito", label: "Cartão crédito", sort: 30 },
+    { id: "pm-cd", code: "cartao_debito", label: "Cartão débito", sort: 40 },
+    { id: "pm-outro", code: "outro", label: "Outro", sort: 50 },
+  ];
+  for (const d of defaults) {
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO ${table} (id, code, label, active, sort_order)
+       VALUES ($1, $2, $3, true, $4)
+       ON CONFLICT (code) DO NOTHING`,
+      d.id,
+      d.code,
+      d.label,
+      d.sort,
+    );
+  }
 }
 
 async function runStatements(statements: string[]): Promise<void> {
@@ -176,4 +212,5 @@ export async function provisionTenantSchema(schemaName: string): Promise<void> {
   assertSafeSchemaName(schemaName);
   await runStatements(tenantDdlStatements(schemaName));
   await runStatements(tenantMigrateStatements(schemaName));
+  await seedDefaultPaymentMethods(schemaName);
 }

@@ -28,12 +28,10 @@ export async function setUserPassword(
 ): Promise<void> {
   const normalized = email.trim().toLowerCase();
   const passwordHash = await hashUserPassword(plainPassword);
-  // SQL direto: compatível mesmo se o Prisma Client ainda não foi regenerado.
-  await prisma.$executeRawUnsafe(
-    `UPDATE users SET password_hash = $1 WHERE email = $2`,
-    passwordHash,
-    normalized,
-  );
+  await prisma.user.update({
+    where: { email: normalized },
+    data: { passwordHash },
+  });
 }
 
 export async function findUserByEmailForAuth(

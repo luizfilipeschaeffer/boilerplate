@@ -11,5 +11,8 @@ export async function requireTenantContext() {
   return {
     organizationId: org.id,
     schemaName: org.schemaName,
+    branchId: session.branchId ?? null,
+    sectorId: session.sectorId ?? "geral",
+    role: session.role ?? "dono",
   };
 }

@@ -52,7 +52,7 @@ export function ContaSenhaForm({ email }: { email: string }) {
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)}>
+    <form method="post" onSubmit={(e) => void handleSubmit(e)} noValidate>
       <FieldGroup>
         <p className="text-sm text-muted-foreground">
           Conta: <span className="font-medium text-foreground">{email}</span>

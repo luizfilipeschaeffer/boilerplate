@@ -5,17 +5,20 @@ import * as React from "react";
 type HeaderActionsContextValue = {
   actions: React.ReactNode;
   setActions: (node: React.ReactNode) => void;
+  info: React.ReactNode;
+  setInfo: (node: React.ReactNode) => void;
 };
 
-const HeaderActionsContext = React.createContext<HeaderActionsContextValue | null>(
+export const HeaderActionsContext = React.createContext<HeaderActionsContextValue | null>(
   null,
 );
 
 export function HeaderActionsProvider({ children }: { children: React.ReactNode }) {
   const [actions, setActions] = React.useState<React.ReactNode>(null);
+  const [info, setInfo] = React.useState<React.ReactNode>(null);
   const value = React.useMemo(
-    () => ({ actions, setActions }),
-    [actions],
+    () => ({ actions, setActions, info, setInfo }),
+    [actions, info],
   );
   return (
     <HeaderActionsContext.Provider value={value}>
@@ -40,5 +43,16 @@ export function SetHeaderActions({ children }: { children: React.ReactNode }) {
     setActions(children);
     return () => setActions(null);
   }, [children, setActions]);
+  return null;
+}
+
+/** Texto exibido no ícone de informações ao lado do título do cabeçalho. */
+export function SetHeaderInfo({ children }: { children: React.ReactNode }) {
+  const setInfo = React.useContext(HeaderActionsContext)?.setInfo;
+  React.useEffect(() => {
+    if (!setInfo) return;
+    setInfo(children);
+    return () => setInfo(null);
+  }, [children, setInfo]);
   return null;
 }

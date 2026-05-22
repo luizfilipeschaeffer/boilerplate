@@ -12,6 +12,7 @@ const ROUTE_MODULE: Record<string, PlatformModuleId> = {
   "/comms": "platform-comms",
   "/insights": "platform-insights",
   "/modulos": "platform-modulos",
+  "/roadmap": "platform-roadmap",
   "/organizacoes": "organizacoes",
 };
 
@@ -51,5 +52,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
 };

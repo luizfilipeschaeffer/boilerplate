@@ -1,4 +1,6 @@
 import { prisma } from "./client";
+import { ensureDefaultBranch } from "./branches";
+import { seedDefaultSectorModules } from "./sectors-admin";
 import { provisionTenantSchema } from "./tenant/provision";
 import { schemaNameFromSlug } from "./tenant/schema";
 
@@ -12,12 +14,16 @@ export async function findOrCreateUserByEmail(email: string, name?: string) {
 
 export async function getMembershipForUser(userId: string) {
   return prisma.membership.findFirst({
-    where: { userId },
+    where: { userId, active: true },
     include: {
       organization: {
         include: {
           modulosAtivos: true,
         },
+      },
+      defaultBranch: true,
+      membershipSectors: {
+        include: { sector: true },
       },
     },
     orderBy: { createdAt: "asc" },
@@ -116,19 +122,37 @@ export async function createOrganizationWithTenant(
       },
     });
 
-    await tx.sector.create({
+    const sector = await tx.sector.create({
       data: {
         organizationId: organization.id,
         name: "Geral",
         slug: "geral",
+        coreSectorSlug: "comercial",
       },
     });
 
-    await tx.membership.create({
+    const branch = await tx.branch.create({
+      data: {
+        organizationId: organization.id,
+        name: "Matriz",
+        slug: "matriz",
+        isDefault: true,
+      },
+    });
+
+    const membership = await tx.membership.create({
       data: {
         userId: ownerUserId,
         organizationId: organization.id,
         role: "dono",
+        defaultBranchId: branch.id,
+      },
+    });
+
+    await tx.membershipSector.create({
+      data: {
+        membershipId: membership.id,
+        sectorId: sector.id,
       },
     });
 
@@ -136,6 +160,11 @@ export async function createOrganizationWithTenant(
   });
 
   await provisionTenantSchema(org.schemaName);
+
+  const moduleIds = await getActiveModuleIdsForOrg(org.id);
+  await seedDefaultSectorModules(org.id, "geral", moduleIds);
+  await ensureDefaultBranch(org.id);
+
   return org;
 }
 
