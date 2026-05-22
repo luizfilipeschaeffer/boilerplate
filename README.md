@@ -116,6 +116,30 @@ A senha é armazenada como **bcrypt** em `platform_users.password_hash`.
   - Inserção manual controlada / convite corporativo (SSO futuro).
 - Para bootstrap em ambiente efêmero (ex.: review app), injete `PLATFORM_ADMIN_SEED_*` como secrets de CI e set `ALLOW_PLATFORM_ADMIN_SEED=true` só naquele job — nunca no repositório.
 
+## Antes do deploy (Vercel)
+
+Evite descobrir erro só no painel da Vercel. Na raiz do monorepo:
+
+```bash
+# Igual ao deploy: install + turbo build (web + platform-admin)
+# Usa DATABASE_URL do ambiente ou um placeholder só para prisma generate
+bun run check:vercel
+
+# Simula clone limpo (apaga Prisma gerado + pastas .next de dev e regera no build)
+bun run check:vercel -- --fresh
+
+# Só o app que você vai publicar
+bun run check:vercel:web
+bun run check:vercel:admin
+```
+
+| Comando | Quando usar |
+|--------|-------------|
+| `bun run check:vercel` | Antes de cada push/deploy — espelha a Vercel |
+| `bun run ci` | Gate completo: Prisma validate + lint + build (precisa Postgres com `bun run db:up` e `.env`) |
+
+O GitHub Actions na branch `dev` roda o mesmo fluxo em push/PR.
+
 ## Estrutura (alvo)
 
 ```
