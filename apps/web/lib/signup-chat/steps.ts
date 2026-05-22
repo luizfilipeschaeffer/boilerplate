@@ -5,11 +5,13 @@ import {
   EMPTY_DIAGNOSTICO_DRAFT,
   draftToOnboardingInput,
 } from "@/lib/diagnostico/draft";
+import { signupFinishLoginInstructions } from "@/lib/auth/login-with-code";
 import {
   computeDiagnosedPhase,
+  faseEscolhidaPrompt,
   FASE_OPTIONS,
-  faseConfirmPrompt,
 } from "@/lib/diagnostico/phase-labels";
+import type { ChoiceOption } from "@/lib/chat/choice-option";
 import { getMarketSegmentChoices } from "@/lib/diagnostico/segment-choices";
 import { TIPOS_NEGOCIO, VENDAS_MES_OPTIONS } from "@/lib/tipos-negocio";
 
@@ -29,7 +31,6 @@ export type SignupStepId =
   | "possuiCnpj"
   | "cnpj"
   | "emiteNota"
-  | "faseConfirm"
   | "faseEscolhida"
   | "summary";
 
@@ -39,7 +40,7 @@ export const INITIAL_SIGNUP_DRAFT: SignupDraft = { ...EMPTY_DIAGNOSTICO_DRAFT };
 
 export type StepKind = "text" | "email" | "code" | "choices" | "info";
 
-export type ChoiceOption = { value: string; label: string };
+export type { ChoiceOption };
 
 export type SignupStepDef = {
   id: SignupStepId;
@@ -196,22 +197,12 @@ export const SIGNUP_STEPS: SignupStepDef[] = [
       { value: "nao", label: "Ainda não" },
       { value: "nao_sei", label: "Não sei / estou começando" },
     ],
-    next: () => "faseConfirm",
-  },
-  {
-    id: "faseConfirm",
-    kind: "choices",
-    prompt: (d) => faseConfirmPrompt(d).replace(/\*\*/g, ""),
-    choices: [
-      { value: "confirmar", label: "Sim, está certo" },
-      { value: "ajustar", label: "Quero ajustar a fase" },
-    ],
-    next: (d) => (d.declaredPhase != null ? "summary" : "faseEscolhida"),
+    next: () => "faseEscolhida",
   },
   {
     id: "faseEscolhida",
     kind: "choices",
-    prompt: "Qual fase descreve melhor seu negócio hoje?",
+    prompt: (d) => faseEscolhidaPrompt(d).replace(/\*\*/g, ""),
     choices: [...FASE_OPTIONS],
     next: () => "summary",
   },
@@ -219,7 +210,7 @@ export const SIGNUP_STEPS: SignupStepDef[] = [
     id: "summary",
     kind: "info",
     prompt: (d) =>
-      `Obrigado, ${firstName(d.name)}! Já aprendi bastante sobre você e sobre “${d.organizationName.trim()}”. Vou criar sua conta e guardar tudo — daqui a pouco te encontro no painel do Aprendiz.`,
+      `${signupFinishLoginInstructions(d.email).replace(/\*\*/g, "")} Estou guardando tudo que aprendi sobre “${d.organizationName.trim()}”.`,
     next: () => null,
   },
 ];
@@ -286,13 +277,6 @@ export function applyAnswer(
       const next = { ...draft, emiteNota: v as SignupDraft["emiteNota"] };
       const diagnosed = computeDiagnosedPhase(next);
       return { ...next, diagnosedPhase: diagnosed };
-    }
-    case "faseConfirm": {
-      const diagnosed = draft.diagnosedPhase ?? computeDiagnosedPhase(draft);
-      if (v === "confirmar") {
-        return { ...draft, declaredPhase: diagnosed };
-      }
-      return { ...draft, declaredPhase: null };
     }
     case "faseEscolhida":
       return { ...draft, declaredPhase: Number(v) };

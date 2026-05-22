@@ -1,4 +1,4 @@
-import type { ChoiceOption } from "@/lib/diagnostico/steps-shared";
+import type { ChoiceOption } from "@/lib/chat/choice-option";
 
 const FALLBACK: ChoiceOption[] = [
   { value: "varejo", label: "Varejo" },

@@ -1,7 +1,8 @@
 "use client";
 
 import type { CommsThreadDetail } from "@boilerplate/db";
-import { COMMS_CHANNEL_LABELS, activityTypeLabel } from "@boilerplate/db";
+import { COMMS_CHANNEL_LABELS } from "@boilerplate/db/platform-comms-labels";
+import { activityTypeLabel } from "@boilerplate/db/platform-crm-ext-labels";
 import Link from "next/link";
 import { useState } from "react";
 import { sendCommsMessageAction } from "./actions";

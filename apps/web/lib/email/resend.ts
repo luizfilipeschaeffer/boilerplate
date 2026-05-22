@@ -3,6 +3,7 @@ import { loginUrlWithEmail, passwordResetEmailCopyUrl } from "@/lib/app-url";
 import {
   buildMemberInviteEmailHtml,
   buildPasswordResetEmailHtml,
+  buildLoginVerificationEmailHtml,
   buildSignupVerificationEmailHtml,
   buildWelcomePasswordEmailHtml,
 } from "@/lib/email/templates";
@@ -39,6 +40,22 @@ async function sendHtmlEmail(input: {
   if (error) {
     throw new Error(error.message ?? "Falha ao enviar e-mail.");
   }
+}
+
+/** Código para entrar no painel sem senha. */
+export async function sendLoginVerificationEmail(input: {
+  to: string;
+  name: string;
+  code: string;
+}): Promise<void> {
+  await sendHtmlEmail({
+    to: input.to,
+    subject: `${input.code} — seu código de acesso`,
+    html: buildLoginVerificationEmailHtml({
+      name: input.name,
+      code: input.code,
+    }),
+  });
 }
 
 /** Código de verificação no cadastro com o Aprendiz. */

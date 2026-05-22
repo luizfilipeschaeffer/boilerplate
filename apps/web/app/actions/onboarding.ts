@@ -23,7 +23,8 @@ export type OnboardingSubmitInput = DiagnosticoInput & {
   name: string;
   email: string;
   organizationName: string;
-  password: string;
+  /** Opcional — primeiro acesso pode ser só com código no login. */
+  password?: string;
 };
 
 export async function submitOnboarding(
@@ -46,9 +47,7 @@ export async function submitOnboarding(
 
   const user = await findOrCreateUserByEmail(email, input.name.trim());
 
-  if (input.password.length < 8) {
-    throw new Error("Use pelo menos 8 caracteres na senha.");
-  }
+  const plainPassword = input.password?.trim() ?? "";
 
   ensureModulesRegistered();
   const onboarding = await completeOnboarding(user.id, input, {
@@ -56,14 +55,15 @@ export async function submitOnboarding(
     declaredPhase: input.declaredPhase ?? undefined,
   });
 
-  await setUserPassword(email, input.password);
-
-  await completeTenantMission({
-    schemaName: onboarding.schemaName,
-    organizationId: onboarding.organizationId,
-    missionId: "criar_senha",
-    source: "auto",
-  });
+  if (plainPassword.length >= 8) {
+    await setUserPassword(email, plainPassword);
+    await completeTenantMission({
+      schemaName: onboarding.schemaName,
+      organizationId: onboarding.organizationId,
+      missionId: "criar_senha",
+      source: "auto",
+    });
+  }
 
   const perfil: AprendizPerfilCadastro = buildPerfilCadastro(
     { ...input, origem: "onboarding" },

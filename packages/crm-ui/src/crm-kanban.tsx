@@ -57,6 +57,7 @@ export function CrmKanban({
   onOpenRecord,
   onDrop,
   leadColumnFooter,
+  newLeadColumnId = "lead",
 }: {
   columns: { id: string; title: string; records: CrmBoardRecord[] }[];
   moduleLabels: Record<string, string>;
@@ -64,6 +65,7 @@ export function CrmKanban({
   onOpenRecord: (record: CrmBoardRecord) => void;
   onDrop: (record: CrmBoardRecord, columnId: string) => Promise<void>;
   leadColumnFooter?: React.ReactNode;
+  newLeadColumnId?: string;
 }) {
   const [active, setActive] = useState<CrmBoardRecord | null>(null);
   const sensors = useSensors(
@@ -101,7 +103,7 @@ export function CrmKanban({
             id={col.id}
             title={col.title}
             count={col.records.length}
-            footer={col.id === "lead" ? leadColumnFooter : undefined}
+            footer={col.id === newLeadColumnId ? leadColumnFooter : undefined}
           >
             {col.records.length === 0 ? (
               <p className="px-1 py-4 text-center text-xs text-muted-foreground">

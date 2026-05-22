@@ -1,6 +1,6 @@
 "use client";
 
-import type { PlatformIntegratorCatalogRow } from "@boilerplate/db";
+import type { PlatformIntegratorCatalogRow } from "@boilerplate/db/platform-integrators.types";
 import {
   getCoreRowModel,
   getFilteredRowModel,

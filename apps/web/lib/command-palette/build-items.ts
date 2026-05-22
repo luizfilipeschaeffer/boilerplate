@@ -101,6 +101,17 @@ export function buildQuickActionItems(
     );
   }
 
+  if (activeModuleIds.includes("core-crm") && canAccessRoute(role, "/crm")) {
+    items.push(
+      item({
+        id: "nav:crm",
+        group: "Navegação",
+        label: "CRM Comercial",
+        href: "/crm",
+      }),
+    );
+  }
+
   if (activeModuleIds.includes("core-vendas") && canAccessRoute(role, "/vendas")) {
     items.push(
       item({

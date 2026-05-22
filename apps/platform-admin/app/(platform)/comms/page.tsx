@@ -1,12 +1,8 @@
-import {
-  listCommsThreads,
-  listOrganizationsForAdmin,
-  prisma,
-} from "@boilerplate/db";
 import { auth } from "@/auth";
 import { canAccessPlatformModule } from "@/lib/rbac";
 import type { PlatformRole } from "@boilerplate/db";
-import { CommsInboxClient } from "@/modules/platform-comms/comms-inbox-client";
+import { CommsWorkspace } from "@/modules/platform-comms/comms-workspace";
+import { loadCommsWorkspaceData } from "@/modules/platform-comms/load-comms-workspace-data";
 
 export const dynamic = "force-dynamic";
 
@@ -25,38 +21,28 @@ export default async function CommsPage({
   );
   const params = await searchParams;
 
-  const [threads, orgs, leads] = await Promise.all([
-    listCommsThreads({
-      organizationId: params.organizationId,
-      platformLeadId: params.platformLeadId,
-    }),
-    listOrganizationsForAdmin(),
-    prisma.platformLead.findMany({
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-  ]);
+  if (!canAccessPlatformModule(role, "platform-comms")) {
+    return (
+      <p className="px-4 text-sm text-muted-foreground">Sem permissão.</p>
+    );
+  }
+
+  const data = await loadCommsWorkspaceData(session?.user?.id, {
+    organizationId: params.organizationId,
+    platformLeadId: params.platformLeadId,
+  });
 
   return (
-    <div className="px-4 pb-8 lg:px-6">
-      <div className="mb-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Comunicação</h1>
-        <p className="text-sm text-muted-foreground">
-          Inbox omnichannel — MVP com e-mail mock e vínculo ao CRM (tipo + fase).
-        </p>
-      </div>
-      {canAccessPlatformModule(role, "platform-comms") ? (
-        <CommsInboxClient
-          threads={threads}
-          canEdit={canEdit}
-          filterOrgId={params.organizationId}
-          filterLeadId={params.platformLeadId}
-          organizations={orgs.map((o) => ({ id: o.id, name: o.name }))}
-          leads={leads}
-        />
-      ) : (
-        <p className="text-sm text-muted-foreground">Sem permissão.</p>
-      )}
-    </div>
+    <CommsWorkspace
+      threads={data.threads}
+      activeThread={null}
+      canEdit={canEdit}
+      currentUserId={session?.user?.id}
+      filterOrgId={params.organizationId}
+      filterLeadId={params.platformLeadId}
+      organizations={data.organizations}
+      leads={data.leads}
+      platformUsers={data.platformUsers}
+    />
   );
 }

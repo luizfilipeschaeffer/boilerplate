@@ -6,7 +6,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./organization": "./src/organization.ts",
-    "./platform-user": "./src/platform-user.ts"
+    "./platform-user": "./src/platform-user.ts",
+    "./platform-comms-labels": "./src/platform-comms-labels.ts",
+    "./platform-crm-ext-labels": "./src/platform-crm-ext-labels.ts",
+    "./platform-integrators.types": "./src/platform-integrators.types.ts"
   },
   "scripts": {
     "lint": "tsc --noEmit -p tsconfig.json",

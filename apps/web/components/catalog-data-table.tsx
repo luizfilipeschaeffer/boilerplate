@@ -7,7 +7,14 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { MoreHorizontal, PackageX, PackageCheck, Pencil } from "lucide-react";
+import {
+  FolderTree,
+  MoreHorizontal,
+  PackageX,
+  PackageCheck,
+  Pencil,
+  X,
+} from "lucide-react";
 
 import { setCatalogItemActiveAction } from "@/app/actions/catalog";
 import { CatalogEditDialog } from "@/components/catalog-edit-dialog";
@@ -36,6 +43,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
+import type { CategoryDto } from "@/app/actions/categories";
+
 export type CatalogRow = {
   id: string;
   name: string;
@@ -43,6 +52,7 @@ export type CatalogRow = {
   sku: string | null;
   priceCents: number | null;
   stockQty: number;
+  categoryId?: string | null;
   active: boolean;
 };
 
@@ -55,7 +65,23 @@ function priceToFormValue(cents: number | null): string {
   return (cents / 100).toFixed(2).replace(".", ",");
 }
 
-export function CatalogDataTable({ items }: { items: CatalogRow[] }) {
+export function CatalogDataTable({
+  items,
+  categories = [],
+  categoryNameById,
+  categoryPanelOpen = false,
+  onToggleCategoryPanel,
+  selectedCategoryLabel = null,
+  onClearCategoryFilter,
+}: {
+  items: CatalogRow[];
+  categories?: CategoryDto[];
+  categoryNameById?: Map<string, string>;
+  categoryPanelOpen?: boolean;
+  onToggleCategoryPanel?: () => void;
+  selectedCategoryLabel?: string | null;
+  onClearCategoryFilter?: () => void;
+}) {
   const { requestSync } = useSyncContext();
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [showInactive, setShowInactive] = React.useState(false);
@@ -105,12 +131,27 @@ export function CatalogDataTable({ items }: { items: CatalogRow[] }) {
           </span>
         ),
       },
+      ...(categoryNameById
+        ? [
+            {
+              id: "category",
+              header: "Categoria",
+              cell: ({ row }: { row: { original: CatalogRow } }) => (
+                <span className="text-muted-foreground">
+                  {row.original.categoryId
+                    ? (categoryNameById.get(row.original.categoryId) ?? "—")
+                    : "—"}
+                </span>
+              ),
+            } as ColumnDef<CatalogRow>,
+          ]
+        : []),
       {
         id: "price",
         header: () => <span className="block text-right">Preço</span>,
         cell: ({ row }) => (
           <span className="block text-right tabular-nums">
-            {formatBrl(row.original.priceCents)}
+            {formatBrl(row.original.priceCents ?? 0)}
           </span>
         ),
       },
@@ -178,7 +219,7 @@ export function CatalogDataTable({ items }: { items: CatalogRow[] }) {
         },
       },
     ],
-    [],
+    [categoryNameById],
   );
 
   const table = useReactTable({
@@ -215,12 +256,42 @@ export function CatalogDataTable({ items }: { items: CatalogRow[] }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          placeholder="Buscar por nome, SKU ou tipo…"
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="max-w-md"
-        />
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:max-w-xl">
+          {onToggleCategoryPanel ? (
+            <Button
+              type="button"
+              variant={categoryPanelOpen ? "secondary" : "outline"}
+              size="icon"
+              className="shrink-0"
+              title={
+                categoryPanelOpen ? "Recolher categorias" : "Abrir categorias"
+              }
+              onClick={onToggleCategoryPanel}
+            >
+              <FolderTree className="size-4" />
+              <span className="sr-only">Categorias</span>
+            </Button>
+          ) : null}
+          <Input
+            placeholder="Buscar por nome, SKU ou tipo…"
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="min-w-0 flex-1"
+          />
+          {selectedCategoryLabel && onClearCategoryFilter ? (
+            <Badge variant="secondary" className="gap-1 pr-1 font-normal">
+              {selectedCategoryLabel}
+              <button
+                type="button"
+                className="rounded-sm p-0.5 hover:bg-muted"
+                title="Limpar filtro de categoria"
+                onClick={onClearCategoryFilter}
+              >
+                <X className="size-3" />
+              </button>
+            </Badge>
+          ) : null}
+        </div>
         <div className="flex items-center gap-2">
           <Switch
             id="show-inactive-catalog"
@@ -249,11 +320,13 @@ export function CatalogDataTable({ items }: { items: CatalogRow[] }) {
             if (!open) setEditItem(null);
           }}
           itemId={editItem.id}
+          categories={categories}
           initialValues={{
             name: editItem.name,
             itemType: editItem.itemType as "produto" | "servico",
             sku: editItem.sku ?? "",
             price: priceToFormValue(editItem.priceCents),
+            categoryId: editItem.categoryId ?? null,
           } satisfies CatalogFormValues}
         />
       ) : null}

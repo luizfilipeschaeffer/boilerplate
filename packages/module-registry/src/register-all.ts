@@ -73,16 +73,17 @@ export function registerAllModules(): void {
     depthTargetMarco: "R2",
     deliveryMarco: "R1",
   });
-  scaffold("core-crm", "CRM", {
+  scaffold("core-crm", "CRM Comercial", {
     navOrdem: 25,
     routePath: "/crm",
     dependencias: ["core-clientes"],
-    implementationStatus: "scaffold",
+    implementationStatus: "implemented",
     sectorSlug: "comercial",
     camada: "Tática",
-    depthCurrent: 0,
+    depthCurrent: 2,
     depthTarget: 3,
     depthTargetMarco: "R3",
+    deliveryMarco: "R3",
   });
   scaffold("core-vendas", "Vendas", {
     navOrdem: 30,
@@ -133,6 +134,19 @@ export function registerAllModules(): void {
     depthTarget: 3,
     depthTargetMarco: "R2",
     deliveryMarco: "R1",
+  });
+  scaffold("ops-compras", "Compras", {
+    navOrdem: 45,
+    dependencias: ["core-catalogo", "core-estoque-basico"],
+    routePath: "/compras",
+    faseMinima: 2,
+    implementationStatus: "implemented",
+    sectorSlug: "operacao",
+    camada: "Operacional",
+    depthCurrent: 1,
+    depthTarget: 3,
+    depthTargetMarco: "R3",
+    deliveryMarco: "R3",
   });
   scaffold("core-ranking", "Ranking", {
     navOrdem: 50,

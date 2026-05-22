@@ -157,21 +157,27 @@ model PlatformCommsThread {
   id                     String    @id @default(uuid())
   subject                String
   channel                String
+  /// client | internal — cliente/lead/org vs membro da equipe plataforma
+  participantKind        String    @default("client") @map("participant_kind")
   status                 String    @default("open")
   lastMessageAt          DateTime? @map("last_message_at")
   organizationId         String?   @map("organization_id")
   platformLeadId         String?   @map("platform_lead_id")
   assignedPlatformUserId String?   @map("assigned_platform_user_id")
+  peerPlatformUserId     String?   @map("peer_platform_user_id")
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
 
-  messages     PlatformCommsMessage[]
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  platformLead PlatformLead? @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
-  activities   PlatformActivity[]
+  messages         PlatformCommsMessage[]
+  organization     Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platformLead     PlatformLead?  @relation(fields: [platformLeadId], references: [id], onDelete: Cascade)
+  peerPlatformUser PlatformUser?  @relation("CommsPeer", fields: [peerPlatformUserId], references: [id], onDelete: SetNull)
+  activities       PlatformActivity[]
 
   @@index([organizationId])
   @@index([platformLeadId])
+  @@index([peerPlatformUserId])
+  @@index([participantKind])
   @@schema("boilerplate")
   @@map("platform_comms_threads")
 }
@@ -255,6 +261,8 @@ model PlatformUser {
   active       Boolean  @default(true)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+
+  commsPeerThreads PlatformCommsThread[] @relation("CommsPeer")
 
   @@schema("boilerplate")
   @@map("platform_users")
@@ -663,6 +671,21 @@ model SignupEmailVerification {
   @@index([email, createdAt])
   @@schema("boilerplate")
   @@map("signup_email_verifications")
+}
+
+/// Código de acesso ao painel sem senha (login por e-mail)
+model LoginEmailVerification {
+  id         String    @id @default(uuid())
+  email      String
+  codeHash   String    @map("code_hash")
+  expiresAt  DateTime  @map("expires_at")
+  verifiedAt DateTime? @map("verified_at")
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([email, createdAt])
+  @@schema("boilerplate")
+  @@map("login_email_verifications")
 }
 
 /// Código para recuperação de senha (login do tenant)

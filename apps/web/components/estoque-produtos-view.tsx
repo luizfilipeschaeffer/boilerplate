@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import * as React from "react";
+import { Sparkles } from "lucide-react";
+
+import { generatePurchaseOrdersFromLowStockAction } from "@/app/actions/purchase-orders";
 
 import {
   listStockProductsPageAction,
@@ -27,11 +30,13 @@ export function EstoqueProdutosView({
   initialCatalogItemCount,
   initialLowCount,
   canEdit,
+  canGenerateCompras = false,
 }: {
   initialProducts: StockProductRow[];
   initialCatalogItemCount: number;
   initialLowCount: number;
   canEdit: boolean;
+  canGenerateCompras?: boolean;
 }) {
   const { requestSync } = useSyncContext();
   const [products, setProducts] = React.useState(initialProducts);
@@ -42,6 +47,8 @@ export function EstoqueProdutosView({
   const [lowCount, setLowCount] = React.useState(initialLowCount);
   const [refreshing, setRefreshing] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [generatingCompras, setGeneratingCompras] = React.useState(false);
+  const [comprasMessage, setComprasMessage] = React.useState<string | null>(null);
 
   const pendingCount = React.useMemo(
     () => countDirtyStockMins(products, draftMins),
@@ -127,9 +134,50 @@ export function EstoqueProdutosView({
   const showTable = products.length > 0;
   const showEmpty = !showTable && !refreshing;
 
+  async function handleGenerateCompras() {
+    setGeneratingCompras(true);
+    setComprasMessage(null);
+    try {
+      const result = await generatePurchaseOrdersFromLowStockAction();
+      if (result.created.length === 0) {
+        setComprasMessage(
+          result.pending.length > 0
+            ? `${result.pending.length} item(ns) sem categoria ou fornecedor — configure em Compras.`
+            : "Nenhum produto abaixo do mínimo.",
+        );
+      } else {
+        setComprasMessage(
+          `${result.created.length} ordem(ns) criada(s) em rascunho.`,
+        );
+      }
+    } catch (e) {
+      setComprasMessage(e instanceof Error ? e.message : "Erro ao gerar compras.");
+    } finally {
+      setGeneratingCompras(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6 px-4 pb-8 lg:px-6">
       <SetHeaderInfo>{headerInfo}</SetHeaderInfo>
+      {canGenerateCompras && lowCount > 0 ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            size="sm"
+            disabled={generatingCompras}
+            onClick={() => void handleGenerateCompras()}
+          >
+            <Sparkles className="size-4" />
+            {generatingCompras ? "Gerando…" : `Gerar compras (${lowCount} abaixo do mínimo)`}
+          </Button>
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/compras" />}>
+            Ver ordens de compra
+          </Button>
+          {comprasMessage ? (
+            <span className="text-sm text-muted-foreground">{comprasMessage}</span>
+          ) : null}
+        </div>
+      ) : null}
       {canEdit ? (
         <EstoqueProdutosHeaderToolbar
           pendingCount={pendingCount}

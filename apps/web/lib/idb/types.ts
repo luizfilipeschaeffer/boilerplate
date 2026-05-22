@@ -15,6 +15,7 @@ export type CachedCatalogItem = {
   priceCents: number | null;
   stockQty: number;
   stockMin: number;
+  categoryId: string | null;
   active: boolean;
   updatedAt: string;
 };

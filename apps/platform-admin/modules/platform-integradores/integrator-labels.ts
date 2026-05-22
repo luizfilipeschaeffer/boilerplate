@@ -1,4 +1,4 @@
-import type { IntegratorImplementationStatus } from "@boilerplate/db";
+import type { IntegratorImplementationStatus } from "@boilerplate/db/platform-integrators.types";
 
 export const INTEGRATOR_TIPO_LABELS: Record<string, string> = {
   payment: "Pagamento",

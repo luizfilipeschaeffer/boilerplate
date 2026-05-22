@@ -1,14 +1,14 @@
 # PRD — Plataforma de Gestão Modular Adaptativa
 
-**Versão:** 0.7 — Core por setor, evolução E0–E10 e profundidade de módulo  
+**Versão:** 0.8 — Categorias hierárquicas, fornecedores e ordens de compra  
 
-**Status:** Marco **R0** ✅ · **R1** ✅ · **R2** (tenant P1–P2) ✅ · **R2.5** (catálogo + `/evolucao` + `/roadmap`) ✅ · Trilha `platform-admin` ✅ · **Próximo:** Marco **R3** — Fiscal e equipe  
+**Status:** Marco **R0** ✅ · **R1** ✅ · **R2** (tenant P1–P2) ✅ · **R2.5** ✅ · **R3.1** (compras + categorias) em entrega · Trilha `platform-admin` ✅ · **Próximo:** Marco **R3** — Fiscal homologado  
 
 **Stack:** Next.js **16.2.6** · PostgreSQL 16 (Docker, porta **5454**, schema global `boilerplate`) · TypeScript · **Bun** · Turborepo · tRPC · NextAuth v5 · shadcn/ui  
 
 **Idioma:** PT-BR (único no MVP)  
 
-**Última atualização:** 21 Maio 2026 — PRD v0.7 (setores core, estágios E, profundidade D, catálogo roadmap)
+**Última atualização:** 22 Maio 2026 — PRD v0.8 (`ops-compras`, árvore de categorias, cadastro de fornecedores)
 
 **Referências de mercado:** [Estrutura Organizacional por Segmento, Setor e Módulos](doc/estudo-de-mercado/Estrutura%20Organizacional%20por%20Segmento,%20Setor%20e%20Módulos.md) · [Módulos Vitais por Segmento](doc/estudo-de-mercado/Módulos%20Vitais%20por%20Segmento.md)
 
@@ -257,7 +257,7 @@ Os módulos de produto pertencem a **setores core** (catálogo global). Isso fac
 
 | Setor core (`slug`) | Camada | Presença | Módulos de produto (exemplos) |
 |---------------------|--------|----------|-------------------------------|
-| `comercial` | Tática | Universal | `core-clientes`, `core-vendas`, `core-ranking`, `ops-vendedores`, `core-crm` (scaffold) |
+| `comercial` | Tática | Universal | `core-clientes`, `core-vendas`, `core-ranking`, `ops-vendedores`, `core-crm` |
 | `operacao` | Operacional | Universal | `core-catalogo`, `core-estoque-basico`, `segment-moda`, `segment-alimentacao` |
 | `financeiro` | Tática | Universal | `fin-fluxo-caixa`; planejado: `fin-contas-pagar`, `fin-dre-simplificado` |
 | `fiscal` | Compliance | Crescente | `fiscal-core`, sub-módulos `fiscal-*` |
@@ -284,7 +284,7 @@ Os módulos de produto pertencem a **setores core** (catálogo global). Isso fac
 | Mercado | ID plataforma | Situação |
 |---------|---------------|----------|
 | ERP | Pacote `core-*` + finanças | Parcial P1–P2 |
-| CRM | `core-clientes`, `core-crm` | Clientes ✅; CRM scaffold |
+| CRM | `core-clientes`, `core-crm` | Clientes ✅; CRM comercial ✅ (kanban S04) |
 | Financeiro / Caixa | `fin-fluxo-caixa` | ✅ P2 |
 | PDV / Vendas | `core-vendas` | ✅ P1 |
 | Estoque | `core-estoque-basico` | ✅ P1 |
@@ -318,7 +318,7 @@ Complementa `implementation_status` (existe código?) e fase P (quando é elegí
 |--------|---------|--------|------------|
 | `core-vendas` | 2 | 4 | R3 |
 | `core-clientes` | 2 | 3 | R2 |
-| `core-crm` | 0 | 3 | R3+ |
+| `core-crm` | 2 | 3 | R3 |
 | `fin-fluxo-caixa` | 2 | 3 | R2 |
 | `fiscal-core` | 1 | 3 | R3 |
 | `fiscal-nfce` (e sub-módulos) | 0 | 2 | R3 |
@@ -458,14 +458,16 @@ Independente da **fase de produto P** e do **estágio E** (referência), cada or
 | Tipo | Módulos típicos além do core Fase 1 |
 |------|-------------------------------------|
 | `pessoa_fisica` | `core-vendas`, `core-clientes`; estoque desligável |
-| `varejo` | + `core-estoque-basico`, `core-ranking`; fase 3 → `fiscal-nfce` + `fiscal-sped` (§9.3) |
-| `atacado` | + `ops-tabela-preco`; fase 3 → `fiscal-nfe` + `fiscal-sped` |
-| `fornecedor` | + `ops-pedidos-compra`, `fin-contas-receber` |
-| `distribuidor` | + `ops-multi-depot`, `ops-rotas`; fase 4 → `ops-multi-loja` |
+| `varejo` | + `core-estoque-basico`, `core-ranking`; P2+ → `ops-compras`; fase 3 → `fiscal-nfce` + `fiscal-sped` (§9.3) |
+| `atacado` | + `ops-tabela-preco`, `ops-compras` (P2+); fase 3 → `fiscal-nfe` + `fiscal-sped` |
+| `fornecedor` | + `fin-contas-receber` (vendas B2B); **não** usar `ops-compras` como comprador — tipo é quem **vende** para outros |
+| `distribuidor` | + `ops-multi-depot`, `ops-rotas`, `ops-compras` (P2+); fase 4 → `ops-multi-loja` |
 | `transportadora` | + `ops-frota`, `ops-romaneio`; fase 2 → `fiscal-cte`, `fiscal-mdfe` |
-| `fabricante` | + `ops-ordem-producao`, `ops-ficha-tecnica`; fase 3 → `fiscal-nfe` |
-| `industria` | + `ops-bom`, `ops-mrp`; fiscal NF-e, qualidade |
-| `produtor_rural` | + `ops-safra-rebanho`, `ops-lote-rastreio`, `ops-gleba`; fiscal rural |
+| `fabricante` | + `ops-ordem-producao`, `ops-ficha-tecnica`, `ops-compras` (P2+); fase 3 → `fiscal-nfe` |
+| `industria` | + `ops-bom`, `ops-mrp`, `ops-compras` (P2+); fiscal NF-e, qualidade |
+| `produtor_rural` | + `ops-safra-rebanho`, `ops-lote-rastreio`, `ops-gleba`, `ops-compras` (P2+); fiscal rural |
+
+> **`ops-pedidos-compra` (legado no texto antigo):** substituído por **`ops-compras`** — ordens de **compra** que o tenant envia a fornecedores cadastrados (§13.5). Distinto de `core-pedidos` (pedidos de **venda** ao cliente).
 
 Módulos marcados como futuros entram no registry com flag `status: 'planned'` até implementação; o diagnóstico pode **sugerir** sem ativar.
 
@@ -1309,7 +1311,10 @@ Agregados compartilhados no schema do tenant — **módulos estendem, não dupli
 | Entidade | Módulo dono | Regras |
 |----------|-------------|--------|
 | `Cliente` | `core-clientes` | Referenciado por vendas, ranking, Aprendiz |
-| `Item` | `core-catalogo` | `tipo: 'produto' \| 'servico'`; serviço sem estoque obrigatório |
+| `Category` | `core-catalogo` | Árvore `catalog_categories` (categoria + subcategoria no MVP); ver §13.3 |
+| `Item` | `core-catalogo` | `tipo: 'produto' \| 'servico'`; `category_id` opcional; serviço sem estoque obrigatório |
+| `Supplier` | `ops-compras` | Cadastro de quem **abastece** o estoque; distinto de tipo negócio `fornecedor` (§13.4) |
+| `PurchaseOrder` | `ops-compras` | OC com linhas; estados §13.5; agrupamento por fornecedor |
 | `Venda`, `VendaItem` | `core-vendas` | Fonte de verdade comercial |
 
 **Evolução por fase (UI única, campos desbloqueados):**
@@ -1317,7 +1322,7 @@ Agregados compartilhados no schema do tenant — **módulos estendem, não dupli
 | Fase | Campos adicionais (exemplo) |
 |------|----------------------------|
 | 1 | nome, tipo, preço, unidade, estoque opcional |
-| 2+ | SKU, custo, categoria |
+| 2+ | SKU, custo, `category_id` (árvore §13.3), fornecedores e OC (`ops-compras`) |
 | 3+ | NCM, CFOP (placeholders via `fiscal-core`) |
 | 4+ | variações, vínculo multi-loja (módulos `ops-*`) |
 
@@ -1336,6 +1341,8 @@ Extensões de segmento (grade, validade) = tabelas 1:N em módulos futuros refer
 | Pós-MVP | BullMQ para handlers assíncronos e integradores |
 
 **Eventos Fase 1 (mínimo):** `venda.confirmada`, `venda.cancelada`, `estoque.baixo`, `cliente.criado`, `item.criado`.
+
+**Eventos Compras (P2+, `ops-compras`):** `ordem_compra.criada`, `ordem_compra.enviada`, `compra.recebida`, `estoque.reposicao_sugerida` (geração automática a partir de estoque baixo — §13.5).
 
 **Offline (PWA):** operações enfileiradas no cliente; replay na API com **idempotency key**; integradores e módulos processam após sync.
 
@@ -1787,6 +1794,51 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 
 > Extensões referenciam `item_id`; elegibilidade cruzada com matriz §6.4.
 
+### 13.3 Categorias hierárquicas (extensão `core-catalogo`)
+
+- Tabela tenant `catalog_categories`: `id`, `parent_id` (nullable), `name`, `slug`, `sort_order`, `active`.
+- **MVP:** profundidade máxima **2 níveis** (categoria raiz + subcategoria); expansão futura via `parent_id` sem migração destrutiva.
+- `catalog_items.category_id` — FK opcional; serviços podem permanecer sem categoria.
+- **UI:** painel em árvore (filtro) + tabela de itens; CRUD de categorias; mover item entre categorias no formulário.
+- **P1:** categorias opcionais; **P2+:** recomendado em missões de primeiros passos.
+
+### 13.4 Fornecedores e abastecimento por categoria (`ops-compras`)
+
+Entidade **`Supplier`** (cadastro separado de `core-clientes`):
+
+| Campo | Uso |
+|-------|-----|
+| `name`, `document`, `email`, `phone` | Identificação |
+| `lead_time_days` | Prazo médio de entrega |
+| `notes`, `active` | Operação |
+
+Relação N:N **`supplier_categories`** (`supplier_id`, `category_id`, `is_default`):
+
+- Fornecedor pode abastecer subcategorias (folhas) diretamente.
+- Vínculo na **categoria pai** implica abastecimento de **todas** as subcategorias filhas (herança na resolução de OC automática).
+- Por categoria, no máximo um fornecedor `is_default` para desempate na geração automática.
+
+### 13.5 Ordens de compra (`ops-compras`)
+
+**Módulo:** `ops-compras` — setor `operacao`, `faseMinima: 2`, depende de `core-catalogo` + `core-estoque-basico`. Elegível para tipos com controle de estoque (§5.5).
+
+**Estados da OC:** `rascunho` → `enviada` → `parcial` → `recebida` → `cancelada`.
+
+**Linhas (`purchase_order_lines`):** `catalog_item_id`, `quantity`, `unit_cost_cents` (opcional no rascunho), `notes`.
+
+**Fluxo automático (MVP):**
+
+1. Usuário aciona **Gerar compra** (Estoque ou Compras).
+2. Lista itens com `stock_qty <= stock_min` (`listLowStockItems`).
+3. Resolve `category_id` → fornecedor via `supplier_categories` (preferir `is_default`).
+4. Agrupa por fornecedor → uma OC `rascunho` por fornecedor.
+5. Quantidade sugerida: `max(stock_min - stock_qty, 1)`.
+6. Usuário revisa, ajusta e confirma (`enviada`).
+
+Itens **sem categoria** ou **sem fornecedor** vinculado não entram na OC automática; exibir fila de pendências na UI.
+
+**Pós-MVP (documentado, não bloqueia MVP):** recebimento → `stock_movements` entrada + `compra.recebida`; `fin-contas-pagar` → título a pagar; cotação multi-fornecedor; NF-e entrada.
+
 ---
 
 ## 14. Roadmap (marcos de entrega R0–R4)
@@ -1806,12 +1858,13 @@ O cadastro usa **`core-catalogo`** único; **tipo de negócio** (§5.5) define q
 | PWA vendas offline + fila + IndexedDB sync | R1 | ✅ |
 | `fin-fluxo-caixa`, `ops-vendedores`, `rel-basico` | R2 | ✅ P2 tenant |
 | `segment-moda`, `segment-alimentacao`, Asaas mock, Aprendiz LLM | R2 | ✅ |
-| `core-crm` (tenant) | R2+ | ⏳ **scaffold** |
+| `core-crm` (tenant) | R3 | ✅ **implemented** (pipeline MVP S04) |
 | Emissão fiscal homologada | R3 | ⏳ Planejado |
 | Catálogo global + profundidade D + seed roadmap | R2.5 | ✅ `db:seed-roadmap` + §8.12 |
 | UI `/roadmap` + `/evolucao` (admin + tenant) | R2.5 | ✅ `platform-admin` + `apps/web` |
 | `apps/platform-admin` | §17 | ✅ CRM, comms mock, insights, `/modulos` |
 | Modelo E0–E10 + core por setor no PRD | Doc | ✅ v0.7 |
+| `ops-compras` — categorias, fornecedores, OC automática | R3.1 | 🚧 Em entrega (§13.3–13.5) |
 
 **Apps em produção local:** `apps/web` (tenant) · `apps/platform-admin` (interno, porta **3002**).
 
@@ -2232,6 +2285,16 @@ Objetivo: o time interno e o cliente enxergarem **onde estamos** e **para onde v
 
 | **core_modules_catalog** | Catálogo global de módulos, profundidade e status de desenvolvimento (§8.12) |
 
+| **Category** | Nó em `catalog_categories` (categoria ou subcategoria) |
+
+| **Supplier** | Fornecedor cadastrado no tenant (`suppliers`) — quem a empresa compra |
+
+| **Fornecedor (tipo negócio)** | Perfil B2B de quem **vende** para outros — não confundir com **Supplier** |
+
+| **Ordem de compra (OC)** | Documento `purchase_orders` em `ops-compras` |
+
+| **ops-compras** | Módulo de compras: fornecedores, vínculo categoria, OC manual e automática (estoque baixo) |
+
 ---
 
 ### Histórico de marcos (produto)
@@ -2244,6 +2307,7 @@ Objetivo: o time interno e o cliente enxergarem **onde estamos** e **para onde v
 | Mai/2026 | Marco R2 — fluxo de caixa, vendedores, relatórios, Asaas mock, Aprendiz LLM (fase P2) |
 | Mai/2026 | PRD v0.7 — estágios E0–E10, setores core, profundidade D0–D5, catálogo roadmap |
 | Mai/2026 | Marco R2.5 — catálogo global, seed roadmap, `/roadmap`, `/evolucao` |
+| Mai/2026 | PRD v0.8 + Marco **R3.1** — categorias hierárquicas, `ops-compras`, OC automática |
 | — | **Atual:** Marco R3 — fiscal homologado + `rh-comissoes` + Aprendiz v2 |
 
 ---

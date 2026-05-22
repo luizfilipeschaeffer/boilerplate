@@ -10,16 +10,19 @@ export function AuthPanel({
   className,
   initialEmail = "",
   inactivityLogout = false,
+  firstAccessHint = false,
 }: {
   className?: string;
   initialEmail?: string;
   inactivityLogout?: boolean;
+  firstAccessHint?: boolean;
 }) {
   return (
     <div className={cn("flex w-full flex-col gap-4", className)}>
       <LoginForm
         initialEmail={initialEmail}
         inactivityLogout={inactivityLogout}
+        firstAccessHint={firstAccessHint}
       />
       <div className="text-center">
         <p className="text-sm text-muted-foreground">Primeira vez aqui?</p>

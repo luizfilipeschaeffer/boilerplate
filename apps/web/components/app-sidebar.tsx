@@ -40,7 +40,7 @@ import { buildSidebarNavEntries } from "@/lib/modules/sidebar-nav";
 const iconByModule: Record<string, React.ReactNode> = {
   "core-catalogo": <Package className="size-4" />,
   "core-clientes": <Users className="size-4" />,
-  "core-crm": <Users className="size-4" />,
+  "core-crm": <BarChart3 className="size-4" />,
   "core-vendas": <ShoppingCart className="size-4" />,
   "core-pedidos": <ShoppingCart className="size-4" />,
   "core-estoque-basico": <Warehouse className="size-4" />,

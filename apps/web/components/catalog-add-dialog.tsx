@@ -1,5 +1,6 @@
 "use client";
 
+import type { CategoryDto } from "@/app/actions/categories";
 import { CatalogForm } from "@/components/catalog-form";
 import {
   Dialog,
@@ -12,9 +13,13 @@ import {
 export function CatalogAddDialog({
   open,
   onOpenChange,
+  categories = [],
+  onSuccess,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  categories?: CategoryDto[];
+  onSuccess?: () => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -27,8 +32,12 @@ export function CatalogAddDialog({
         </DialogHeader>
         <CatalogForm
           layout="stack"
+          categories={categories}
           submitLabel="Adicionar item"
-          onSuccess={() => onOpenChange(false)}
+          onSuccess={() => {
+            onSuccess?.();
+            onOpenChange(false);
+          }}
         />
       </DialogContent>
     </Dialog>

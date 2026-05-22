@@ -1,14 +1,12 @@
 import { prisma } from "./client";
+import type {
+  CommsChannel,
+  CommsDirection,
+  CommsParticipantKind,
+} from "./platform-comms-labels";
 
-export type CommsChannel = "email" | "whatsapp" | "telegram" | "sms";
-export type CommsDirection = "inbound" | "outbound";
-
-export const COMMS_CHANNEL_LABELS: Record<CommsChannel, string> = {
-  email: "E-mail",
-  whatsapp: "WhatsApp",
-  telegram: "Telegram",
-  sms: "SMS",
-};
+export type { CommsChannel, CommsDirection, CommsParticipantKind } from "./platform-comms-labels";
+export { COMMS_CHANNEL_LABELS, COMMS_PARTICIPANT_LABELS } from "./platform-comms-labels";
 
 export type CommsThreadSummary = {
   id: string;
@@ -21,6 +19,11 @@ export type CommsThreadSummary = {
   platformLeadId: string | null;
   recordTitle: string | null;
   recordKind: "organization" | "lead" | null;
+  participantKind: CommsParticipantKind;
+  peerPlatformUserId: string | null;
+  peerName: string | null;
+  peerEmail: string | null;
+  peerRole: string | null;
   assignedPlatformUserId: string | null;
   messageCount: number;
 };
@@ -42,10 +45,36 @@ export type CommsThreadDetail = CommsThreadSummary & {
 };
 
 function asChannel(value: string): CommsChannel {
-  if (value === "whatsapp" || value === "telegram" || value === "sms") {
+  if (
+    value === "whatsapp" ||
+    value === "telegram" ||
+    value === "sms" ||
+    value === "internal"
+  ) {
     return value;
   }
   return "email";
+}
+
+function asParticipantKind(value: string): CommsParticipantKind {
+  return value === "internal" ? "internal" : "client";
+}
+
+function displayTitle(t: {
+  subject: string;
+  participantKind: string;
+  organization?: { name: string } | null;
+  platformLead?: { name: string } | null;
+  peerPlatformUser?: { name: string | null; email: string } | null;
+}): string {
+  if (asParticipantKind(t.participantKind) === "internal") {
+    return (
+      t.peerPlatformUser?.name?.trim() ||
+      t.peerPlatformUser?.email ||
+      t.subject
+    );
+  }
+  return t.organization?.name ?? t.platformLead?.name ?? t.subject;
 }
 
 async function resolveRecordTitle(
@@ -73,6 +102,7 @@ export async function listCommsThreads(filters?: {
   organizationId?: string;
   platformLeadId?: string;
   channel?: CommsChannel;
+  participantKind?: CommsParticipantKind;
   status?: string;
 }): Promise<CommsThreadSummary[]> {
   const threads = await prisma.platformCommsThread.findMany({
@@ -84,6 +114,9 @@ export async function listCommsThreads(filters?: {
         ? { platformLeadId: filters.platformLeadId }
         : {}),
       ...(filters?.channel ? { channel: filters.channel } : {}),
+      ...(filters?.participantKind
+        ? { participantKind: filters.participantKind }
+        : {}),
       ...(filters?.status ? { status: filters.status } : {}),
     },
     orderBy: [{ lastMessageAt: "desc" }, { updatedAt: "desc" }],
@@ -95,27 +128,40 @@ export async function listCommsThreads(filters?: {
       _count: { select: { messages: true } },
       organization: { select: { name: true } },
       platformLead: { select: { name: true } },
+      peerPlatformUser: { select: { name: true, email: true, role: true } },
     },
   });
 
-  return threads.map((t) => ({
-    id: t.id,
-    subject: t.subject,
-    channel: asChannel(t.channel),
-    status: t.status,
-    lastMessageAt: t.lastMessageAt,
-    preview: t.messages[0]?.body.slice(0, 120) ?? null,
-    organizationId: t.organizationId,
-    platformLeadId: t.platformLeadId,
-    recordTitle: t.organization?.name ?? t.platformLead?.name ?? null,
-    recordKind: t.organizationId
-      ? "organization"
-      : t.platformLeadId
-        ? "lead"
-        : null,
-    assignedPlatformUserId: t.assignedPlatformUserId,
-    messageCount: t._count.messages,
-  }));
+  return threads.map((t) => {
+    const participantKind = asParticipantKind(t.participantKind);
+    const title = displayTitle(t);
+    return {
+      id: t.id,
+      subject: t.subject,
+      channel: asChannel(t.channel),
+      status: t.status,
+      lastMessageAt: t.lastMessageAt,
+      preview: t.messages[0]?.body.slice(0, 120) ?? null,
+      organizationId: t.organizationId,
+      platformLeadId: t.platformLeadId,
+      recordTitle:
+        participantKind === "internal"
+          ? title
+          : (t.organization?.name ?? t.platformLead?.name ?? null),
+      recordKind: t.organizationId
+        ? "organization"
+        : t.platformLeadId
+          ? "lead"
+          : null,
+      participantKind,
+      peerPlatformUserId: t.peerPlatformUserId,
+      peerName: t.peerPlatformUser?.name ?? null,
+      peerEmail: t.peerPlatformUser?.email ?? null,
+      peerRole: t.peerPlatformUser?.role ?? null,
+      assignedPlatformUserId: t.assignedPlatformUserId,
+      messageCount: t._count.messages,
+    };
+  });
 }
 
 export async function getCommsThread(
@@ -131,9 +177,11 @@ export async function getCommsThread(
       platformLead: {
         select: { name: true, tipoNegocio: true, estimatedPhase: true },
       },
+      peerPlatformUser: { select: { name: true, email: true, role: true } },
     },
   });
   if (!t) return null;
+  const participantKind = asParticipantKind(t.participantKind);
 
   const consents = await prisma.platformCommsConsent.findMany({
     where: {
@@ -147,6 +195,8 @@ export async function getCommsThread(
     orderBy: { consentedAt: "desc" },
   });
 
+  const title = displayTitle(t);
+
   return {
     id: t.id,
     subject: t.subject,
@@ -156,12 +206,20 @@ export async function getCommsThread(
     preview: t.messages.at(-1)?.body.slice(0, 120) ?? null,
     organizationId: t.organizationId,
     platformLeadId: t.platformLeadId,
-    recordTitle: t.organization?.name ?? t.platformLead?.name ?? null,
+    recordTitle:
+      participantKind === "internal"
+        ? title
+        : (t.organization?.name ?? t.platformLead?.name ?? null),
     recordKind: t.organizationId
       ? "organization"
       : t.platformLeadId
         ? "lead"
         : null,
+    participantKind,
+    peerPlatformUserId: t.peerPlatformUserId,
+    peerName: t.peerPlatformUser?.name ?? null,
+    peerEmail: t.peerPlatformUser?.email ?? null,
+    peerRole: t.peerPlatformUser?.role ?? null,
     assignedPlatformUserId: t.assignedPlatformUserId,
     messageCount: t.messages.length,
     messages: t.messages.map((m) => ({
@@ -186,19 +244,29 @@ export async function getCommsThread(
 export async function createCommsThread(input: {
   subject: string;
   channel: CommsChannel;
+  participantKind?: CommsParticipantKind;
   organizationId?: string | null;
   platformLeadId?: string | null;
+  peerPlatformUserId?: string | null;
   assignedPlatformUserId?: string | null;
   initialBody?: string;
   fromLabel?: string;
   toLabel?: string;
 }): Promise<string> {
+  const participantKind =
+    input.participantKind ??
+    (input.peerPlatformUserId || input.channel === "internal"
+      ? "internal"
+      : "client");
+
   const thread = await prisma.platformCommsThread.create({
     data: {
       subject: input.subject,
       channel: input.channel,
+      participantKind,
       organizationId: input.organizationId ?? null,
       platformLeadId: input.platformLeadId ?? null,
+      peerPlatformUserId: input.peerPlatformUserId ?? null,
       assignedPlatformUserId: input.assignedPlatformUserId ?? null,
       status: "open",
     },

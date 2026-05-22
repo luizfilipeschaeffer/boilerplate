@@ -34,7 +34,7 @@ const diagnosticoSchema = z.object({
 export const onboardingRouter = router({
   preview: protectedProcedure
     .input(diagnosticoSchema.omit({ organizationName: true }))
-    .mutation(({ input }) => {
+    .mutation(async ({ input }) => {
       ensureModulesRegistered();
       const diag: DiagnosticoInput = {
         tipoNegocio: input.tipoNegocio,

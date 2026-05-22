@@ -30,3 +30,18 @@ export function groupByPipelineStage(
   }
   return groups;
 }
+
+export function groupByStages(
+  records: CrmBoardRecord[],
+  stages: readonly string[],
+): Record<string, CrmBoardRecord[]> {
+  const groups = Object.fromEntries(
+    stages.map((s) => [s, [] as CrmBoardRecord[]]),
+  ) as Record<string, CrmBoardRecord[]>;
+
+  for (const record of records) {
+    const key = String(record.pipelineStage);
+    if (groups[key]) groups[key].push(record);
+  }
+  return groups;
+}

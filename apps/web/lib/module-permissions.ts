@@ -25,6 +25,11 @@ export const MODULE_PERMISSION_MATRIX: Record<
     ver: ["dono", "gerente", "vendedor"],
     registrar: ["dono", "gerente", "vendedor"],
   },
+  "core-crm": {
+    ver: ["dono", "gerente", "vendedor"],
+    registrar: ["dono", "gerente", "vendedor"],
+    editar: ["dono", "gerente", "vendedor"],
+  },
   "core-vendas": {
     ver: ["dono", "gerente", "vendedor"],
     registrar: ["dono", "gerente", "vendedor"],
@@ -53,6 +58,12 @@ export const MODULE_PERMISSION_MATRIX: Record<
   },
   "rel-basico": { ver: ["dono", "gerente"] },
   "ops-multi-loja": { ver: ["dono", "gerente"], editar: ["dono", "gerente"] },
+  "ops-compras": {
+    ver: ["dono", "gerente", "operador"],
+    registrar: ["dono", "gerente", "operador"],
+    editar: ["dono", "gerente"],
+    cancelar: ["dono", "gerente"],
+  },
   aprendiz: { ver: ["dono", "gerente", "vendedor", "operador"] },
 };
 

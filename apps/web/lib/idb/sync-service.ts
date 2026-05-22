@@ -116,6 +116,7 @@ function mapCatalog(rows: SyncApiResponse["catalog"]): CachedCatalogItem[] {
     priceCents: r.price_cents,
     stockQty: r.stock_qty,
     stockMin: r.stock_min,
+    categoryId: r.category_id ?? null,
     active: r.active ?? true,
     updatedAt: r.updated_at,
   }));

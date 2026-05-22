@@ -17,16 +17,7 @@ export type PlatformActivityRow = {
   authorName: string | null;
 };
 
-const ACTIVITY_LABELS: Record<string, string> = {
-  note: "Nota",
-  call: "Ligação",
-  meeting: "Reunião",
-  message: "Mensagem",
-};
-
-export function activityTypeLabel(type: string): string {
-  return ACTIVITY_LABELS[type] ?? type;
-}
+export { activityTypeLabel } from "./platform-crm-ext-labels";
 
 export async function listContactsForRecord(
   id: string,

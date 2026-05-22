@@ -4,7 +4,18 @@ export type DomainEventType =
   | "estoque.baixo"
   | "cliente.criado"
   | "item.criado"
-  | "missao.concluida";
+  | "missao.concluida"
+  | "pedido.convertido"
+  | "crm.lead.criado"
+  | "crm.deal.criado"
+  | "crm.deal.etapa_alterada"
+  | "crm.nota.criada"
+  | "crm.lead.mesclado"
+  | "crm.lead.atualizado"
+  | "ordem_compra.criada"
+  | "ordem_compra.enviada"
+  | "compra.recebida"
+  | "estoque.reposicao_sugerida";
 
 export interface DomainEvent<T extends DomainEventType = DomainEventType> {
   type: T;

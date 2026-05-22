@@ -7,6 +7,7 @@ import {
   addCrmNoteAction,
   createPlatformLeadAction,
   loadCrmNotesAction,
+  loadCrmTimelineAction,
   moveCrmPhaseAction,
   moveCrmStageAction,
   updateOrgModulesAction,
@@ -39,6 +40,7 @@ export function PlatformCrmBoardClient({
         await moveCrmStageAction(id, kind, stage);
       }}
       onLoadNotes={loadCrmNotesAction}
+      onLoadTimeline={loadCrmTimelineAction}
       onAddNote={async (id, kind, body) => {
         await addCrmNoteAction(id, kind, body);
       }}

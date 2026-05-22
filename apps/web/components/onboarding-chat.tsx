@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { signIn } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, User } from "lucide-react";
 
@@ -18,13 +18,13 @@ import {
   type OnboardingDraft,
   type OnboardingStepId,
 } from "@/lib/onboarding-chat/steps";
-import { validateAccessPassword } from "@/lib/onboarding-chat/validate-password";
 import {
   getOnboardingStepRawValue,
   truncateMessagesToStep,
   type ChatMessage,
   type StepHistoryEntry,
 } from "@/lib/chat/step-history";
+import { ChatChoiceList } from "@/components/chat/chat-choice-list";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -75,8 +75,6 @@ export function AprendizOnboardingChat({
   const [submitting, setSubmitting] = React.useState(false);
   const [inputError, setInputError] = React.useState<string | null>(null);
   const [finished, setFinished] = React.useState(false);
-  const [accessPassword, setAccessPassword] = React.useState("");
-  const [accessPasswordConfirm, setAccessPasswordConfirm] = React.useState("");
   const [history, setHistory] = React.useState<
     StepHistoryEntry<OnboardingStepId, OnboardingDraft>[]
   >([]);
@@ -143,34 +141,15 @@ export function AprendizOnboardingChat({
         : step.choices
       : undefined;
 
-  async function finishOnboarding(
-    finalDraft: OnboardingDraft,
-    password: string,
-  ) {
+  async function finishOnboarding(finalDraft: OnboardingDraft) {
     setSubmitting(true);
     setFinished(true);
     try {
       const payload = draftToOnboardingInput(finalDraft);
-      const result = await submitOnboarding({ ...payload, password });
-      const res = await signIn("credentials", {
-        email: payload.email,
-        password,
-        redirect: false,
-      });
-      if (res?.error || !res?.ok) {
-        pushMessage(
-          "aprendiz",
-          "Painel configurado! Entre de novo com seu e-mail para continuar.",
-        );
-        setSubmitting(false);
-        setFinished(false);
-        return;
-      }
-      if (result.requiresPaymentValidation) {
-        router.push("/configuracoes/cobranca?primeiroAcesso=1");
-      } else {
-        router.push("/aprendiz?primeiroContato=1");
-      }
+      await submitOnboarding(payload);
+      await signOut({ redirect: false });
+      const loginEmail = encodeURIComponent(payload.email);
+      router.push(`/login?email=${loginEmail}&primeiroAcesso=1`);
       router.refresh();
     } catch (e) {
       const msg =
@@ -194,10 +173,6 @@ export function AprendizOnboardingChat({
     const entryIndex = history.findLastIndex((e) => e.stepId === targetStepId);
     if (entryIndex < 0) return;
     const entry = history[entryIndex];
-    if (currentStep === "password") {
-      setAccessPassword("");
-      setAccessPasswordConfirm("");
-    }
     setHistory((prev) => prev.slice(0, entryIndex));
     setMessages((prev) => truncateMessagesToStep(prev, targetStepId));
     setDraft(entry.draftBefore);
@@ -245,31 +220,14 @@ export function AprendizOnboardingChat({
     if (!nextId) return;
 
     if (nextId === "summary") {
+      setCurrentStep("summary");
+      await showAprendiz("summary", nextDraft);
+      await finishOnboarding(nextDraft);
       return;
     }
 
     setCurrentStep(nextId);
     await showAprendiz(nextId, nextDraft);
-  }
-
-  async function handlePasswordSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (typing || submitting || finished || currentStep !== "password") return;
-
-    const err = validateAccessPassword(accessPassword, accessPasswordConfirm);
-    if (err) {
-      setInputError(err);
-      return;
-    }
-    setInputError(null);
-
-    const draftBefore = draft;
-    pushMessage("user", formatUserAnswer("password", "", draft), "password");
-    recordAnswer("password", draftBefore, "ok");
-
-    setCurrentStep("summary");
-    await showAprendiz("summary", draft);
-    await finishOnboarding(draft, accessPassword);
   }
 
   async function handleTextSubmit(e: React.FormEvent) {
@@ -297,11 +255,12 @@ export function AprendizOnboardingChat({
     step.kind === "text" &&
     currentStep !== "summary";
 
-  const showPasswordSetup =
-    !finished && !typing && !submitting && step.kind === "password";
-
   const showContinueInfo =
-    !finished && !typing && step.kind === "info" && currentStep === "welcome";
+    !finished &&
+    !typing &&
+    !submitting &&
+    step.kind === "info" &&
+    currentStep === "welcome";
 
   const canGoBack =
     history.length > 0 &&
@@ -413,20 +372,10 @@ export function AprendizOnboardingChat({
         ) : null}
 
         {choiceOptions && !finished && !typing && !submitting ? (
-          <div className="flex flex-wrap gap-2">
-            {choiceOptions.map((opt) => (
-              <Button
-                key={opt.value}
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-auto whitespace-normal py-2 text-left"
-                onClick={() => void handleChoice(opt.value)}
-              >
-                {opt.label}
-              </Button>
-            ))}
-          </div>
+          <ChatChoiceList
+            options={choiceOptions}
+            onSelect={(value) => void handleChoice(value)}
+          />
         ) : null}
 
         {showContinueInfo ? (
@@ -437,50 +386,6 @@ export function AprendizOnboardingChat({
           >
             Vamos lá
           </Button>
-        ) : null}
-
-        {showPasswordSetup ? (
-          <form
-            onSubmit={(e) => void handlePasswordSubmit(e)}
-            className="flex flex-col gap-3"
-          >
-            <Field>
-              <FieldLabel htmlFor="onboarding-password">Senha de acesso</FieldLabel>
-              <Input
-                id="onboarding-password"
-                type="password"
-                autoComplete="new-password"
-                value={accessPassword}
-                onChange={(e) => setAccessPassword(e.target.value)}
-                placeholder="Mínimo 8 caracteres"
-                disabled={submitting}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="onboarding-password-confirm">
-                Confirmar senha
-              </FieldLabel>
-              <Input
-                id="onboarding-password-confirm"
-                type="password"
-                autoComplete="new-password"
-                value={accessPasswordConfirm}
-                onChange={(e) => setAccessPasswordConfirm(e.target.value)}
-                placeholder="Repita a senha"
-                disabled={submitting}
-              />
-            </Field>
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Spinner className="mr-2" />
-                  Configurando painel…
-                </>
-              ) : (
-                "Criar senha e concluir"
-              )}
-            </Button>
-          </form>
         ) : null}
 
         {showTextInput ? (

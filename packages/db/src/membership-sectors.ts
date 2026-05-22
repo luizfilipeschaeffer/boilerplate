@@ -111,7 +111,8 @@ export async function setSectorMemberships(
 
 /**
  * Setores que o usuário pode escolher na sidebar.
- * Sem vínculos: dono/gerente veem todos; demais papéis só "geral" (se existir).
+ * Dono/gerente: todos os setores da organização.
+ * Demais papéis: setores vinculados em membership_sectors; sem vínculo, só "geral".
  */
 export async function listSectorsAccessibleToUser(
   userId: string,
@@ -134,8 +135,10 @@ export async function listSectorsAccessibleToUser(
   const isAdmin =
     membership.role === "dono" || membership.role === "gerente";
 
+  // Dono/gerente enxergam todos os setores da org (sidebar e permissões de contexto).
+  if (isAdmin) return all;
+
   if (membership.membershipSectors.length === 0) {
-    if (isAdmin) return all;
     const geral = all.filter((s) => s.slug === "geral");
     return geral.length > 0 ? geral : all.slice(0, 1);
   }

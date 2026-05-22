@@ -143,14 +143,14 @@ export function wasAnsweredInCadastro(
   return Boolean(draft.cadastroAnswered?.[step]);
 }
 
-export function draftToOnboardingInput(draft: DiagnosticoDraft) {
+/** Campos de diagnóstico sem resolver fase (evita ciclo com computeDiagnosedPhase). */
+export function draftToDiagnosticoInput(
+  draft: DiagnosticoDraft,
+): DiagnosticoInput {
   return {
-    name: draft.name.trim(),
-    email: draft.email.trim().toLowerCase(),
-    organizationName: draft.organizationName.trim(),
     tipoNegocio: draft.tipoNegocio,
     segmentoAtuacao: draft.marketSegmentSlug,
-    declaredPhase: resolveDeclaredPhase(draft),
+    declaredPhase: draft.declaredPhase,
     temPontoFixo: draft.temPontoFixo,
     vendasMes: draft.vendasMes,
     temFuncionarios: draft.temFuncionarios,
@@ -162,6 +162,16 @@ export function draftToOnboardingInput(draft: DiagnosticoDraft) {
         : draft.emiteNota === "nao"
           ? false
           : null,
+  };
+}
+
+export function draftToOnboardingInput(draft: DiagnosticoDraft) {
+  return {
+    name: draft.name.trim(),
+    email: draft.email.trim().toLowerCase(),
+    organizationName: draft.organizationName.trim(),
+    ...draftToDiagnosticoInput(draft),
+    declaredPhase: resolveDeclaredPhase(draft),
   };
 }
 

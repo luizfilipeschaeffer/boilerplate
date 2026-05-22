@@ -5,6 +5,9 @@ export * from "./onboarding";
 export * from "./tenant/provision";
 export * from "./tenant/schema";
 export * from "./tenant/catalog";
+export * from "./tenant/categories";
+export * from "./tenant/suppliers";
+export * from "./tenant/purchase-orders";
 export * from "./tenant/clients";
 export * from "./branches";
 export * from "./sectors-admin";
@@ -32,6 +35,7 @@ export * from "./domain-events";
 export * from "./platform-user";
 export * from "./signup-draft";
 export * from "./signup-email-verification";
+export * from "./login-email-verification";
 export * from "./password-reset";
 export * from "./user-password";
 export * from "./crm";
@@ -44,7 +48,16 @@ export * from "./activation";
 export * from "./segment-phases";
 export * from "./platform-audit";
 export * from "./platform-payment";
-export * from "./platform-integrators";
+export type * from "./platform-integrators.types";
+export type { PlatformCatalogJson } from "./platform-integrators";
+export {
+  loadPlatformCatalogJson,
+  listPlatformIntegratorCatalog,
+  seedPlatformCatalogFromJson,
+  seedPlatformIntegratorCatalog,
+  seedPaymentGatewaysFromCatalog,
+  seedPricingFromCatalog,
+} from "./platform-integrators";
 export * from "./provisioning";
 export * from "./provisioning-events";
 export * from "./billing-payment";

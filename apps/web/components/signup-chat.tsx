@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Send, User } from "lucide-react";
 
@@ -30,6 +29,7 @@ import {
   type ChatMessage,
   type StepHistoryEntry,
 } from "@/lib/chat/step-history";
+import { ChatChoiceList } from "@/components/chat/chat-choice-list";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -258,35 +258,14 @@ export function AprendizCadastroChat({
     setFinished(true);
     try {
       const payload = draftToOnboardingInput(finalDraft);
-      const result = await registerAndOnboard(payload);
-      const { automacoesAtivas, requiresPaymentValidation } = result;
-      const res = await signIn("credentials", {
-        email: payload.email,
-        password: "signup",
-        redirect: false,
-      });
-      if (res?.error || !res?.ok) {
-        pushMessage(
-          "aprendiz",
-          "Guardei tudo que aprendi. Entre com seu e-mail na tela de login para me encontrar de novo.",
-        );
-        setSubmitting(false);
-        return;
-      }
-
-      const n = automacoesAtivas.length;
+      await registerAndOnboard(payload);
       pushMessage(
         "aprendiz",
-        n > 0
-          ? `Pronto! Ativei ${n} automação${n > 1 ? "ões" : ""} inicial${n > 1 ? "is" : ""} com base no que aprendi. Te espero no painel do Aprendiz.`
-          : "Pronto! Sua conta está criada. Te espero no painel do Aprendiz — vou continuar aprendendo com você.",
+        "Pronto! Sua conta está criada. Na próxima tela, use Entrar com código por e-mail para acessar o painel.",
       );
       await delay(800);
-      if (requiresPaymentValidation) {
-        router.push("/configuracoes/cobranca?primeiroAcesso=1");
-      } else {
-        router.push("/aprendiz?primeiroContato=1");
-      }
+      const loginEmail = encodeURIComponent(payload.email);
+      router.push(`/login?email=${loginEmail}&primeiroAcesso=1`);
       router.refresh();
     } catch (e) {
       const msg =
@@ -468,20 +447,10 @@ export function AprendizCadastroChat({
         ) : null}
 
         {choiceOptions && !finished && !typing && !submitting ? (
-          <div className="flex flex-wrap gap-2">
-            {choiceOptions.map((opt) => (
-              <Button
-                key={opt.value}
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-auto whitespace-normal py-2 text-left"
-                onClick={() => void handleChoice(opt.value)}
-              >
-                {opt.label}
-              </Button>
-            ))}
-          </div>
+          <ChatChoiceList
+            options={choiceOptions}
+            onSelect={(value) => void handleChoice(value)}
+          />
         ) : null}
 
         {showContinueInfo ? (

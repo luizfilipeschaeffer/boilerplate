@@ -6,6 +6,8 @@ import {
   canEditEstoqueProdutos,
   canViewEstoque,
 } from "@/lib/estoque-access";
+import { canRegisterCompras } from "@/lib/compras-access";
+import { getActiveModuleIds } from "@/lib/modules/active-modules";
 import { redirect } from "next/navigation";
 
 export default async function EstoqueProdutosPage() {
@@ -19,6 +21,11 @@ export default async function EstoqueProdutosPage() {
   const { products, catalogItemCount, lowCount } =
     await listStockProductsPageAction();
 
+  const orgId = session?.organizationId;
+  const moduleIds = orgId ? await getActiveModuleIds(orgId) : [];
+  const canGenerateCompras =
+    moduleIds.includes("ops-compras") && canRegisterCompras(role);
+
   return (
     <>
       <MissionVisitTracker missionId="ver_estoque" />
@@ -27,6 +34,7 @@ export default async function EstoqueProdutosPage() {
         initialCatalogItemCount={catalogItemCount}
         initialLowCount={lowCount}
         canEdit={canEditEstoqueProdutos(role)}
+        canGenerateCompras={canGenerateCompras}
       />
     </>
   );

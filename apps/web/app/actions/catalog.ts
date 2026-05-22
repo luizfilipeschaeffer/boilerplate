@@ -22,6 +22,7 @@ export async function listCatalogAction() {
     priceCents: row.price_cents,
     stockQty: row.stock_qty,
     stockMin: row.stock_min,
+    categoryId: row.category_id,
     active: row.active,
   }));
 }
@@ -31,6 +32,7 @@ export async function createCatalogAction(data: {
   itemType: CatalogItemType;
   sku?: string | null;
   priceCents?: number | null;
+  categoryId?: string | null;
 }) {
   const ctx = await requireTenantContext();
   const row = await createCatalogItem(ctx.schemaName, data);
@@ -50,6 +52,7 @@ export async function updateCatalogAction(
     itemType: CatalogItemType;
     sku?: string | null;
     priceCents?: number | null;
+    categoryId?: string | null;
   },
 ) {
   const ctx = await requireTenantContext();

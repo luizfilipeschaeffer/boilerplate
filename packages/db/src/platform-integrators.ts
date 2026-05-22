@@ -1,56 +1,16 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import platformCatalogSeed from "../data/platform-catalog.json";
 import { prisma } from "./client";
 import {
   upsertBundlePreco,
   upsertModuloPreco,
   upsertPlanoBase,
-  type BundlePrecoRow,
-  type ModuloPrecoRow,
-  type PlanoBaseRow,
 } from "./billing-pricing";
-
-const PKG_DB_SRC = dirname(fileURLToPath(import.meta.url));
-const CATALOG_PATH = join(PKG_DB_SRC, "../data/platform-catalog.json");
-
-export type IntegratorImplementationStatus =
-  | "implemented"
-  | "scaffold"
-  | "planned";
-
-export type PlatformIntegratorCatalogRow = {
-  id: string;
-  label: string;
-  tipo: string;
-  provider: string | null;
-  description: string | null;
-  implementationStatus: IntegratorImplementationStatus;
-  modulosSuportados: string[];
-  packagePath: string | null;
-  deliveryMarco: string | null;
-  ordem: number;
-};
-
-export type PlatformCatalogGatewaySeed = {
-  isDefault?: boolean;
-  configSchema?: Record<string, unknown>;
-  ativo?: boolean;
-};
-
-export type PlatformCatalogIntegratorSeed = {
-  id: string;
-  label: string;
-  tipo: string;
-  provider?: string;
-  description?: string;
-  implementationStatus: IntegratorImplementationStatus;
-  modulosSuportados?: string[];
-  packagePath?: string;
-  deliveryMarco?: string | null;
-  ordem?: number;
-  gateway?: PlatformCatalogGatewaySeed;
-};
+import type { BundlePrecoRow, ModuloPrecoRow, PlanoBaseRow } from "./billing-pricing";
+import type {
+  PlatformCatalogIntegratorSeed,
+  PlatformIntegratorCatalogRow,
+  IntegratorImplementationStatus,
+} from "./platform-integrators.types";
 
 export type PlatformCatalogJson = {
   integrators: PlatformCatalogIntegratorSeed[];
@@ -58,6 +18,13 @@ export type PlatformCatalogJson = {
   planos?: PlanoBaseRow[];
   bundles?: BundlePrecoRow[];
 };
+
+export type {
+  IntegratorImplementationStatus,
+  PlatformCatalogGatewaySeed,
+  PlatformCatalogIntegratorSeed,
+  PlatformIntegratorCatalogRow,
+} from "./platform-integrators.types";
 
 function parseStringArray(json: unknown): string[] {
   if (!Array.isArray(json)) return [];
@@ -91,8 +58,7 @@ function mapCatalogRow(s: {
 }
 
 export function loadPlatformCatalogJson(): PlatformCatalogJson {
-  const raw = readFileSync(CATALOG_PATH, "utf-8");
-  return JSON.parse(raw) as PlatformCatalogJson;
+  return platformCatalogSeed as PlatformCatalogJson;
 }
 
 export async function listPlatformIntegratorCatalog(opts?: {

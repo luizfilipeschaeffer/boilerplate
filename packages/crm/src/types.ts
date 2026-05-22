@@ -33,8 +33,20 @@ export interface CrmNote {
 export interface CreateLeadInput {
   name: string;
   email?: string | null;
+  phone?: string | null;
+  cnpj?: string | null;
+  source?: string | null;
+  ownerUserId?: string | null;
+  notes?: string | null;
+  tags?: string[];
+  utm?: import("./lead-types").CrmLeadUtm;
   tipoNegocio?: string | null;
   estimatedPhase?: Fase;
+}
+
+export interface CreateDealInput {
+  clientId: string;
+  crmLeadId?: string | null;
 }
 
 export interface CrmRepository {
@@ -45,6 +57,7 @@ export interface CrmRepository {
     id: string,
     kind: CrmRecordKind,
     stage: CrmPipelineStage,
+    previousStage?: string,
   ): Promise<void>;
   updateModules?(id: string, moduleIds: string[]): Promise<void>;
   listNotes(id: string, kind: CrmRecordKind): Promise<CrmNote[]>;
@@ -55,4 +68,5 @@ export interface CrmRepository {
     authorId?: string,
   ): Promise<void>;
   createLead?(input: CreateLeadInput): Promise<CrmBoardRecord>;
+  createDeal?(input: CreateDealInput): Promise<CrmBoardRecord>;
 }

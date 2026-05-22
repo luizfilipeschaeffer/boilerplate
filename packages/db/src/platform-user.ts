@@ -28,6 +28,17 @@ export async function findPlatformUserByEmail(email: string) {
   });
 }
 
+export async function listPlatformUsersForComms(excludeUserId?: string) {
+  return prisma.platformUser.findMany({
+    where: {
+      active: true,
+      ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
+    },
+    orderBy: [{ name: "asc" }, { email: "asc" }],
+    select: { id: true, name: true, email: true, role: true },
+  });
+}
+
 export async function upsertPlatformUser(input: {
   email: string;
   name?: string;

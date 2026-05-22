@@ -37,6 +37,8 @@ const allowedDevOrigins = parseDevOriginHosts();
 const nextConfig: NextConfig = {
   transpilePackages: [
     "@boilerplate/db",
+    "@boilerplate/billing",
+    "@boilerplate/integrators",
     "@boilerplate/crm",
     "@boilerplate/crm-ui",
     "@boilerplate/module-registry",

@@ -1,6 +1,11 @@
 import type { TipoNegocio } from "@boilerplate/shared";
 import type { DiagnosticoDraft } from "@/lib/diagnostico/draft";
-import { computeDiagnosedPhase, FASE_OPTIONS, faseConfirmPrompt } from "@/lib/diagnostico/phase-labels";
+import type { ChoiceOption } from "@/lib/chat/choice-option";
+import {
+  computeDiagnosedPhase,
+  faseEscolhidaPrompt,
+  FASE_OPTIONS,
+} from "@/lib/diagnostico/phase-labels";
 import { getMarketSegmentChoices } from "@/lib/diagnostico/segment-choices";
 import { TIPOS_NEGOCIO, VENDAS_MES_OPTIONS } from "@/lib/tipos-negocio";
 
@@ -14,7 +19,6 @@ export type DiagnosticoStepId =
   | "possuiCnpj"
   | "cnpj"
   | "emiteNota"
-  | "faseConfirm"
   | "faseEscolhida";
 
 export const DIAGNOSTICO_STEP_IDS: DiagnosticoStepId[] = [
@@ -27,11 +31,10 @@ export const DIAGNOSTICO_STEP_IDS: DiagnosticoStepId[] = [
   "possuiCnpj",
   "cnpj",
   "emiteNota",
-  "faseConfirm",
   "faseEscolhida",
 ];
 
-export type ChoiceOption = { value: string; label: string };
+export type { ChoiceOption };
 
 export type DiagnosticoStepDef = {
   id: DiagnosticoStepId;
@@ -139,25 +142,12 @@ export const DIAGNOSTICO_STEPS: DiagnosticoStepDef[] = [
       { value: "nao", label: "Ainda não" },
       { value: "nao_sei", label: "Não sei / estou começando" },
     ],
-    next: (d) => {
-      const diagnosed = computeDiagnosedPhase(d);
-      return diagnosed ? "faseConfirm" : "faseConfirm";
-    },
-  },
-  {
-    id: "faseConfirm",
-    kind: "choices",
-    prompt: (d) => faseConfirmPrompt(d).replace(/\*\*/g, ""),
-    choices: [
-      { value: "confirmar", label: "Sim, está certo" },
-      { value: "ajustar", label: "Quero ajustar a fase" },
-    ],
-    next: (d) => (d.declaredPhase != null ? null : "faseEscolhida"),
+    next: () => "faseEscolhida",
   },
   {
     id: "faseEscolhida",
     kind: "choices",
-    prompt: "Qual fase descreve melhor seu negócio hoje?",
+    prompt: (d) => faseEscolhidaPrompt(d).replace(/\*\*/g, ""),
     choices: [...FASE_OPTIONS],
     next: () => null,
   },
@@ -220,13 +210,6 @@ export function applyDiagnosticoAnswer(
       const next = { ...draft, emiteNota: v as DiagnosticoDraft["emiteNota"] };
       const diagnosed = computeDiagnosedPhase(next);
       return { ...next, diagnosedPhase: diagnosed };
-    }
-    case "faseConfirm": {
-      const diagnosed = draft.diagnosedPhase ?? computeDiagnosedPhase(draft);
-      if (v === "confirmar") {
-        return { ...draft, declaredPhase: diagnosed };
-      }
-      return { ...draft, declaredPhase: null };
     }
     case "faseEscolhida":
       return { ...draft, declaredPhase: Number(v) };

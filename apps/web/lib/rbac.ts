@@ -14,6 +14,7 @@ const ROUTES_BY_ROLE: Record<TenantRole, string[] | "*"> = {
     "/pedidos",
     "/vendas",
     "/clientes",
+    "/crm",
     "/catalogo",
     "/ranking",
     "/conta",
@@ -23,6 +24,7 @@ const ROUTES_BY_ROLE: Record<TenantRole, string[] | "*"> = {
     "/pedidos",
     "/estoque",
     "/catalogo",
+    "/compras",
     "/conta",
   ],
   financeiro: [
@@ -36,9 +38,11 @@ const ROUTES_BY_ROLE: Record<TenantRole, string[] | "*"> = {
 const MODULE_ROUTE_PREFIX: Record<string, string> = {
   "core-catalogo": "/catalogo",
   "core-clientes": "/clientes",
+  "core-crm": "/crm",
   "core-vendas": "/vendas",
   "core-pedidos": "/pedidos",
   "core-estoque-basico": "/estoque",
+  "ops-compras": "/compras",
   "core-ranking": "/ranking",
   "fin-fluxo-caixa": "/fluxo-caixa",
   "ops-vendedores": "/vendedores",
@@ -70,11 +74,12 @@ export function filterNavModuleIdsForRole(
     vendedor: [
       "core-catalogo",
       "core-clientes",
+      "core-crm",
       "core-vendas",
       "core-pedidos",
       "core-ranking",
     ],
-    operador: ["core-catalogo", "core-pedidos", "core-estoque-basico"],
+    operador: ["core-catalogo", "core-pedidos", "core-estoque-basico", "ops-compras"],
     financeiro: ["fin-fluxo-caixa", "rel-basico", "core-catalogo"],
   };
   const prefixes = allowedPrefixes[r] ?? [];

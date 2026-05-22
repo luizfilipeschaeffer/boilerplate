@@ -42,8 +42,10 @@ export async function getCommsThreadAction(threadId: string) {
 export async function createCommsThreadAction(input: {
   subject: string;
   channel: CommsChannel;
+  participantKind?: "client" | "internal";
   organizationId?: string;
   platformLeadId?: string;
+  peerPlatformUserId?: string;
   initialBody?: string;
   toLabel?: string;
   registerConsent?: boolean;
@@ -52,14 +54,16 @@ export async function createCommsThreadAction(input: {
   const threadId = await createCommsThread({
     subject: input.subject,
     channel: input.channel,
+    participantKind: input.participantKind,
     organizationId: input.organizationId,
     platformLeadId: input.platformLeadId,
+    peerPlatformUserId: input.peerPlatformUserId,
     assignedPlatformUserId: platformUserId,
     initialBody: input.initialBody,
     fromLabel: "Equipe Plataforma",
     toLabel: input.toLabel,
   });
-  if (input.registerConsent) {
+  if (input.registerConsent && input.channel !== "internal") {
     await registerCommsConsent({
       channel: input.channel,
       organizationId: input.organizationId,

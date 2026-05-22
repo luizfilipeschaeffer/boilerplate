@@ -171,6 +171,36 @@ export function buildParagraph(text: string): string {
   return `<p style="margin:0 0 16px;">${text}</p>`;
 }
 
+export function buildLoginVerificationEmailHtml(input: {
+  name: string;
+  code: string;
+}): string {
+  const name = escapeHtml(firstNameFrom(input.name));
+
+  const body = [
+    buildParagraph(`Olá, <strong>${name}</strong>!`),
+    buildParagraph(
+      "Use o código abaixo para <strong>entrar no painel sem senha</strong>. Na tela de login, escolha <strong>Entrar com código por e-mail</strong> e cole o código:",
+    ),
+    buildOtpBlock({
+      code: input.code,
+      copyHint: "Cole este código na tela de login do Boilerplate.",
+      validityMinutes: 15,
+    }),
+    buildInfoBox(
+      "<strong>Preferir senha?</strong> Se você já criou uma senha, pode entrar normalmente. Quem ainda não definiu senha deve usar este código.",
+    ),
+  ].join("");
+
+  return buildEmailLayout({
+    preheader: `Seu código de acesso: ${input.code}`,
+    eyebrow: "Acesso ao painel",
+    title: "Entrar sem senha",
+    footerLabel: "Boilerplate",
+    bodyHtml: body,
+  });
+}
+
 export function buildSignupVerificationEmailHtml(input: {
   name: string;
   code: string;

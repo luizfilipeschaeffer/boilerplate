@@ -8,6 +8,7 @@ import {
   findUserByEmailForAuth,
   listSectorsAccessibleToUser,
   userCanAccessSector,
+  verifyLoginEmailCode,
   verifyUserPassword,
 } from "@boilerplate/db";
 import { authConfig } from "./auth.config";
@@ -85,25 +86,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "E-mail", type: "email" },
         password: { label: "Senha", type: "password" },
+        loginCode: { label: "Código", type: "text" },
       },
       authorize: async (credentials) => {
         const email = credentials?.email?.toString().trim().toLowerCase();
         const password = credentials?.password?.toString() ?? "";
+        const loginCode = credentials?.loginCode?.toString() ?? "";
         if (!email) return null;
 
         const existing = await findUserByEmailForAuth(email);
 
-        if (existing) {
-          if (!existing.passwordHash) {
-            const pendingMembership = await getMembershipForUser(existing.id);
-            if (pendingMembership) return null;
-          } else {
-            const valid = await verifyUserPassword(
-              password,
-              existing.passwordHash,
-            );
-            if (!valid) return null;
+        if (loginCode.trim()) {
+          try {
+            const valid = await verifyLoginEmailCode(email, loginCode);
+            if (!valid || !existing) return null;
+          } catch {
+            return null;
           }
+        } else {
+          if (!existing?.passwordHash) return null;
+          const valid = await verifyUserPassword(
+            password,
+            existing.passwordHash,
+          );
+          if (!valid) return null;
         }
 
         const user = existing ?? (await findOrCreateUserByEmail(email));
