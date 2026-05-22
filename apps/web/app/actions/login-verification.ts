@@ -6,7 +6,10 @@ import {
   prisma,
   verifyLoginEmailCode,
 } from "@boilerplate/db";
-import { LOGIN_CODE_GENERIC_SENT } from "@/lib/auth/login-with-code";
+import {
+  LOGIN_CODE_GENERIC_SENT,
+  LOGIN_CODE_INVALID,
+} from "@/lib/auth/login-with-code";
 import { sendLoginVerificationEmail } from "@/lib/email/resend";
 
 export async function sendLoginVerificationCode(

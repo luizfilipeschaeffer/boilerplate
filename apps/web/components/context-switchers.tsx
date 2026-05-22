@@ -62,6 +62,7 @@ export function ContextSwitchers({
           <Select
             value={resolvedBranchId}
             onValueChange={async (id) => {
+              if (!id) return;
               setBranchId(id);
               await updateSessionContext({ branchId: id });
               router.refresh();
@@ -89,6 +90,7 @@ export function ContextSwitchers({
           <Select
             value={sectorSlug}
             onValueChange={async (slug) => {
+              if (!slug) return;
               setSectorId(slug);
               await updateSessionContext({ sectorId: slug });
               router.refresh();

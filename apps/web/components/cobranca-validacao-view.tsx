@@ -120,7 +120,10 @@ export function CobrancaValidacaoView() {
       <CardContent className="flex flex-col gap-4 max-w-md">
         <div className="space-y-2">
           <Label>Gateway</Label>
-          <Select value={integratorId} onValueChange={setIntegratorId}>
+          <Select
+            value={integratorId}
+            onValueChange={(value) => setIntegratorId(value ?? "")}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Selecione" />
             </SelectTrigger>

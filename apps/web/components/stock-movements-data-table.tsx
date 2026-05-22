@@ -8,6 +8,7 @@ import {
   getFilteredRowModel,
   useReactTable,
   type ColumnDef,
+  type ExpandedState,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
@@ -58,7 +59,7 @@ export function StockMovementsDataTable({
   batches: StockMovementBatchRow[];
 }) {
   const [globalFilter, setGlobalFilter] = React.useState("");
-  const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
+  const [expanded, setExpanded] = React.useState<ExpandedState>({});
 
   const columns = React.useMemo<ColumnDef<StockMovementBatchRow>[]>(
     () => [

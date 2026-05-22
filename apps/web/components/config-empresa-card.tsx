@@ -219,7 +219,7 @@ export function ConfigEmpresaCard() {
               <Label>Tipo de negócio</Label>
               <Select
                 value={tipoNegocio}
-                onValueChange={setTipoNegocio}
+                onValueChange={(v) => setTipoNegocio(v ?? "")}
                 disabled={!canEdit}
               >
                 <SelectTrigger>

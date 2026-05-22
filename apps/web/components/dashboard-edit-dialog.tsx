@@ -178,7 +178,10 @@ export function DashboardEditDialog({
         <div className="flex min-h-0 flex-1 flex-col gap-4 px-6 py-4">
           <div className="shrink-0 grid gap-2">
             <Label>Setor</Label>
-            <Select value={sectorSlug} onValueChange={setSectorSlug}>
+            <Select
+              value={sectorSlug}
+              onValueChange={(v) => setSectorSlug(v ?? "")}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Setor" />
               </SelectTrigger>

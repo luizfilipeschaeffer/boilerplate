@@ -9,6 +9,7 @@ import {
 import {
   resolveMemberAccountStatus,
   type MemberAccountStatus,
+  type MemberRole,
 } from "@boilerplate/db";
 import {
   MEMBER_ACCOUNT_STATUS_LABELS,
@@ -74,7 +75,7 @@ function MemberConvidadoStatusHover({
   onResend: () => void;
 }) {
   return (
-    <HoverCard openDelay={200} closeDelay={80}>
+    <HoverCard>
       <HoverCardTrigger
         className="inline-flex rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         render={
@@ -248,10 +249,10 @@ export function MemberAccessDialog({
     });
   }
 
-  function applyRoleToPermissions(role: string) {
-    if (!draft) return;
+  function applyRoleToPermissions(role: string | null) {
+    if (!draft || !role) return;
     setDraft({
-      role,
+      role: role as MemberRole,
       active: draft.active,
       sectors: draft.sectors.map((s) => ({
         ...s,
@@ -270,7 +271,7 @@ export function MemberAccessDialog({
     setSaving(true);
     try {
       await saveMemberAccessAction(membershipId, {
-        role: draft.role as MemberDetail["role"],
+        role: draft.role as MemberRole,
         active: draft.active,
         sectorIds: draft.sectors.filter((s) => s.assigned).map((s) => s.sectorId),
         sectors: draft.sectors

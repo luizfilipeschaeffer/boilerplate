@@ -79,7 +79,7 @@ export async function listStockMovementBatches(
   const movTable = tenantStockMovementsTable(schemaName);
   const catalogTable = tenantCatalogTable(schemaName);
   const rows = await prisma.$queryRawUnsafe<
-    StockMovementRow & { item_name: string }
+    (StockMovementRow & { item_name: string })[]
   >(
     `SELECT m.id, m.batch_id, m.catalog_item_id, m.movement_type, m.quantity, m.note, m.created_at,
             c.name AS item_name

@@ -33,6 +33,7 @@ type SyncApiResponse = {
     price_cents: number | null;
     stock_qty: number;
     stock_min: number;
+    category_id?: string | null;
     active: boolean;
     updated_at: string;
   }[];

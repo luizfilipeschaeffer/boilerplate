@@ -1,4 +1,5 @@
 import { prisma } from "./client";
+import { Prisma } from "./generated/prisma";
 
 export const DEFAULT_COMMAND_SHORTCUT_IDS = [
   "action:catalogo-novo",
@@ -86,7 +87,7 @@ export async function saveMembershipCommandPaletteShortcuts(
       where: {
         userId_organizationId: { userId, organizationId },
       },
-      data: { commandPaletteShortcuts: null },
+      data: { commandPaletteShortcuts: Prisma.DbNull },
     });
     return null;
   }

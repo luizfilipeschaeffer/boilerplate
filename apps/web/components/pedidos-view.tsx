@@ -138,7 +138,10 @@ export function PedidosView() {
 
   return (
     <div className="flex flex-col gap-6 px-4 pb-8 lg:px-6">
-      <SetHeaderInfo text="Pré-vendas que podem ser convertidas em venda confirmada com baixa de estoque." />
+      <SetHeaderInfo>
+        Pré-vendas que podem ser convertidas em venda confirmada com baixa de
+        estoque.
+      </SetHeaderInfo>
       <div className="flex justify-end">
         <Button type="button" onClick={() => setOpen(true)}>
           Novo pedido
@@ -154,7 +157,10 @@ export function PedidosView() {
               <div className="flex flex-col gap-3">
                 <div className="space-y-2">
                   <Label>Cliente</Label>
-                  <Select value={clientId} onValueChange={setClientId}>
+                  <Select
+                    value={clientId}
+                    onValueChange={(v) => setClientId(v ?? "_none")}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -170,7 +176,10 @@ export function PedidosView() {
                 </div>
                 <div className="space-y-2">
                   <Label>Vendedor</Label>
-                  <Select value={sellerId} onValueChange={setSellerId}>
+                  <Select
+                    value={sellerId}
+                    onValueChange={(v) => setSellerId(v ?? "_none")}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -188,7 +197,7 @@ export function PedidosView() {
                   <Label>Produto</Label>
                   <Select
                     value={catalogItemId}
-                    onValueChange={setCatalogItemId}
+                    onValueChange={(v) => setCatalogItemId(v ?? "")}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Item" />
@@ -290,21 +299,24 @@ export function PedidosView() {
             <Label>Forma de pagamento</Label>
             <Select
               value={convertPayment}
-              onValueChange={setConvertPayment}
+              onValueChange={(v) => setConvertPayment(v ?? "dinheiro")}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(paymentMethods.length
-                  ? paymentMethods
+                {(paymentMethods.length > 0
+                  ? paymentMethods.map((pm) => ({
+                      code: pm.code,
+                      label: pm.label,
+                    }))
                   : [
                       { code: "dinheiro", label: "Dinheiro" },
                       { code: "pix", label: "PIX" },
                     ]
                 ).map((pm) => (
                   <SelectItem key={pm.code} value={pm.code}>
-                    {"label" in pm ? pm.label : pm.code}
+                    {pm.label}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -118,39 +118,41 @@ export function CatalogoCachedView({
           Carregando catálogo…
         </div>
       ) : (
-        <div
-          className={cn(
-            "grid min-h-0 flex-1 gap-4",
-            categoryPanelOpen && isLg && "lg:grid-cols-[240px_1fr]",
-          )}
-        >
-          {categoryPanelOpen && isLg ? (
-            <CatalogCategoryTree {...treeProps} className="min-h-[280px]" />
-          ) : null}
-          <CatalogDataTable
-            items={items}
-            categories={categories}
-            categoryNameById={categoryNameById}
-            categoryPanelOpen={categoryPanelOpen}
-            onToggleCategoryPanel={() => setCategoryPanelOpen((o) => !o)}
-            selectedCategoryLabel={selectedCategoryLabel}
-            onClearCategoryFilter={() => setSelectedCategoryId(null)}
-          />
-        </div>
+        <>
+          <div
+            className={cn(
+              "grid min-h-0 flex-1 gap-4",
+              categoryPanelOpen && isLg && "lg:grid-cols-[240px_1fr]",
+            )}
+          >
+            {categoryPanelOpen && isLg ? (
+              <CatalogCategoryTree {...treeProps} className="min-h-[280px]" />
+            ) : null}
+            <CatalogDataTable
+              items={items}
+              categories={categories}
+              categoryNameById={categoryNameById}
+              categoryPanelOpen={categoryPanelOpen}
+              onToggleCategoryPanel={() => setCategoryPanelOpen((o) => !o)}
+              selectedCategoryLabel={selectedCategoryLabel}
+              onClearCategoryFilter={() => setSelectedCategoryId(null)}
+            />
+          </div>
 
-        <Sheet
-          open={categoryPanelOpen && !isLg}
-          onOpenChange={setCategoryPanelOpen}
-        >
-          <SheetContent side="left" className="w-[min(100%,280px)] p-0">
-            <SheetHeader className="border-b px-4 py-3">
-              <SheetTitle>Categorias</SheetTitle>
-            </SheetHeader>
-            <div className="min-h-0 flex-1 overflow-hidden p-3">
-              <CatalogCategoryTree {...treeProps} className="h-full border-0 p-0" />
-            </div>
-          </SheetContent>
-        </Sheet>
+          <Sheet
+            open={categoryPanelOpen && !isLg}
+            onOpenChange={setCategoryPanelOpen}
+          >
+            <SheetContent side="left" className="w-[min(100%,280px)] p-0">
+              <SheetHeader className="border-b px-4 py-3">
+                <SheetTitle>Categorias</SheetTitle>
+              </SheetHeader>
+              <div className="min-h-0 flex-1 overflow-hidden p-3">
+                <CatalogCategoryTree {...treeProps} className="h-full border-0 p-0" />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </>
       )}
     </div>
   );

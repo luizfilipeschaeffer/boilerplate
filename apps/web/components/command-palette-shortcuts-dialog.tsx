@@ -249,7 +249,10 @@ export function CommandPaletteShortcutsDialog({
           {mode === "sector" && canEditSector ? (
             <div className="shrink-0 grid gap-2">
               <Label>Setor</Label>
-              <Select value={sectorSlug} onValueChange={setSectorSlug}>
+              <Select
+                value={sectorSlug}
+                onValueChange={(v) => setSectorSlug(v ?? "")}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Setor" />
                 </SelectTrigger>

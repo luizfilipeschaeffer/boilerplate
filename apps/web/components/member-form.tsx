@@ -83,7 +83,7 @@ export function MemberForm({
         </Field>
         <Field>
           <FieldLabel>Papel</FieldLabel>
-          <Select value={role} onValueChange={setRole}>
+          <Select value={role} onValueChange={(v) => setRole(v ?? "")}>
             <SelectTrigger id="member-role">
               <SelectValue />
             </SelectTrigger>
