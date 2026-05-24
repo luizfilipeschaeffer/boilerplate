@@ -8,6 +8,8 @@ export default defineConfig([
     rules: {
       // TanStack Table + React Compiler: API intencionalmente não memoizável
       "react-hooks/incompatible-library": "off",
+      // Data fetching / dialog reset-on-open — padrões válidos neste app
+      "react-hooks/set-state-in-effect": "off",
     },
   },
 ]);

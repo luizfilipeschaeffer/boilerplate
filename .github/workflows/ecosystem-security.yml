@@ -39,7 +39,7 @@ jobs:
         run: bun run --filter @boilerplate-community/example-module test
 
       - name: Capability manifest sync check
-        run: bun -e "import { moduleContract } from './community/example-module/src/contract.ts'; if (moduleContract.capabilities.filesystem !== false) process.exit(1); console.log('ok')"
+        run: bun scripts/check-example-module-capabilities.ts
 
       - name: Dependency audit (blocking)
         run: bun audit --audit-level=high

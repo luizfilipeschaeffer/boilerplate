@@ -17,9 +17,9 @@
   "dependencies": {
     "@boilerplate/sdk-core": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/sdk-node": "^0.203.0",
-    "@opentelemetry/auto-instrumentations-node": "^0.62.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.203.0"
+    "@opentelemetry/sdk-node": "^0.217.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.75.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.217.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

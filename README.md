@@ -161,6 +161,19 @@ Desenvolvedores que queiram propor **módulos ou integradores** da comunidade:
 
 Fluxo: PR padronizada → auditoria (CI + review) → moderação em platform-admin (`/comunidade`) → marketplace e tenants.
 
+### CI local (antes de commit/PR)
+
+Espelha GitHub Actions (`ci.yml` + `ecosystem-security.yml`):
+
+```bash
+# Pare o dev server antes do build (evita EPERM do Prisma no Windows)
+# Ctrl+C no terminal com bun run dev
+
+bun run ci:local
+```
+
+Atalho parcial: `bun run ci` (sem ecosystem lint nem example-module tests).
+
 ### Prisma na Vercel (query engine)
 
 Se o login/API falhar com `PrismaClientInitializationError` / `rhel-openssl-3.0.x`, o bundle serverless não incluiu o engine. O monorepo já define `binaryTargets` no schema e `outputFileTracingIncludes` nos `next.config.ts` dos apps. Após alterar isso, faça **redeploy** (build limpo na Vercel).

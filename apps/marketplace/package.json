@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bun --env-file=../../.env --env-file=../../.env.development next dev --turbopack -H 0.0.0.0 -p 3003",
-    "build": "next build",
+    "build": "bun --env-file=../../.env --env-file=../../.env.development next build",
     "lint": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
