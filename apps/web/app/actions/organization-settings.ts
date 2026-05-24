@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import {
   addOrganizationModules,
   applyOrganizationPlan,
+  assertActiveMembership,
   getOrganizationCompanySettings,
   updateOrganizationProfile,
   type OrganizationProfileInput,
@@ -17,21 +18,19 @@ ensureModulesRegistered();
 
 async function requireOrgManager() {
   const session = await auth();
-  const orgId = session?.organizationId;
   const userId = session?.user?.id;
-  const role = session?.role ?? "dono";
-  if (!orgId || !userId) throw new Error("Sessão inválida.");
-  if (role !== "dono" && role !== "gerente") {
-    throw new Error("Sem permissão para alterar dados da empresa.");
-  }
-  return { orgId, userId, role };
+  if (!userId) throw new Error("Sessão inválida.");
+  const membership = await assertActiveMembership(userId, { minRole: "gerente" });
+  return { orgId: membership.organizationId, userId, role: membership.role };
 }
 
 export async function getOrganizationSettingsAction() {
   const session = await auth();
-  const orgId = session?.organizationId;
-  const role = session?.role ?? "dono";
-  if (!orgId) throw new Error("Organização não disponível.");
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Sessão inválida.");
+  const membership = await assertActiveMembership(userId);
+  const orgId = membership.organizationId;
+  const role = membership.role;
 
   const settings = await getOrganizationCompanySettings(orgId);
   if (!settings) throw new Error("Empresa não encontrada.");

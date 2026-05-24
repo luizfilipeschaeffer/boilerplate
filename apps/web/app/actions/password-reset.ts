@@ -10,6 +10,7 @@ import {
 } from "@boilerplate/db";
 import { revalidateMemberPagesForEmail } from "@/lib/revalidate-member-pages";
 import { sendPasswordResetEmail } from "@/lib/email/resend";
+import { canSendWithResend, isResendDevFallback } from "@/lib/email/resend-config";
 
 const GENERIC_SENT_MESSAGE =
   "Se existir uma conta com este e-mail, enviamos um código de recuperação. Confira sua caixa de entrada e o spam.";
@@ -31,10 +32,7 @@ export async function requestPasswordReset(
         select: { name: true },
       });
 
-      if (
-        process.env.NODE_ENV === "development" &&
-        !process.env.RESEND_API_KEY
-      ) {
+      if (isResendDevFallback() && !(await canSendWithResend())) {
         console.info(
           `[dev] Código de recuperação para ${normalized}: ${created.code}`,
         );

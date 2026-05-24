@@ -7,6 +7,7 @@ import {
 } from "@boilerplate/db";
 import { checkSignupEmail } from "@/app/actions/signup";
 import { sendSignupVerificationEmail } from "@/lib/email/resend";
+import { canSendWithResend, isResendDevFallback } from "@/lib/email/resend-config";
 
 export async function sendSignupVerificationCode(
   email: string,
@@ -22,7 +23,7 @@ export async function sendSignupVerificationCode(
 
   const { code } = await createSignupEmailVerification(normalized);
 
-  if (process.env.NODE_ENV === "development" && !process.env.RESEND_API_KEY) {
+  if (isResendDevFallback() && !(await canSendWithResend())) {
     console.info(
       `[dev] Código de verificação para ${normalized}: ${code}`,
     );

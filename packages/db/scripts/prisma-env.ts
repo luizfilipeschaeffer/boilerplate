@@ -15,10 +15,13 @@ const MONOREPO_ROOT = join(PKG_DB, "../../..");
 
 const ENV_CANDIDATES = [".env", ".env.development", ".env.local"];
 
-function resolveEnvFile(): string {
+function resolveEnvFile(): string | null {
   for (const name of ENV_CANDIDATES) {
     const path = join(MONOREPO_ROOT, name);
     if (existsSync(path)) return path;
+  }
+  if (process.env.DATABASE_URL?.trim()) {
+    return null;
   }
   console.error(
     [
@@ -27,7 +30,7 @@ function resolveEnvFile(): string {
       "Crie um deles com DATABASE_URL:",
       "  copy .env.example .env",
       "  — ou —",
-      "  mantenha .env.development na raiz",
+      "  injete DATABASE_URL via Vercel/CI (sem arquivo .env)",
       "",
       `Raiz: ${MONOREPO_ROOT}`,
     ].join("\n"),
@@ -68,17 +71,22 @@ if (prismaArgs.length === 0) {
 const require = createRequire(join(DB_ROOT, "package.json"));
 const prismaEntry = require.resolve("prisma/build/index.js");
 
+const fileVars = envFile ? loadEnvFile(envFile) : {};
 const env = {
   ...process.env,
-  ...loadEnvFile(envFile),
+  ...fileVars,
 };
 
 if (!env.DATABASE_URL) {
-  console.error(`DATABASE_URL ausente em ${envFile}`);
+  console.error(
+    envFile
+      ? `DATABASE_URL ausente em ${envFile}`
+      : "DATABASE_URL ausente no ambiente (Vercel/CI).",
+  );
   process.exit(1);
 }
 
-console.log(`[prisma-env] ${envFile}`);
+console.log(`[prisma-env] ${envFile ?? "process.env (Vercel/CI)"}`);
 
 const result = spawnSync(process.execPath, [prismaEntry, ...prismaArgs], {
   cwd: DB_ROOT,

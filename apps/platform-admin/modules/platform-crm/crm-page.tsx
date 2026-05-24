@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/auth";
-import type { PlatformRole } from "@boilerplate/db";
 import { canEditCrm } from "./can-edit-crm";
 import { PlatformCrmBoardClient } from "./crm-board-client";
 import type { CrmBoardView } from "@boilerplate/crm-ui";
@@ -33,7 +32,12 @@ export default async function PlatformCrmPage({
   searchParams: Promise<{ view?: string }>;
 }) {
   const session = await auth();
-  const role = (session?.user?.platformRole ?? "platform_produto") as PlatformRole;
+  const role = session?.user?.platformRole;
+  if (!role) {
+    return (
+      <p className="px-4 text-sm text-muted-foreground">Sem permissão.</p>
+    );
+  }
   const canEdit = canEditCrm(role);
   const params = await searchParams;
   const initialView =

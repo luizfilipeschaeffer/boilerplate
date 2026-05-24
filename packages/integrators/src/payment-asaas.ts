@@ -4,6 +4,7 @@ export interface PaymentSubscriptionInput {
   customerName: string;
   valueCentavos: number;
   description: string;
+  integratorSecrets?: Record<string, string>;
 }
 
 export interface PaymentSubscriptionResult {
@@ -14,14 +15,15 @@ export interface PaymentSubscriptionResult {
 }
 
 /**
- * Adapter Asaas (PRD §12). Sem `ASAAS_API_KEY` opera em modo simulado.
+ * Adapter Asaas (PRD §12). Sem credenciais configuradas opera em modo simulado.
  */
 export async function createAsaasSubscription(
   input: PaymentSubscriptionInput,
 ): Promise<PaymentSubscriptionResult> {
-  const apiKey = process.env.ASAAS_API_KEY?.trim();
+  const apiKey = input.integratorSecrets?.apiKey?.trim();
   const baseUrl =
-    process.env.ASAAS_API_URL?.trim() ?? "https://sandbox.asaas.com/api/v3";
+    input.integratorSecrets?.apiUrl?.trim() ??
+    "https://sandbox.asaas.com/api/v3";
 
   if (!apiKey) {
     return {
@@ -59,4 +61,18 @@ export async function createAsaasSubscription(
     subscriptionId: data.id,
     status: data.status === "ACTIVE" ? "active" : "pending",
   };
+}
+
+export async function cancelAsaasSubscription(
+  customerRef: string,
+  integratorSecrets?: Record<string, string>,
+): Promise<void> {
+  const apiKey = integratorSecrets?.apiKey?.trim();
+  if (!apiKey) return;
+  const baseUrl =
+    integratorSecrets?.apiUrl?.trim() ?? "https://sandbox.asaas.com/api/v3";
+  await fetch(`${baseUrl}/subscriptions/${customerRef}`, {
+    method: "DELETE",
+    headers: { access_token: apiKey },
+  });
 }

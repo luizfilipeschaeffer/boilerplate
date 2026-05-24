@@ -4,6 +4,31 @@ import { prisma } from "./client";
 import { getActiveModuleIdsForOrg } from "./organization";
 import { completePaymentVerification } from "./provisioning";
 import { getTenantPaymentIntegrator } from "./platform-payment";
+import { isMockIntegrator, resolve } from "./integrator-credentials";
+
+function paymentSecretsFromResolved(creds: {
+  secrets: Record<string, string>;
+  configPublic: Record<string, unknown>;
+}): Record<string, string> {
+  const merged: Record<string, string> = { ...creds.secrets };
+  if (typeof creds.configPublic.apiUrl === "string" && creds.configPublic.apiUrl) {
+    merged.apiUrl = creds.configPublic.apiUrl;
+  }
+  return merged;
+}
+
+async function resolvePaymentSecrets(
+  integratorId: string,
+  organizationId: string,
+): Promise<Record<string, string> | undefined> {
+  if (isMockIntegrator(integratorId)) return undefined;
+  try {
+    const creds = await resolve(integratorId, organizationId);
+    return paymentSecretsFromResolved(creds);
+  } catch {
+    return undefined;
+  }
+}
 
 export async function startPaymentValidation(
   organizationId: string,
@@ -27,12 +52,18 @@ export async function startPaymentValidation(
   const moduleIds = await getActiveModuleIdsForOrg(organizationId);
   const centavos = calcularMensalidade(moduleIds);
 
+  const integratorSecrets = await resolvePaymentSecrets(
+    integratorId,
+    organizationId,
+  );
+
   const result = await adapter.criarValidacaoPagamento({
     tenantId: organizationId,
     customerEmail: userEmail,
     customerName: userName,
     valueCentavos: centavos || 4900,
     description: `Validação — ${org.name}`,
+    integratorSecrets,
   });
 
   await prisma.organization.update({

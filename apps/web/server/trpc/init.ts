@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { initTRPC, TRPCError } from "@trpc/server";
+import { assertActiveMembership } from "@boilerplate/db";
 
 export const createContext = async () => {
   const session = await auth();
@@ -26,8 +27,21 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   });
 });
 
-export const tenantProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.session.needsOnboarding || !ctx.session.organizationId) {
+export const membershipProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const membership = await assertActiveMembership(ctx.userId);
+  return next({
+    ctx: {
+      ...ctx,
+      membership,
+      organizationId: membership.organizationId,
+      schemaName: membership.schemaName,
+      role: membership.role,
+    },
+  });
+});
+
+export const tenantProcedure = membershipProcedure.use(({ ctx, next }) => {
+  if (ctx.session.needsOnboarding) {
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
       message: "ONBOARDING_REQUIRED",
@@ -36,7 +50,6 @@ export const tenantProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({
     ctx: {
       ...ctx,
-      organizationId: ctx.session.organizationId,
       sectorId: ctx.session.sectorId ?? "geral",
     },
   });

@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
 import { prismaMonorepoTracing } from "../../packages/db/next-config-prisma";
+import { nextSecurityHeadersConfig } from "@boilerplate/shared/security";
 
 function addOriginHost(hosts: Set<string>, segment: string): void {
   const value = segment.trim();
@@ -53,6 +54,9 @@ const nextConfig: NextConfig = {
   ...(process.env.NODE_ENV === "development" && allowedDevOrigins.length > 0
     ? { allowedDevOrigins }
     : {}),
+  async headers() {
+    return nextSecurityHeadersConfig();
+  },
 };
 
 export default nextConfig;

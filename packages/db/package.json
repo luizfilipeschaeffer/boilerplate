@@ -20,6 +20,10 @@
     "db:migrate-tenants": "bun --env-file=../../.env --env-file=../../.env.development ./scripts/migrate-tenants.ts",
     "db:seed-platform-admin": "bun ./scripts/seed-platform-admin.ts",
     "db:seed-roadmap": "bun ./scripts/seed-product-roadmap.ts",
+    "db:seed-integrator-credentials": "bun ./scripts/seed-integrator-credentials.ts",
+    "db:vercel-bootstrap": "bun ./scripts/vercel-bootstrap.ts",
+    "db:rotate-kek": "bun ./scripts/rotate-kek.ts",
+    "test": "bun --env-file=../../.env --env-file=../../.env.development test src",
     "db:restart": "bun ./scripts/db-restart.ts"
   },
   "dependencies": {

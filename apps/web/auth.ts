@@ -7,6 +7,8 @@ import {
 import {
   findUserByEmailForAuth,
   listSectorsAccessibleToUser,
+  prisma,
+  userCanAccessBranch,
   userCanAccessSector,
   verifyLoginEmailCode,
   verifyUserPassword,
@@ -26,6 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           branchId?: string | null;
           role?: string | null;
           needsOnboarding?: boolean;
+          sessionVersion?: number;
         };
         token.userId = u.id;
         token.organizationId = u.organizationId ?? undefined;
@@ -33,10 +36,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.branchId = u.branchId ?? undefined;
         token.role = u.role ?? undefined;
         token.needsOnboarding = u.needsOnboarding ?? false;
+        token.sessionVersion = u.sessionVersion ?? 0;
       }
 
       const userId = token.userId as string | undefined;
       if (userId) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { sessionVersion: true },
+        });
+        if (!dbUser) {
+          return {};
+        }
+        const tokenVersion = (token.sessionVersion as number | undefined) ?? 0;
+        if (tokenVersion !== dbUser.sessionVersion) {
+          return {};
+        }
+        token.sessionVersion = dbUser.sessionVersion;
+
         const membership = await getMembershipForUser(userId);
         if (membership) {
           token.organizationId = membership.organizationId;
@@ -58,7 +75,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (trigger === "update" && session) {
         const s = session as { branchId?: string; sectorId?: string };
-        if (s.branchId !== undefined) token.branchId = s.branchId;
+        if (s.branchId !== undefined && userId && token.organizationId) {
+          const branchAllowed = await userCanAccessBranch(
+            userId,
+            token.organizationId as string,
+            s.branchId,
+          );
+          if (branchAllowed) {
+            token.branchId = s.branchId;
+          }
+        }
         if (s.sectorId !== undefined && userId && token.organizationId) {
           const allowed = await userCanAccessSector(
             userId,
@@ -113,6 +139,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const user = existing ?? (await findOrCreateUserByEmail(email));
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { sessionVersion: true },
+        });
         const membership = await getMembershipForUser(user.id);
 
         if (!membership) {
@@ -121,6 +151,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: user.email,
             name: user.name,
             needsOnboarding: true,
+            sessionVersion: dbUser?.sessionVersion ?? 0,
           };
         }
 
@@ -139,6 +170,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           branchId: membership.defaultBranchId ?? undefined,
           role: membership.role,
           needsOnboarding: false,
+          sessionVersion: dbUser?.sessionVersion ?? 0,
         };
       },
     }),

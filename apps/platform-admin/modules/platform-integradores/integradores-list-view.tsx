@@ -7,7 +7,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { ChevronRight, Settings2 } from "lucide-react";
+import { ChevronRight, KeyRound, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import {
 export type IntegratorTableRow = PlatformIntegratorCatalogRow & {
   gatewayAtivo: boolean | null;
   gatewayDefault: boolean | null;
+  credentialConfigurable: boolean;
 };
 
 function statusVariant(
@@ -139,6 +140,19 @@ export function IntegradoresListView({
         header: "Ações",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
+            {row.original.credentialConfigurable && canEditGateways ? (
+              <Link
+                href={`/integradores/${row.original.id}/credenciais`}
+                className={buttonVariants({
+                  variant: "ghost",
+                  size: "sm",
+                  className: "h-8 gap-1",
+                })}
+              >
+                <KeyRound className="size-3.5" />
+                Credenciais
+              </Link>
+            ) : null}
             {row.original.tipo === "payment" && canEditGateways ? (
               <Link
                 href="/integradores/gateways"
@@ -151,9 +165,9 @@ export function IntegradoresListView({
                 <Settings2 className="size-3.5" />
                 Gateways
               </Link>
-            ) : (
+            ) : !row.original.credentialConfigurable ? (
               <ChevronRight className="size-4 text-muted-foreground opacity-40" />
-            )}
+            ) : null}
           </div>
         ),
       },

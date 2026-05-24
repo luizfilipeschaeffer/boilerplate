@@ -14,7 +14,19 @@ const ROUTE_MODULE: Record<string, PlatformModuleId> = {
   "/modulos": "platform-modulos",
   "/roadmap": "platform-roadmap",
   "/organizacoes": "organizacoes",
+  "/segmentos": "platform-segmentos",
+  "/integradores": "platform-integradores",
 };
+
+function isAllowedPlatformIp(req: Request): boolean {
+  const allowed = process.env.PLATFORM_ADMIN_ALLOWED_IPS?.trim();
+  if (!allowed) return true;
+  const ips = allowed.split(",").map((v) => v.trim()).filter(Boolean);
+  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const realIp = req.headers.get("x-real-ip")?.trim();
+  const candidate = forwarded ?? realIp ?? "";
+  return ips.includes(candidate);
+}
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -23,6 +35,10 @@ export default auth((req) => {
   const isPublic =
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth");
+
+  if (!isAllowedPlatformIp(req)) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
 
   if (!session?.user?.platformRole && !isPublic) {
     return NextResponse.redirect(new URL("/login", req.url));

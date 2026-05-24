@@ -1,4 +1,7 @@
 import { PrismaClient } from "./generated/prisma";
+import { assertKekConfigured } from "@boilerplate/shared/secrets";
+
+assertKekConfigured();
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 

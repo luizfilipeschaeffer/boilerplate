@@ -7,6 +7,7 @@ import {
 } from "@boilerplate/db";
 import { passwordResetEmailCopyUrl } from "@/lib/app-url";
 import { sendWelcomePasswordEmail } from "@/lib/email/resend";
+import { canSendWithResend, isResendDevFallback } from "@/lib/email/resend-config";
 
 /**
  * Envia e-mail com código para criar a primeira senha (reutiliza fluxo de /esqueci-senha).
@@ -29,10 +30,7 @@ export async function sendInitialPasswordSetupEmail(
 
   const created = await createPasswordResetVerification(normalized);
   if (!created) {
-    if (
-      process.env.NODE_ENV === "development" &&
-      !process.env.RESEND_API_KEY
-    ) {
+    if (isResendDevFallback() && !(await canSendWithResend())) {
       console.info(
         `[dev] Criação de senha: aguarde 1 minuto ou abra /esqueci-senha com ${normalized}.`,
       );
@@ -46,10 +44,7 @@ export async function sendInitialPasswordSetupEmail(
     normalized.split("@")[0] ||
     "você";
 
-  if (
-    process.env.NODE_ENV === "development" &&
-    !process.env.RESEND_API_KEY
-  ) {
+  if (isResendDevFallback() && !(await canSendWithResend())) {
     console.info(
       `[dev] Código para criar senha (${normalized}): ${created.code}`,
     );

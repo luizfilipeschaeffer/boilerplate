@@ -13,6 +13,7 @@ declare module "next-auth" {
     branchId?: string;
     role?: string;
     needsOnboarding?: boolean;
+    sessionVersion?: number;
   }
 }
 
@@ -24,5 +25,6 @@ declare module "next-auth/jwt" {
     branchId?: string;
     role?: string;
     needsOnboarding?: boolean;
+    sessionVersion?: number;
   }
 }

@@ -8,7 +8,6 @@ import {
   listActivitiesForRecord,
   listContactsForRecord,
   listPlatformCrmTimeline,
-  type PlatformRole,
 } from "@boilerplate/db";
 import type {
   CrmPipelineStage,
@@ -16,20 +15,23 @@ import type {
   CreateLeadInput,
 } from "@boilerplate/crm";
 import type { Fase } from "@boilerplate/shared";
-import { auth } from "@/auth";
 import { canEditCrm } from "./can-edit-crm";
+import { requirePlatformModule } from "@/lib/platform-access";
 import { revalidatePath } from "next/cache";
 
 async function requireCrmEditor() {
-  const session = await auth();
-  const role = session?.user?.platformRole as PlatformRole | undefined;
-  if (!role || !canEditCrm(role)) {
+  const ctx = await requirePlatformModule("platform-crm");
+  if (!canEditCrm(ctx.platformRole)) {
     throw new Error("Sem permissão para editar o CRM");
   }
   return {
-    platformUserId: session?.user?.id,
-    role,
+    platformUserId: ctx.userId,
+    role: ctx.platformRole,
   };
+}
+
+async function requireCrmReader() {
+  return requirePlatformModule("platform-crm");
 }
 
 function repo() {
@@ -86,22 +88,22 @@ export async function createPlatformLeadAction(input: CreateLeadInput) {
 }
 
 export async function loadCrmNotesAction(id: string, kind: CrmRecordKind) {
-  await auth();
+  await requireCrmReader();
   return repo().listNotes(id, kind);
 }
 
 export async function loadCrmTimelineAction(id: string, kind: CrmRecordKind) {
-  await auth();
+  await requireCrmReader();
   return listPlatformCrmTimeline(id, kind);
 }
 
 export async function loadCrmContactsAction(id: string, kind: CrmRecordKind) {
-  await auth();
+  await requireCrmReader();
   return listContactsForRecord(id, kind);
 }
 
 export async function loadCrmActivitiesAction(id: string, kind: CrmRecordKind) {
-  await auth();
+  await requireCrmReader();
   return listActivitiesForRecord(id, kind);
 }
 

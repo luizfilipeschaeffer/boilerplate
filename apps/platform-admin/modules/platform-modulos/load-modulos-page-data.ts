@@ -4,7 +4,6 @@ import {
   listModuloPrecos,
   listPlanosBase,
   seedDefaultPricingIfEmpty,
-  type PlatformRole,
 } from "@boilerplate/db";
 import { getAllModules, registerAllModules } from "@boilerplate/module-registry";
 import { cache } from "react";
@@ -18,8 +17,8 @@ async function ensureModulosPricingReady() {
 
 export const loadModulosAccess = cache(async () => {
   const session = await auth();
-  const role = (session?.user?.platformRole ?? "platform_produto") as PlatformRole;
-  return canEditModulosPricing(role);
+  const role = session?.user?.platformRole;
+  return role ? canEditModulosPricing(role) : false;
 });
 
 export const loadModulosCatalogoData = cache(async () => {

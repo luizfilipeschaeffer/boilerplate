@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { canAccessPlatformModule } from "@/lib/rbac";
-import type { PlatformRole } from "@boilerplate/db";
 import { notFound } from "next/navigation";
 import { CommsWorkspace } from "@/modules/platform-comms/comms-workspace";
 import { loadCommsWorkspaceData } from "@/modules/platform-comms/load-comms-workspace-data";
@@ -19,17 +18,16 @@ export default async function CommsThreadPage({
 }) {
   const { threadId } = await params;
   const session = await auth();
-  const role = (session?.user?.platformRole ?? "platform_suporte") as PlatformRole;
-  const canEdit = ["platform_admin", "platform_comercial", "platform_suporte"].includes(
-    role,
-  );
-  const filterParams = await searchParams;
-
-  if (!canAccessPlatformModule(role, "platform-comms")) {
+  const role = session?.user?.platformRole;
+  if (!role || !canAccessPlatformModule(role, "platform-comms")) {
     return (
       <p className="px-4 text-sm text-muted-foreground">Sem permissão.</p>
     );
   }
+  const filterParams = await searchParams;
+  const canEdit = ["platform_admin", "platform_comercial", "platform_suporte"].includes(
+    role,
+  );
 
   const data = await loadCommsWorkspaceData(session?.user?.id, {
     threadId,

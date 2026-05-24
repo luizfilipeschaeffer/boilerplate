@@ -19,6 +19,11 @@ const links = [
     desc: "Multi-loja e filial ativa na sidebar.",
   },
   {
+    href: "/configuracoes/integradores",
+    title: "Integradores",
+    desc: "Credenciais próprias (BYOK) ou padrão da plataforma.",
+  },
+  {
     href: "/configuracoes/pagamentos",
     title: "Pagamentos",
     desc: "Formas aceitas nos pedidos e vendas.",
