@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { sendOrganizationMemberInviteEmail } from "@/app/actions/member-invite-email";
 import {
+  assertActiveMembership,
   createOrganizationMember,
   getMemberAccessDetail,
   getOrganizationById,
@@ -17,13 +18,10 @@ import { revalidatePath } from "next/cache";
 
 async function requireManager() {
   const session = await auth();
-  const orgId = session?.organizationId;
-  const role = session?.role ?? "dono";
-  if (!orgId) throw new Error("Organização não disponível");
-  if (role !== "dono" && role !== "gerente") {
-    throw new Error("Sem permissão para gerenciar membros");
-  }
-  return { orgId, session };
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Não autenticado");
+  const membership = await assertActiveMembership(userId, { minRole: "gerente" });
+  return { orgId: membership.organizationId, session, userId };
 }
 
 export async function listMembersAction() {
@@ -70,6 +68,7 @@ export async function createMemberAction(data: {
       name: data.name,
       role: data.role,
       organizationName: org?.name ?? "sua organização",
+      organizationId: orgId,
     });
   }
 
@@ -106,6 +105,7 @@ export async function resendMemberInviteAction(membershipId: string) {
     name: detail.name,
     role: detail.role,
     organizationName: org?.name ?? "sua organização",
+    organizationId: orgId,
   });
 }
 

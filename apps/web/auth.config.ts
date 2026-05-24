@@ -1,20 +1,22 @@
 import type { NextAuthConfig } from "next-auth";
+import {
+  buildSessionConfig,
+  buildSessionCookieOptions,
+  resolveAuthSecret,
+  resolveTrustHost,
+} from "@boilerplate/shared/security";
 
 /**
  * Base NextAuth para o middleware (Edge, sem Prisma).
  * Membership no JWT é sincronizada em `auth.ts` (Node).
  */
 export const authConfig = {
-  trustHost: true,
-  cookies: {
-    sessionToken: {
-      name: "boilerplate-web.session-token",
-    },
-  },
+  trustHost: resolveTrustHost(),
+  cookies: buildSessionCookieOptions("boilerplate-web.session-token"),
   pages: {
     signIn: "/login",
   },
-  session: { strategy: "jwt" },
+  session: buildSessionConfig(),
   providers: [],
   callbacks: {
     async jwt({ token, user, trigger, session }) {
@@ -26,6 +28,7 @@ export const authConfig = {
           branchId?: string | null;
           role?: string | null;
           needsOnboarding?: boolean;
+          sessionVersion?: number;
         };
         token.userId = u.id;
         token.organizationId = u.organizationId ?? undefined;
@@ -33,6 +36,7 @@ export const authConfig = {
         token.branchId = u.branchId ?? undefined;
         token.role = u.role ?? undefined;
         token.needsOnboarding = u.needsOnboarding ?? false;
+        token.sessionVersion = u.sessionVersion ?? 0;
       }
       if (trigger === "update" && session) {
         const s = session as {
@@ -50,15 +54,12 @@ export const authConfig = {
         session.organizationId = token.organizationId as string | undefined;
         session.sectorId = (token.sectorId as string) ?? "geral";
         session.branchId = token.branchId as string | undefined;
-        session.role = (token.role as string) ?? "dono";
+        session.role = token.role as string | undefined;
         session.needsOnboarding = Boolean(token.needsOnboarding);
+        session.sessionVersion = (token.sessionVersion as number) ?? 0;
       }
       return session;
     },
   },
-  secret:
-    process.env.AUTH_SECRET ??
-    (process.env.NODE_ENV === "development"
-      ? "dev-only-auth-secret-change-in-env"
-      : undefined),
+  secret: resolveAuthSecret("AUTH_SECRET_WEB"),
 } satisfies NextAuthConfig;

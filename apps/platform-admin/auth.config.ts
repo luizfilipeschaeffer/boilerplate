@@ -1,20 +1,22 @@
 import type { NextAuthConfig } from "next-auth";
 import type { PlatformRole } from "@/lib/platform-role";
+import {
+  buildSessionConfig,
+  buildSessionCookieOptions,
+  resolveAuthSecret,
+  resolveTrustHost,
+} from "@boilerplate/shared/security";
 
 /**
  * Config compartilhada sem Prisma. O middleware importa só este arquivo.
  */
 export const authConfig = {
-  trustHost: true,
-  cookies: {
-    sessionToken: {
-      name: "boilerplate-platform-admin.session-token",
-    },
-  },
+  trustHost: resolveTrustHost(),
+  cookies: buildSessionCookieOptions("boilerplate-platform-admin.session-token"),
   pages: {
     signIn: "/login",
   },
-  session: { strategy: "jwt" },
+  session: buildSessionConfig(),
   providers: [],
   callbacks: {
     async jwt({ token, user }) {
@@ -28,14 +30,10 @@ export const authConfig = {
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.userId as string;
-        session.user.platformRole = token.platformRole as PlatformRole;
+        session.user.platformRole = token.platformRole as PlatformRole | undefined;
       }
       return session;
     },
   },
-  secret:
-    process.env.AUTH_SECRET ??
-    (process.env.NODE_ENV === "development"
-      ? "dev-only-auth-secret-change-in-env"
-      : undefined),
+  secret: resolveAuthSecret("AUTH_SECRET_PLATFORM_ADMIN"),
 } satisfies NextAuthConfig;

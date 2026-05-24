@@ -1,6 +1,8 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  provider      = "prisma-client-js"
+  output        = "../src/generated/prisma"
+  // Vercel (Linux): rhel-openssl-3.0.x — local dev: native (Windows/macOS)
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -238,11 +240,12 @@ model PlatformActivity {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  name         String?
-  passwordHash String?  @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id             String   @id @default(uuid())
+  email          String   @unique
+  name           String?
+  passwordHash   String?  @map("password_hash")
+  sessionVersion Int      @default(0) @map("session_version")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   memberships Membership[]
 
@@ -488,7 +491,7 @@ model PlatformIntegratorCatalog {
   @@map("platform_integrator_catalog")
 }
 
-/// Gateways de pagamento habilitados na plataforma (credenciais em env)
+/// Gateways de pagamento habilitados na plataforma
 model PlatformPaymentGateway {
   integratorId String   @id @map("integrator_id")
   label        String
@@ -501,15 +504,30 @@ model PlatformPaymentGateway {
   @@map("platform_payment_gateways")
 }
 
-/// Integrador escolhido pelo tenant (pagamento)
+/// Credenciais default da plataforma por integrador (envelope encryption)
+model PlatformIntegratorCredential {
+  integratorId               String    @id @map("integrator_id")
+  configPublic               Json      @default("{}") @map("config_public")
+  credentialsEncrypted       String?   @map("credentials_encrypted") @db.Text
+  configuredAt               DateTime? @map("configured_at")
+  configuredByPlatformUserId String?   @map("configured_by_platform_user_id")
+  updatedAt                  DateTime  @updatedAt @map("updated_at")
+
+  @@schema("boilerplate")
+  @@map("platform_integrator_credentials")
+}
+
+/// Integrador escolhido pelo tenant (pagamento) + override BYOK de credenciais
 model TenantIntegrator {
-  id             String   @id @default(uuid())
-  organizationId String   @map("organization_id")
-  integratorId   String   @map("integrator_id")
-  config         Json     @default("{}")
-  ativo          Boolean  @default(true)
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id                   String   @id @default(uuid())
+  organizationId       String   @map("organization_id")
+  integratorId         String   @map("integrator_id")
+  config               Json     @default("{}")
+  configPublic         Json     @default("{}") @map("config_public")
+  credentialsEncrypted String?  @map("credentials_encrypted") @db.Text
+  ativo                Boolean  @default(true)
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 

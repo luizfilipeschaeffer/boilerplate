@@ -9,6 +9,7 @@ import {
   passwordResetEmailCopyUrl,
 } from "@/lib/app-url";
 import { sendMemberInviteEmail } from "@/lib/email/resend";
+import { canSendWithResend, isResendDevFallback } from "@/lib/email/resend-config";
 import { roleLabel } from "@/lib/role-labels";
 
 export type MemberInviteEmailResult = {
@@ -29,6 +30,7 @@ export async function sendOrganizationMemberInviteEmail(input: {
   name?: string;
   role: string;
   organizationName: string;
+  organizationId?: string | null;
 }): Promise<MemberInviteEmailResult> {
   const normalized = input.email.trim().toLowerCase();
   const loginUrl = loginUrlWithEmail(normalized);
@@ -50,9 +52,9 @@ export async function sendOrganizationMemberInviteEmail(input: {
     }
   }
 
-  const hasResend = Boolean(process.env.RESEND_API_KEY);
+  const hasResend = await canSendWithResend(input.organizationId);
 
-  if (!hasResend && process.env.NODE_ENV === "development") {
+  if (!hasResend && isResendDevFallback()) {
     console.info(
       `[dev] Convite membro ${normalized} · org: ${input.organizationName} · papel: ${role}`,
     );
@@ -80,7 +82,7 @@ export async function sendOrganizationMemberInviteEmail(input: {
       loginUrl,
       setupUrl,
       message:
-        "Membro criado, mas RESEND_API_KEY não está configurada para enviar o e-mail.",
+        "Membro criado, mas as credenciais do Resend não estão configuradas para enviar o e-mail.",
     };
   }
 
@@ -102,6 +104,7 @@ export async function sendOrganizationMemberInviteEmail(input: {
       roleLabel: role,
       needsPasswordSetup,
       setupCode,
+      organizationId: input.organizationId,
     });
     return {
       sent: true,

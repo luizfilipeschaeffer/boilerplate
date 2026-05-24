@@ -1,31 +1,24 @@
 "use server";
 
-import { auth } from "@/auth";
 import {
   createBranch,
   listBranches,
   updateBranch,
 } from "@boilerplate/db";
+import { requireTenantContext } from "@/lib/tenant-context";
 import { revalidatePath } from "next/cache";
 
-async function requireOrgId() {
-  const session = await auth();
-  const orgId = session?.organizationId;
-  if (!orgId) throw new Error("Organização não disponível");
-  return orgId;
-}
-
 export async function listBranchesAction() {
-  const orgId = await requireOrgId();
-  return listBranches(orgId);
+  const { organizationId } = await requireTenantContext();
+  return listBranches(organizationId);
 }
 
 export async function createBranchAction(data: {
   name: string;
   isDefault?: boolean;
 }) {
-  const orgId = await requireOrgId();
-  await createBranch(orgId, {
+  const { organizationId } = await requireTenantContext();
+  await createBranch(organizationId, {
     name: data.name,
     isDefault: data.isDefault,
   });
@@ -38,8 +31,8 @@ export async function updateBranchAction(data: {
   active?: boolean;
   isDefault?: boolean;
 }) {
-  const orgId = await requireOrgId();
-  await updateBranch(data.id, orgId, {
+  const { organizationId } = await requireTenantContext();
+  await updateBranch(data.id, organizationId, {
     name: data.name,
     active: data.active,
     isDefault: data.isDefault,

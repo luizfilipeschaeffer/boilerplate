@@ -10,7 +10,10 @@
     "check:vercel": "bun scripts/pre-deploy-check.ts",
     "check:vercel:web": "bun scripts/pre-deploy-check.ts -- --web",
     "check:vercel:admin": "bun scripts/pre-deploy-check.ts -- --admin",
-    "ci": "bun run db:validate && bun run lint && bun run build",
+    "db:vercel-bootstrap": "bun run --filter @boilerplate/db db:vercel-bootstrap",
+    "ci": "bun run db:validate && bun run validate:env && bun run audit && bun run lint && bun run build",
+    "validate:env": "bun scripts/validate-env.ts",
+    "audit": "bun audit --audit-level=high || true",
     "db:validate": "bun run --filter @boilerplate/db db:validate",
     "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "db:down": "docker compose -f infra/docker/docker-compose.yml down",
@@ -19,11 +22,13 @@
     "db:migrate-tenants": "bun run --filter @boilerplate/db db:migrate-tenants",
     "db:seed-platform-admin": "bun run --filter @boilerplate/db db:seed-platform-admin",
     "db:seed-roadmap": "bun run --filter @boilerplate/db db:seed-roadmap",
+    "db:seed-integrator-credentials": "bun run --filter @boilerplate/db db:seed-integrator-credentials",
     "db:restart": "bun run --filter @boilerplate/db db:restart"
   },
   "devDependencies": {
     "turbo": "^2.5.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "@types/node": "^22.15.29"
   },
   "packageManager": "bun@1.3.14"
 }

@@ -16,6 +16,105 @@ export type MemberRole =
   | "operador"
   | "financeiro";
 
+export class MembershipError extends Error {
+  constructor(
+    public readonly code: "UNAUTHORIZED" | "FORBIDDEN",
+    message?: string,
+  ) {
+    super(message ?? (code === "UNAUTHORIZED" ? "Não autenticado" : "Acesso negado"));
+    this.name = "MembershipError";
+  }
+}
+
+const ROLE_RANK: Record<MemberRole, number> = {
+  vendedor: 1,
+  operador: 2,
+  financeiro: 3,
+  gerente: 4,
+  dono: 5,
+};
+
+function roleAtLeast(role: string, minRole: MemberRole): boolean {
+  const current = ROLE_RANK[role as MemberRole] ?? 0;
+  return current >= ROLE_RANK[minRole];
+}
+
+export async function userCanAccessBranch(
+  userId: string,
+  organizationId: string,
+  branchId: string,
+): Promise<boolean> {
+  const membership = await prisma.membership.findFirst({
+    where: { userId, organizationId, active: true },
+  });
+  if (!membership) return false;
+
+  const branch = await prisma.branch.findFirst({
+    where: { id: branchId, organizationId, active: true },
+  });
+  return Boolean(branch);
+}
+
+export type ActiveMembershipContext = {
+  organizationId: string;
+  schemaName: string;
+  role: MemberRole;
+  branchId: string | null;
+  userId: string;
+  membershipId: string;
+};
+
+export async function assertActiveMembership(
+  userId: string,
+  opts?: { minRole?: MemberRole; sectorId?: string; branchId?: string },
+): Promise<ActiveMembershipContext> {
+  const { getMembershipForUser } = await import("./organization");
+  const membership = await getMembershipForUser(userId);
+  if (!membership?.active) {
+    throw new MembershipError("UNAUTHORIZED");
+  }
+
+  if (opts?.minRole && !roleAtLeast(membership.role, opts.minRole)) {
+    throw new MembershipError("FORBIDDEN", "Permissão insuficiente.");
+  }
+
+  if (opts?.branchId) {
+    const allowed = await userCanAccessBranch(
+      userId,
+      membership.organizationId,
+      opts.branchId,
+    );
+    if (!allowed) throw new MembershipError("FORBIDDEN", "Filial inválida.");
+  }
+
+  if (opts?.sectorId) {
+    const { userCanAccessSector } = await import("./membership-sectors");
+    const allowed = await userCanAccessSector(
+      userId,
+      membership.organizationId,
+      opts.sectorId,
+    );
+    if (!allowed) throw new MembershipError("FORBIDDEN", "Setor inválido.");
+  }
+
+  return {
+    organizationId: membership.organizationId,
+    schemaName: membership.organization.schemaName,
+    role: membership.role as MemberRole,
+    branchId: membership.defaultBranchId,
+    userId,
+    membershipId: membership.id,
+  };
+}
+
+export async function revokeAllUserSessions(): Promise<number> {
+  const result = await prisma.user.updateMany({
+    data: { sessionVersion: { increment: 1 } },
+  });
+  return result.count;
+}
+
+
 export interface MemberModuleAccessRow {
   moduleId: string;
   enabled: boolean;

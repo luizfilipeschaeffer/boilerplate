@@ -11,7 +11,7 @@ export const paymentStripeAdapter: PaymentGatewayAdapter = {
   async criarValidacaoPagamento(
     input: PaymentValidationInput,
   ): Promise<PaymentValidationResult> {
-    const key = process.env.STRIPE_SECRET_KEY?.trim();
+    const key = input.integratorSecrets?.secretKey?.trim();
     if (!key) {
       return {
         provider: "stripe",

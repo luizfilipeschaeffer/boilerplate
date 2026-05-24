@@ -5,12 +5,22 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./types": "./src/types/index.ts"
+    "./types": "./src/types/index.ts",
+    "./secrets": "./src/secrets/index.ts",
+    "./security": "./src/security/index.ts",
+    "./env": "./src/env/index.ts"
   },
   "scripts": {
-    "lint": "tsc --noEmit -p tsconfig.json"
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test src"
+  },
+  "dependencies": {
+    "@upstash/ratelimit": "^2.0.5",
+    "@upstash/redis": "^1.34.9",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
+    "@types/node": "^22.15.29",
     "typescript": "^5.8.3"
   }
 }

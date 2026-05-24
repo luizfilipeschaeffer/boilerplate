@@ -61,3 +61,6 @@ export {
 export * from "./provisioning";
 export * from "./provisioning-events";
 export * from "./billing-payment";
+export * from "./integrator-credentials";
+export * from "./integrator-config-schema";
+export * from "./integrator-health";

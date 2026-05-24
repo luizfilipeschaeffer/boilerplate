@@ -3,14 +3,15 @@
 import {
   listPlatformIntegratorCatalog,
   listPlatformPaymentGateways,
+  getIntegratorConfigFields,
   upsertPlatformPaymentGateway,
-  type PlatformRole,
 } from "@boilerplate/db";
-import { auth } from "@/auth";
 import { canEditGateways } from "../platform-segmentos/can-edit-segments";
+import { requirePlatformModule } from "@/lib/platform-access";
 import type { IntegratorTableRow } from "./integradores-list-view";
 
 export async function loadIntegradoresCatalogData() {
+  const ctx = await requirePlatformModule("platform-integradores");
   const [integrators, gateways] = await Promise.all([
     listPlatformIntegratorCatalog(),
     listPlatformPaymentGateways(),
@@ -25,22 +26,20 @@ export async function loadIntegradoresCatalogData() {
       ...i,
       gatewayAtivo: gw ? gw.ativo : null,
       gatewayDefault: gw ? gw.isDefault : null,
+      credentialConfigurable: getIntegratorConfigFields(i.id).length > 0,
     };
   });
 
-  const session = await auth();
-  const role = (session?.user?.platformRole ?? "platform_produto") as PlatformRole;
   return {
     integrators: rows,
-    canEditGateways: canEditGateways(role),
+    canEditGateways: canEditGateways(ctx.platformRole),
   };
 }
 
 export async function loadGatewaysData() {
+  const ctx = await requirePlatformModule("platform-integradores");
   const gateways = await listPlatformPaymentGateways();
-  const session = await auth();
-  const role = (session?.user?.platformRole ?? "platform_produto") as PlatformRole;
-  return { gateways, canEdit: canEditGateways(role) };
+  return { gateways, canEdit: canEditGateways(ctx.platformRole) };
 }
 
 export async function toggleGatewayAction(input: {
@@ -49,13 +48,12 @@ export async function toggleGatewayAction(input: {
   ativo: boolean;
   isDefault?: boolean;
 }) {
-  const session = await auth();
-  const role = (session?.user?.platformRole ?? "platform_produto") as PlatformRole;
-  if (!canEditGateways(role)) {
+  const ctx = await requirePlatformModule("platform-integradores");
+  if (!canEditGateways(ctx.platformRole)) {
     throw new Error("Somente administradores podem alterar gateways.");
   }
   return upsertPlatformPaymentGateway(
     input,
-    session?.user?.id ?? null,
+    ctx.userId,
   );
 }

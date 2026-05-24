@@ -4,6 +4,8 @@ export interface PaymentValidationInput {
   customerName: string;
   valueCentavos: number;
   description: string;
+  /** Credenciais resolvidas server-side — nunca vêm do client. */
+  integratorSecrets?: Record<string, string>;
 }
 
 export interface PaymentValidationResult {
@@ -28,5 +30,8 @@ export interface PaymentGatewayAdapter {
     input: PaymentValidationInput,
   ): Promise<PaymentValidationResult>;
   confirmarWebhook(payload: unknown): Promise<PaymentWebhookResult>;
-  cancelar(customerRef: string): Promise<void>;
+  cancelar(
+    customerRef: string,
+    integratorSecrets?: Record<string, string>,
+  ): Promise<void>;
 }

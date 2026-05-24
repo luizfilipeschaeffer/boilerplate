@@ -34,4 +34,5 @@ export type PlatformCatalogIntegratorSeed = {
   deliveryMarco?: string | null;
   ordem?: number;
   gateway?: PlatformCatalogGatewaySeed;
+  configSchema?: Record<string, unknown>;
 };

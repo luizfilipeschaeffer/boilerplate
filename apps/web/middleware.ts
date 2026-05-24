@@ -16,8 +16,10 @@ export default auth((req) => {
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/esqueci-senha") ||
     pathname.startsWith("/convite-vendedor");
+  const isWebhook = pathname.startsWith("/api/webhooks");
   const isPublic =
     isAuthPage ||
+    isWebhook ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/trpc");
 
@@ -32,8 +34,16 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  const role = (session as { role?: string })?.role ?? "dono";
-  if (session?.user && !isPublic && pathname.startsWith("/")) {
+  const needsOnboarding = Boolean(
+    (session as { needsOnboarding?: boolean } | null)?.needsOnboarding,
+  );
+  const role = (session as { role?: string } | null)?.role;
+
+  if (session?.user && !isPublic && !needsOnboarding && !role) {
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  if (session?.user && !isPublic && !needsOnboarding && role && pathname.startsWith("/")) {
     if (!canAccessRoute(role, pathname)) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }

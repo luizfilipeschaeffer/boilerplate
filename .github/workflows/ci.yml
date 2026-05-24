@@ -54,6 +54,12 @@ jobs:
           AUTH_SECRET=ci-only-secret-do-not-use-in-production
           EOF
 
+      - name: Validate environment
+        run: bun scripts/validate-env.ts
+
+      - name: Dependency audit
+        run: bun audit --audit-level=high || true
+
       - name: Validate Prisma schema
         run: bun run db:validate
 

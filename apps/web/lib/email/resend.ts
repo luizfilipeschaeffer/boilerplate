@@ -1,3 +1,7 @@
+import {
+  MESSAGING_RESEND_INTEGRATOR_ID,
+  resolve,
+} from "@boilerplate/db";
 import { Resend } from "resend";
 import { loginUrlWithEmail, passwordResetEmailCopyUrl } from "@/lib/app-url";
 import {
@@ -8,17 +12,25 @@ import {
   buildWelcomePasswordEmailHtml,
 } from "@/lib/email/templates";
 
-function getResendClient(): Resend {
-  const apiKey = process.env.RESEND_API_KEY;
+async function getResendClient(organizationId?: string | null): Promise<Resend> {
+  const creds = await resolve(MESSAGING_RESEND_INTEGRATOR_ID, organizationId);
+  const apiKey = creds.secrets.apiKey?.trim();
   if (!apiKey) {
-    throw new Error(
-      "RESEND_API_KEY não configurada. Adicione em .env ou .env.development.",
-    );
+    throw new Error("Credenciais do Resend não configuradas.");
   }
   return new Resend(apiKey);
 }
 
-function getFromAddress(): string {
+async function getFromAddress(organizationId?: string | null): Promise<string> {
+  try {
+    const creds = await resolve(MESSAGING_RESEND_INTEGRATOR_ID, organizationId);
+    const from = creds.configPublic.fromEmail;
+    if (typeof from === "string" && from.trim()) {
+      return from.trim();
+    }
+  } catch {
+    // fallback abaixo
+  }
   return (
     process.env.RESEND_FROM_EMAIL ?? "Boilerplate <onboarding@resend.dev>"
   );
@@ -28,10 +40,11 @@ async function sendHtmlEmail(input: {
   to: string;
   subject: string;
   html: string;
+  organizationId?: string | null;
 }): Promise<void> {
-  const resend = getResendClient();
+  const resend = await getResendClient(input.organizationId);
   const { error } = await resend.emails.send({
-    from: getFromAddress(),
+    from: await getFromAddress(input.organizationId),
     to: input.to,
     subject: input.subject,
     html: input.html,
@@ -47,6 +60,7 @@ export async function sendLoginVerificationEmail(input: {
   to: string;
   name: string;
   code: string;
+  organizationId?: string | null;
 }): Promise<void> {
   await sendHtmlEmail({
     to: input.to,
@@ -55,6 +69,7 @@ export async function sendLoginVerificationEmail(input: {
       name: input.name,
       code: input.code,
     }),
+    organizationId: input.organizationId,
   });
 }
 
@@ -82,6 +97,7 @@ export async function sendMemberInviteEmail(input: {
   roleLabel: string;
   needsPasswordSetup: boolean;
   setupCode?: string;
+  organizationId?: string | null;
 }): Promise<void> {
   const loginUrl = loginUrlWithEmail(input.to);
   const setupUrl =
@@ -104,6 +120,7 @@ export async function sendMemberInviteEmail(input: {
       setupUrl,
       code: input.setupCode,
     }),
+    organizationId: input.organizationId,
   });
 }
 
@@ -112,6 +129,7 @@ export async function sendWelcomePasswordEmail(input: {
   to: string;
   name: string;
   code: string;
+  organizationId?: string | null;
 }): Promise<void> {
   const copyUrl = passwordResetEmailCopyUrl(input.to, input.code);
 
@@ -123,6 +141,7 @@ export async function sendWelcomePasswordEmail(input: {
       code: input.code,
       copyUrl,
     }),
+    organizationId: input.organizationId,
   });
 }
 
@@ -131,6 +150,7 @@ export async function sendPasswordResetEmail(input: {
   to: string;
   name: string;
   code: string;
+  organizationId?: string | null;
 }): Promise<void> {
   const copyUrl = passwordResetEmailCopyUrl(input.to, input.code);
 
@@ -142,5 +162,6 @@ export async function sendPasswordResetEmail(input: {
       code: input.code,
       copyUrl,
     }),
+    organizationId: input.organizationId,
   });
 }

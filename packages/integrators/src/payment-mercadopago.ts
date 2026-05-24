@@ -11,7 +11,7 @@ export const paymentMercadoPagoAdapter: PaymentGatewayAdapter = {
   async criarValidacaoPagamento(
     input: PaymentValidationInput,
   ): Promise<PaymentValidationResult> {
-    const token = process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
+    const token = input.integratorSecrets?.accessToken?.trim();
     if (!token) {
       return {
         provider: "mercadopago",

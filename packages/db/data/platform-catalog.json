@@ -24,7 +24,7 @@
       "packagePath": "packages/integrators",
       "deliveryMarco": "R2",
       "ordem": 20,
-      "gateway": { "isDefault": false, "configSchema": { "envKey": "ASAAS_API_KEY" }, "ativo": true }
+      "gateway": { "isDefault": false, "configSchema": { "fields": [{ "key": "apiKey", "label": "API Key", "type": "secret", "required": true }, { "key": "apiUrl", "label": "URL da API", "type": "url", "required": false }] }, "ativo": true }
     },
     {
       "id": "payment-stripe",
@@ -37,7 +37,7 @@
       "packagePath": "packages/integrators",
       "deliveryMarco": "R3",
       "ordem": 30,
-      "gateway": { "isDefault": false, "configSchema": { "envKey": "STRIPE_SECRET_KEY" }, "ativo": true }
+      "gateway": { "isDefault": false, "configSchema": { "fields": [{ "key": "secretKey", "label": "Secret Key", "type": "secret", "required": true }] }, "ativo": true }
     },
     {
       "id": "payment-mercadopago",
@@ -50,7 +50,7 @@
       "packagePath": "packages/integrators",
       "deliveryMarco": "R3",
       "ordem": 40,
-      "gateway": { "isDefault": false, "configSchema": { "envKey": "MERCADOPAGO_ACCESS_TOKEN" }, "ativo": true }
+      "gateway": { "isDefault": false, "configSchema": { "fields": [{ "key": "accessToken", "label": "Access Token", "type": "secret", "required": true }] }, "ativo": true }
     },
     {
       "id": "payment-pagseguro",
@@ -122,7 +122,13 @@
       "modulosSuportados": ["platform-comms"],
       "packagePath": "packages/integrators/messaging",
       "deliveryMarco": "R3",
-      "ordem": 210
+      "ordem": 210,
+      "configSchema": {
+        "fields": [
+          { "key": "apiKey", "label": "API Key", "type": "secret", "required": true },
+          { "key": "fromEmail", "label": "Remetente", "type": "string", "required": false }
+        ]
+      }
     },
     {
       "id": "messaging-twilio-sms",

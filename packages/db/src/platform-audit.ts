@@ -4,7 +4,8 @@ export type PlatformAuditEntityType =
   | "segment"
   | "segment_phase"
   | "bundle"
-  | "gateway";
+  | "gateway"
+  | "integrator_credential";
 
 export async function writePlatformConfigAudit(input: {
   entityType: PlatformAuditEntityType;

@@ -85,10 +85,11 @@ Detalhes: [infra/docker/README.md](./infra/docker/README.md).
 | `bun run build` | Build de produção |
 | `bunx --bun shadcn@latest …` | CLI shadcn em `apps/web` |
 | `bun run db:up` | Sobe Postgres no Docker |
-| `bun run db:push` | Aplica schema Prisma |
+| `bun run db:push` | Aplica schema Prisma (tabelas globais no schema `boilerplate`) |
 | `bun run db:restart` | Zera o banco, recria schema public e roda seed do superadmin |
 | `bun run db:seed-platform-admin` | Cria/atualiza `platform_admin` (dev) |
-| `bun run db:migrate-tenants` | Atualiza DDL dos schemas `tenant_*` |
+| `bun run db:seed-integrator-credentials` | Grava credenciais fake de integradores criptografadas (dev) |
+| `bun run db:migrate-tenants` | Atualiza DDL dos schemas `tenant_*` (não usa migrations SQL do Prisma) |
 
 ## Platform-admin — primeiro operador (segurança)
 
@@ -107,6 +108,14 @@ Detalhes: [infra/docker/README.md](./infra/docker/README.md).
 
 A senha é armazenada como **bcrypt** em `platform_users.password_hash`.
 
+### Credenciais de integradores (dev)
+
+1. Gere uma KEK local: `openssl rand -base64 32` → `INTEGRATOR_ENCRYPTION_KEY` no `.env` ou `.env.development`.
+2. Aplique o schema: `bun run db:push`.
+3. Seed de chaves fake (commitadas em `packages/db/data/integrator-secrets.dev.json`): `bun run db:seed-integrator-credentials`.
+
+Em produção, configure credenciais pelo **platform-admin** (Integradores → Credenciais) ou override BYOK em **Configurações → Integradores** no app tenant.
+
 ### Produção e staging
 
 - O script **recusa** rodar com `NODE_ENV=production` unless `ALLOW_PLATFORM_ADMIN_SEED=true`.
@@ -117,6 +126,10 @@ A senha é armazenada como **bcrypt** em `platform_users.password_hash`.
 - Para bootstrap em ambiente efêmero (ex.: review app), injete `PLATFORM_ADMIN_SEED_*` como secrets de CI e set `ALLOW_PLATFORM_ADMIN_SEED=true` só naquele job — nunca no repositório.
 
 ## Antes do deploy (Vercel)
+
+Documentação completa: **[doc/vercel/README.md](./doc/vercel/README.md)** e **[doc/vercel/environment-variables.md](./doc/vercel/environment-variables.md)**.
+
+Resumo: dois projetos Vercel (`apps/web` + `apps/platform-admin`), PostgreSQL compartilhado (Neon), bootstrap automático no deploy do **platform-admin** com `RUN_VERCEL_DB_BOOTSTRAP=true`.
 
 Evite descobrir erro só no painel da Vercel. Na raiz do monorepo:
 
@@ -139,6 +152,10 @@ bun run check:vercel:admin
 | `bun run ci` | Gate completo: Prisma validate + lint + build (precisa Postgres com `bun run db:up` e `.env`) |
 
 O GitHub Actions na branch `dev` roda o mesmo fluxo em push/PR.
+
+### Prisma na Vercel (query engine)
+
+Se o login/API falhar com `PrismaClientInitializationError` / `rhel-openssl-3.0.x`, o bundle serverless não incluiu o engine. O monorepo já define `binaryTargets` no schema e `outputFileTracingIncludes` nos `next.config.ts` dos apps. Após alterar isso, faça **redeploy** (build limpo na Vercel).
 
 ## Estrutura (alvo)
 

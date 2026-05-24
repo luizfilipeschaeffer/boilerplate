@@ -1,6 +1,5 @@
 "use server";
 
-import { auth } from "@/auth";
 import {
   createSector,
   listSectors,
@@ -8,15 +7,14 @@ import {
   setSectorModules,
   getActiveModuleIdsForOrg,
 } from "@boilerplate/db";
+import { requireTenantContext } from "@/lib/tenant-context";
 import { getModulesByIds } from "@boilerplate/module-registry";
 import { ensureModulesRegistered } from "@/lib/modules/init";
 import { revalidatePath } from "next/cache";
 
 async function requireOrgId() {
-  const session = await auth();
-  const orgId = session?.organizationId;
-  if (!orgId) throw new Error("Organização não disponível");
-  return orgId;
+  const { organizationId } = await requireTenantContext();
+  return organizationId;
 }
 
 export async function listSectorsConfigAction() {

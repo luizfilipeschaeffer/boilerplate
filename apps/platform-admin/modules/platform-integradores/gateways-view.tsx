@@ -1,6 +1,7 @@
 "use client";
 
 import type { PlatformPaymentGatewayRow } from "@boilerplate/db";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -46,8 +47,12 @@ export function GatewaysView({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Gateways de pagamento habilitados na plataforma. Credenciais ficam em
-        variáveis de ambiente. Veja o{" "}
+        Gateways de pagamento habilitados na plataforma. Credenciais ficam
+        criptografadas no banco — configure em{" "}
+        <Link href="/integradores" className="underline hover:text-foreground">
+          Integradores → Credenciais
+        </Link>
+        . Veja o{" "}
         <a href="/integradores" className="underline hover:text-foreground">
           catálogo completo de integradores
         </a>

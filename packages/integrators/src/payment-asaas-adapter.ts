@@ -4,7 +4,7 @@ import type {
   PaymentValidationResult,
   PaymentWebhookResult,
 } from "./payment-types";
-import { createAsaasSubscription } from "./payment-asaas";
+import { cancelAsaasSubscription, createAsaasSubscription } from "./payment-asaas";
 
 export const paymentAsaasAdapter: PaymentGatewayAdapter = {
   id: "payment-asaas",
@@ -40,14 +40,10 @@ export const paymentAsaasAdapter: PaymentGatewayAdapter = {
     return { verified: false };
   },
 
-  async cancelar(customerRef: string): Promise<void> {
-    const apiKey = process.env.ASAAS_API_KEY?.trim();
-    if (!apiKey) return;
-    const baseUrl =
-      process.env.ASAAS_API_URL?.trim() ?? "https://sandbox.asaas.com/api/v3";
-    await fetch(`${baseUrl}/subscriptions/${customerRef}`, {
-      method: "DELETE",
-      headers: { access_token: apiKey },
-    });
+  async cancelar(
+    customerRef: string,
+    integratorSecrets?: Record<string, string>,
+  ): Promise<void> {
+    await cancelAsaasSubscription(customerRef, integratorSecrets);
   },
 };
