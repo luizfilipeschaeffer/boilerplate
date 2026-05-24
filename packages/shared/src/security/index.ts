@@ -8,4 +8,3 @@ export * from "./cors";
 export * from "./upload";
 export * from "./rate-limit";
 export * from "./action-guard";
-export * from "./webhook";

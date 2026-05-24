@@ -8,6 +8,7 @@
     "./types": "./src/types/index.ts",
     "./secrets": "./src/secrets/index.ts",
     "./security": "./src/security/index.ts",
+    "./security/webhook": "./src/security/webhook.ts",
     "./env": "./src/env/index.ts"
   },
   "scripts": {
@@ -17,6 +18,8 @@
   "dependencies": {
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.34.9",
+    "@boilerplate/event-bus": "workspace:*",
+    "@boilerplate/sdk-core": "workspace:*",
     "zod": "^3.25.67"
   },
   "devDependencies": {

@@ -46,12 +46,12 @@ bun run dev
 
 ### Rede local (celular / outro PC)
 
-1. No `.env.development` da raiz, use o IP da máquina (ex. `192.168.60.60`):
+1. No `.env.development` da raiz, use o IP da máquina (ex. `192.168.3.3`):
 
    ```env
-   NEXT_PUBLIC_APP_URL=http://192.168.60.60:3000
-   DEV_ALLOWED_ORIGIN=http://192.168.60.60:3000,http://localhost:3000
-   NEXT_PUBLIC_PLATFORM_ADMIN_URL=http://192.168.60.60:3002
+   NEXT_PUBLIC_APP_URL=http://192.168.3.3:3000
+   DEV_ALLOWED_ORIGIN=http://192.168.3.3:3000,http://localhost:3000
+   NEXT_PUBLIC_PLATFORM_ADMIN_URL=http://192.168.3.3:3002
    ```
 
 2. Copie os exemplos por app (ajuste o IP se mudar):
@@ -59,10 +59,10 @@ bun run dev
    - `apps/web/.env.development.example` → `apps/web/.env.development`
    - `apps/platform-admin/.env.development.example` → `apps/platform-admin/.env.development`
 
-3. `bun run dev` já escuta em `192.168.60.60` (todas as interfaces). Acesse:
+3. `bun run dev` já escuta em `192.168.3.3` (todas as interfaces). Acesse:
 
-   - Tenant: http://192.168.60.60:3000
-   - Admin: http://192.168.60.60:3002
+   - Tenant: http://192.168.3.3:3000
+   - Admin: http://192.168.3.3:3002
 
 4. Se não abrir de outro aparelho, libere as portas **3000** e **3002** no Firewall do Windows para rede privada.
 
@@ -152,6 +152,14 @@ bun run check:vercel:admin
 | `bun run ci` | Gate completo: Prisma validate + lint + build (precisa Postgres com `bun run db:up` e `.env`) |
 
 O GitHub Actions na branch `dev` roda o mesmo fluxo em push/PR.
+
+## Ecossistema (comunidade)
+
+Desenvolvedores que queiram propor **módulos ou integradores** da comunidade:
+
+→ **[doc/ecosystem/publicacao-pr-comunidade.md](./doc/ecosystem/publicacao-pr-comunidade.md)**
+
+Fluxo: PR padronizada → auditoria (CI + review) → moderação em platform-admin (`/comunidade`) → marketplace e tenants.
 
 ### Prisma na Vercel (query engine)
 

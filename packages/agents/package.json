@@ -1,0 +1,21 @@
+{
+  "name": "@boilerplate/agents",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./crm-lead-agent": "./src/crm-lead-agent.ts"
+  },
+  "scripts": { "lint": "tsc --noEmit -p tsconfig.json" },
+  "dependencies": {
+    "@boilerplate/ai-runtime": "workspace:*",
+    "@boilerplate/sdk-core": "workspace:*",
+    "@boilerplate/sdk-events": "workspace:*",
+    "@boilerplate/event-bus": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
+  }
+}

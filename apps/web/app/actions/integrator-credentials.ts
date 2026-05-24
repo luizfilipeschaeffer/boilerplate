@@ -6,6 +6,7 @@ import {
   clearTenantCredentialOverride,
   getCredentialStatus,
   getIntegratorConfigFields,
+  isEcosystemItemAvailableToTenants,
   listPlatformIntegratorCatalog,
   upsertTenantCredential,
   type CredentialStatus,
@@ -98,6 +99,7 @@ export async function loadTenantIntegratorsPage(): Promise<{
     const fields = getIntegratorConfigFields(item.id);
     if (fields.length === 0) continue;
     if (item.implementationStatus === "planned") continue;
+    if (!(await isEcosystemItemAvailableToTenants("integrator", item.id))) continue;
 
     const status = organizationId
       ? sanitizeStatus(await getCredentialStatus(item.id, organizationId))

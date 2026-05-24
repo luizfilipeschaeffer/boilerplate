@@ -15,6 +15,9 @@ model Organization {
   id                String   @id @default(uuid())
   name              String
   slug              String   @unique
+  /// tenant | franchisor | subsidiary
+  orgType           String   @default("tenant") @map("org_type")
+  parentOrganizationId String? @map("parent_organization_id")
   schemaName        String   @unique @map("schema_name")
   phase             Int      @default(1)
   /// lead | trial | active | expansion | churn_risk
@@ -38,10 +41,14 @@ model Organization {
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   marketSegment     MarketSegment? @relation(fields: [marketSegmentSlug], references: [slug], onDelete: SetNull)
+  parentOrganization Organization? @relation("OrgHierarchy", fields: [parentOrganizationId], references: [id], onDelete: SetNull)
+  childOrganizations Organization[] @relation("OrgHierarchy")
   modulosAtivos  ModuloAtivo[]
   moduloDemanda  ModuloDemanda[]
   memberships    Membership[]
   branches       Branch[]
+  departments    Department[]
+  roleGrants     MembershipRoleGrant[]
   sellerInvites  SellerInvite[]
   crmDeals            CrmDeal[]
   crmNotes            PlatformCrmNote[]
@@ -287,6 +294,8 @@ model Membership {
   defaultBranch     Branch?            @relation(fields: [defaultBranchId], references: [id], onDelete: SetNull)
   membershipSectors       MembershipSector[]
   membershipSectorModules MembershipSectorModule[]
+  roleGrants              MembershipRoleGrant[]
+  teamMemberships         MembershipTeam[]
 
   @@unique([userId, organizationId])
   @@schema("boilerplate")
@@ -305,6 +314,8 @@ model Branch {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   memberships  Membership[]
+  departments  Department[]
+  sectors      Sector[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -312,9 +323,11 @@ model Branch {
   @@map("branches")
 }
 
+/// Setor/departamento — alias conceitual de Department (Sector mantido por compatibilidade)
 model Sector {
   id              String  @id @default(uuid())
   organizationId  String  @map("organization_id")
+  branchId        String? @map("branch_id")
   name            String
   slug            String  @default("geral")
   coreSectorSlug  String? @map("core_sector_slug")
@@ -323,13 +336,89 @@ model Sector {
   /// IDs dos atalhos da paleta de comandos (Alt+P) por setor
   commandPaletteShortcuts Json @default("[\"action:catalogo-novo\",\"action:cliente-novo\",\"action:venda-nova\"]") @map("command_palette_shortcuts")
 
+  branch                  Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
   sectorModules           SectorModule[]
   membershipSectors       MembershipSector[]
   membershipSectorModules MembershipSectorModule[]
+  teams                   Team[]
+  department              Department?
 
   @@unique([organizationId, slug])
+  @@index([branchId])
   @@schema("boilerplate")
   @@map("sectors")
+}
+
+/// Department — espelho de Sector para contratos enterprise (1:1 via sectorId)
+model Department {
+  id             String  @id @default(uuid())
+  organizationId String  @map("organization_id")
+  branchId       String? @map("branch_id")
+  sectorId       String  @unique @map("sector_id")
+  name           String
+  slug           String
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  sector       Sector       @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  teams        Team[]
+
+  @@unique([organizationId, slug])
+  @@index([branchId])
+  @@schema("boilerplate")
+  @@map("departments")
+}
+
+model Team {
+  id           String @id @default(uuid())
+  departmentId String @map("department_id")
+  sectorId     String @map("sector_id")
+  name         String
+  slug         String
+  active       Boolean @default(true)
+
+  department      Department       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  sector          Sector           @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  teamMemberships MembershipTeam[]
+
+  @@unique([departmentId, slug])
+  @@index([sectorId])
+  @@schema("boilerplate")
+  @@map("teams")
+}
+
+model MembershipTeam {
+  membershipId String @map("membership_id")
+  teamId       String @map("team_id")
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([membershipId, teamId])
+  @@schema("boilerplate")
+  @@map("membership_teams")
+}
+
+/// RBAC contextual multinível (org → filial → departamento → equipe)
+model MembershipRoleGrant {
+  id             String  @id @default(uuid())
+  membershipId   String  @map("membership_id")
+  organizationId String  @map("organization_id")
+  role           String
+  branchId       String? @map("branch_id")
+  departmentId   String? @map("department_id")
+  teamId         String? @map("team_id")
+  permissions    Json    @default("[]")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  membership   Membership   @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, organizationId, branchId, departmentId, teamId])
+  @@index([membershipId])
+  @@index([organizationId])
+  @@schema("boilerplate")
+  @@map("membership_role_grants")
 }
 
 model SectorModule {
@@ -551,6 +640,39 @@ model PlatformConfigAuditLog {
   @@index([createdAt])
   @@schema("boilerplate")
   @@map("platform_config_audit_logs")
+}
+
+/// Publicações da comunidade (módulos e integradores) — moderação antes de uso pelos tenants
+model EcosystemPublication {
+  id                         String   @id @default(uuid())
+  /// module | integrator
+  kind                       String
+  externalId                 String   @map("external_id")
+  name                       String
+  description                String?
+  publisherName              String?  @map("publisher_name")
+  publisherEmail             String?  @map("publisher_email")
+  packageName                String?  @map("package_name")
+  packagePath                String?  @map("package_path")
+  /// payment, messaging, fiscal, etc. (integradores)
+  category                   String?
+  manifest                   Json     @default("{}")
+  /// pending_review | approved | changes_requested | rejected
+  moderationStatus           String   @default("pending_review") @map("moderation_status")
+  reviewNotes                String?  @map("review_notes") @db.Text
+  /// community | verified — verified após aprovação
+  trustLevel                 String   @default("community") @map("trust_level")
+  availableToTenants         Boolean  @default(false) @map("available_to_tenants")
+  reviewedAt                 DateTime? @map("reviewed_at")
+  reviewedByPlatformUserId   String?  @map("reviewed_by_platform_user_id")
+  submittedAt                DateTime @default(now()) @map("submitted_at")
+  updatedAt                  DateTime @updatedAt @map("updated_at")
+
+  @@unique([kind, externalId])
+  @@index([moderationStatus])
+  @@index([kind])
+  @@schema("boilerplate")
+  @@map("ecosystem_publications")
 }
 
 model SegmentSectorModule {

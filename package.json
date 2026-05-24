@@ -1,10 +1,17 @@
 {
   "name": "boilerplate",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "community/*",
+    "modules/*"
+  ],
   "scripts": {
     "clean": "bun run scripts/clean.ts",
-    "dev": "turbo run dev",
+    "dev": "bun scripts/free-dev-ports.ts && turbo run dev --filter=@boilerplate/web --filter=@boilerplate/platform-admin --filter=apps-marketplace",
+    "predev": "bun run db:migrate-tenants",
+    "dev:community": "turbo run dev --filter=@boilerplate/web --filter=@boilerplate-community/example-module",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "check:vercel": "bun scripts/pre-deploy-check.ts",
@@ -13,7 +20,9 @@
     "db:vercel-bootstrap": "bun run --filter @boilerplate/db db:vercel-bootstrap",
     "ci": "bun run db:validate && bun run validate:env && bun run audit && bun run lint && bun run build",
     "validate:env": "bun scripts/validate-env.ts",
-    "audit": "bun audit --audit-level=high || true",
+    "audit": "bun audit --audit-level=high",
+    "test": "turbo run test",
+    "lint:ecosystem": "eslint -c eslint.ecosystem.config.mjs community/example-module/src community/example-integrator/src",
     "db:validate": "bun run --filter @boilerplate/db db:validate",
     "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "db:down": "docker compose -f infra/docker/docker-compose.yml down",

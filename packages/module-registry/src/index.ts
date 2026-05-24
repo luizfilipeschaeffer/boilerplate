@@ -7,3 +7,5 @@ export * from "./recomendar-modulos";
 export { PACOTES_POR_FASE } from "./pacotes-fase";
 export * from "./define-module";
 export * from "./register-all";
+export * from "./schema-registry";
+export * from "./legacy-adapter";

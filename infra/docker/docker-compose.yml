@@ -17,5 +17,27 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: boilerplate-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.128.0
+    container_name: boilerplate-otel
+    restart: unless-stopped
+    ports:
+      - "4318:4318"
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel/config.yaml:ro
+
 volumes:
   boilerplate_pg_data:

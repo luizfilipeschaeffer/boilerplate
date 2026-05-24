@@ -1,5 +1,5 @@
 import { handlePaymentWebhook } from "@boilerplate/db";
-import { verifyWebhookSignature } from "@boilerplate/shared/security";
+import { verifyWebhookSignature } from "@boilerplate/shared/security/webhook";
 import { NextResponse } from "next/server";
 
 export async function POST(

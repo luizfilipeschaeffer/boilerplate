@@ -12,6 +12,7 @@ import {
   Users,
   Plug,
   Wallet,
+  Globe,
 } from "lucide-react";
 
 export type PlatformNavItem = {
@@ -71,6 +72,13 @@ export const ALL_PLATFORM_NAV: PlatformNavItem[] = [
     href: "/integradores",
     ordem: 48,
     icon: <Plug className="size-4" />,
+  },
+  {
+    id: "platform-comunidade",
+    label: "Comunidade",
+    href: "/comunidade",
+    ordem: 49,
+    icon: <Globe className="size-4" />,
   },
   {
     id: "platform-roadmap",

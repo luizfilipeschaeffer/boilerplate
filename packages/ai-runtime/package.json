@@ -1,0 +1,16 @@
+{
+  "name": "@boilerplate/ai-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "lint": "tsc --noEmit -p tsconfig.json" },
+  "dependencies": {
+    "@boilerplate/sdk-core": "workspace:*",
+    "@boilerplate/observability": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
+  }
+}

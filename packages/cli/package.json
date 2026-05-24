@@ -1,0 +1,18 @@
+{
+  "name": "@boilerplate/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "create-boilerplate-module": "./bin/create-module.js",
+    "boilerplate": "./bin/boilerplate.js"
+  },
+  "scripts": { "lint": "node -e \"console.log('cli ok')\"" },
+  "dependencies": {
+    "@boilerplate/sdk-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
+  }
+}

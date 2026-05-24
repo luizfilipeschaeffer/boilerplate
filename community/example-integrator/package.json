@@ -1,0 +1,15 @@
+{
+  "name": "@boilerplate-community/example-integrator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": { "lint": "tsc --noEmit -p tsconfig.json" },
+  "dependencies": {
+    "@boilerplate/sdk-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
+  }
+}

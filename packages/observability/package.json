@@ -1,0 +1,28 @@
+{
+  "name": "@boilerplate/observability",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./otel": "./src/otel/setup.ts",
+    "./logging": "./src/logging/structured.ts",
+    "./audit": "./src/audit/platform-audit.ts",
+    "./metrics": "./src/metrics/module-meter.ts"
+  },
+  "scripts": {
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test src"
+  },
+  "dependencies": {
+    "@boilerplate/sdk-core": "workspace:*",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-node": "^0.203.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.62.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.203.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
+  }
+}

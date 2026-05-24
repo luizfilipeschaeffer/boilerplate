@@ -64,3 +64,7 @@ export * from "./billing-payment";
 export * from "./integrator-credentials";
 export * from "./integrator-config-schema";
 export * from "./integrator-health";
+export * from "./extensions/tenant-scope";
+export * from "./role-grants";
+export * from "./module-migrations";
+export * from "./ecosystem-publications";
