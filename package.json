@@ -17,6 +17,7 @@
     "check:vercel": "bun scripts/pre-deploy-check.ts",
     "check:vercel:web": "bun scripts/pre-deploy-check.ts -- --web",
     "check:vercel:admin": "bun scripts/pre-deploy-check.ts -- --admin",
+    "vercel:env-sync": "bun scripts/vercel-env-sync.ts",
     "db:vercel-bootstrap": "bun run --filter @boilerplate/db db:vercel-bootstrap",
     "ci": "bun run db:validate && bun run validate:env && bun run audit && bun run lint && bun run build",
     "ci:local": "bun scripts/ci-local.ts",

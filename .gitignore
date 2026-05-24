@@ -16,3 +16,4 @@ packages/db/src/generated
 .env.local
 .env.development
 .env.*.local
+.env*

@@ -44,6 +44,15 @@ function run(label: string, cmd: string[], cwd = ROOT): void {
 console.log(`[vercel-build] App: ${filter}`);
 console.log(`[vercel-build] VERCEL_ENV=${process.env.VERCEL_ENV ?? "local"}`);
 
+const vercelEnv = process.env.VERCEL_ENV;
+if (process.env.VERCEL === "1" && vercelEnv && vercelEnv !== "development") {
+  run("Validar variáveis de ambiente", [
+    process.execPath,
+    "scripts/validate-env.ts",
+    "--strict",
+  ]);
+}
+
 if (process.env.RUN_VERCEL_DB_BOOTSTRAP === "true") {
   run("Bootstrap do banco", [
     process.execPath,

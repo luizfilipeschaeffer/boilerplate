@@ -81,6 +81,14 @@ Após o deploy do **platform-admin**:
 
 Referência completa: **[environment-variables.md](./environment-variables.md)**
 
+### Deploy rápido (template + sync)
+
+```bash
+copy doc\vercel\env.production.example .env.vercel.production
+# Preencha DATABASE_URL, secrets, URLs dos projetos Vercel
+bun run vercel:env-sync
+```
+
 ### Mínimo obrigatório (Preview demo funcional)
 
 **Compartilhadas (ambos projetos):**
