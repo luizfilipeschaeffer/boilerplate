@@ -8,6 +8,7 @@ export type PlatformModuleId =
   | "platform-modulos"
   | "platform-segmentos"
   | "platform-integradores"
+  | "platform-comunidade"
   | "platform-roadmap"
   | "organizacoes";
 
@@ -52,6 +53,13 @@ const MODULE_ACCESS: Record<PlatformModuleId, PlatformRole[]> = {
     "platform_admin",
     "platform_produto",
     "platform_engenharia",
+  ],
+  "platform-comunidade": [
+    "platform_admin",
+    "platform_produto",
+    "platform_engenharia",
+    "platform_comercial",
+    "platform_suporte",
   ],
   "platform-roadmap": [
     "platform_admin",

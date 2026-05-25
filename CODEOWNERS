@@ -1,0 +1,18 @@
+# Core — platform team only
+/packages/core/                    @boilerplate/core-team
+/packages/sdk-core/                @boilerplate/core-team
+/packages/event-bus/               @boilerplate/core-team
+/packages/sandbox/                 @boilerplate/core-team
+/packages/observability/           @boilerplate/core-team
+
+# Official modules
+/modules/                          @boilerplate/core-team @boilerplate/module-maintainers
+/packages/crm/                     @boilerplate/core-team @boilerplate/module-maintainers
+
+# Community — core review required
+/community/                        @boilerplate/core-team
+/segments/                         @boilerplate/core-team @boilerplate/community-reviewers
+
+# Security-sensitive
+/SECURITY.md                       @boilerplate/core-team
+/.github/workflows/ecosystem-security.yml @boilerplate/core-team

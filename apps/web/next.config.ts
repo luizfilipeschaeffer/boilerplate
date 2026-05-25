@@ -1,8 +1,16 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
+import {
+  applyMonorepoAppEnv,
+  loadMonorepoEnv,
+} from "../../packages/db/monorepo-env";
 import { prismaMonorepoTracing } from "../../packages/db/next-config-prisma";
 import { nextSecurityHeadersConfig } from "@boilerplate/shared/security";
+
+const appDir = path.dirname(fileURLToPath(import.meta.url));
+loadMonorepoEnv(appDir);
+applyMonorepoAppEnv("web");
 
 function addOriginHost(hosts: Set<string>, segment: string): void {
   const value = segment.trim();
@@ -35,8 +43,6 @@ function parseDevOriginHosts(): string[] {
 }
 
 const allowedDevOrigins = parseDevOriginHosts();
-
-const appDir = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   ...prismaMonorepoTracing(appDir),

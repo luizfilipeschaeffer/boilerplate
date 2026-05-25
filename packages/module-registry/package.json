@@ -10,7 +10,8 @@
     "lint": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@boilerplate/shared": "workspace:*"
+    "@boilerplate/shared": "workspace:*",
+    "@boilerplate/sdk-core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

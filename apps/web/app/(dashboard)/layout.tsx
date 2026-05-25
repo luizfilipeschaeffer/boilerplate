@@ -6,11 +6,11 @@ import {
   getActiveModuleIds,
   getDashboardNav,
 } from "@/lib/modules/active-modules";
-import { ensureModulesRegistered } from "@/lib/modules/init";
+import { ensureServerModulesInitialized } from "@/lib/modules/init-server";
 import { resolveUserSetup } from "@/lib/session-setup";
 import { redirect } from "next/navigation";
 
-ensureModulesRegistered();
+ensureServerModulesInitialized();
 
 export default async function DashboardLayout({
   children,

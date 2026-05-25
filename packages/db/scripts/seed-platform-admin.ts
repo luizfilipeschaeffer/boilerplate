@@ -1,5 +1,12 @@
 import { loadMonorepoEnv } from "./load-monorepo-env";
 
+if (process.env.VERCEL === "1") {
+  console.error(
+    "[seed-platform-admin] Seeds não podem rodar no build Vercel. Use: bun run db:setup-remote",
+  );
+  process.exit(1);
+}
+
 const loaded = loadMonorepoEnv();
 if (loaded.length > 0) {
   console.log(`[seed] env: ${loaded.join(" → ")}`);

@@ -1,0 +1,17 @@
+{
+  "$schema": "../../doc/ecosystem/ecosystem.publication.schema.json",
+  "kind": "module",
+  "externalId": "example-module",
+  "name": "Example Module",
+  "description": "Módulo de exemplo da comunidade com contrato v1, event handlers e repository.",
+  "publisherName": "Comunidade Boilerplate",
+  "publisherEmail": "ecosystem@boilerplate.dev",
+  "packageName": "@boilerplate-community/example-module",
+  "packagePath": "community/example-module",
+  "category": null,
+  "segmentosAlvo": ["ecommerce"],
+  "modulosSuportados": null,
+  "dependencias": [],
+  "riscosConhecidos": "Pacote de referência — não usar em produção sem moderação.",
+  "instrucoesRollout": "Registro em module-migrations.ts; aprovar em platform-admin /comunidade."
+}

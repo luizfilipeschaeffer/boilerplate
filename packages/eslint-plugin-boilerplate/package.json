@@ -1,0 +1,13 @@
+{
+  "name": "eslint-plugin-boilerplate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "lint": "node -e \"import('eslint-plugin-boilerplate').then(() => console.log('ok'))\""
+  }
+}

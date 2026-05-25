@@ -1,4 +1,5 @@
 import { prisma } from "./client";
+import { isEcosystemItemAvailableToTenants } from "./ecosystem-publications";
 import {
   calcularMensalidadeFromDb,
   listModuloPrecos,
@@ -125,6 +126,15 @@ export async function addOrganizationModules(
   moduleIds: string[],
 ): Promise<string[]> {
   if (moduleIds.length === 0) return getActiveModuleIdsForOrg(organizationId);
+
+  for (const moduleId of moduleIds) {
+    const allowed = await isEcosystemItemAvailableToTenants("module", moduleId);
+    if (!allowed) {
+      throw new Error(
+        `O módulo "${moduleId}" ainda não foi aprovado pela moderação da comunidade.`,
+      );
+    }
+  }
 
   const current = await getActiveModuleIdsForOrg(organizationId);
   const merged = [...new Set([...current, ...moduleIds])];

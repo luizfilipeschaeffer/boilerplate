@@ -52,13 +52,17 @@ jobs:
           cat > .env <<'EOF'
           DATABASE_URL=postgresql://boilerplate:boilerplate@localhost:5432/boilerplate
           AUTH_SECRET=ci-only-secret-do-not-use-in-production
+          INTEGRATOR_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
           EOF
 
       - name: Validate environment
         run: bun scripts/validate-env.ts
 
       - name: Dependency audit
-        run: bun audit --audit-level=high || true
+        run: bun audit --audit-level=high
+
+      - name: SDK tests
+        run: bun run --filter @boilerplate/sdk-core test
 
       - name: Validate Prisma schema
         run: bun run db:validate

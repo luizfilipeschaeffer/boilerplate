@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EcosystemPublicationMetadata",
+  "description": "Metadados padronizados para PRs da comunidade (módulos e integradores).",
+  "type": "object",
+  "required": [
+    "kind",
+    "externalId",
+    "name",
+    "description",
+    "publisherName",
+    "publisherEmail",
+    "packageName",
+    "packagePath"
+  ],
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["module", "integrator"]
+    },
+    "externalId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Id kebab-case único no ecossistema"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 120
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 2000
+    },
+    "publisherName": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 120
+    },
+    "publisherEmail": {
+      "type": "string",
+      "format": "email"
+    },
+    "packageName": {
+      "type": "string",
+      "pattern": "^@boilerplate-community/"
+    },
+    "packagePath": {
+      "type": "string",
+      "pattern": "^community/"
+    },
+    "category": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "payment",
+        "messaging",
+        "fiscal",
+        "storage",
+        "social",
+        "webhook"
+      ],
+      "description": "Obrigatório para integradores; null para módulos"
+    },
+    "segmentosAlvo": {
+      "type": ["array", "null"],
+      "items": { "type": "string" }
+    },
+    "modulosSuportados": {
+      "type": ["array", "null"],
+      "items": { "type": "string" },
+      "description": "Integradores: [\"*\"] ou lista de module ids"
+    },
+    "dependencias": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Ids de outros módulos necessários"
+    },
+    "riscosConhecidos": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "instrucoesRollout": {
+      "type": "string",
+      "maxLength": 2000
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "integrator" } } },
+      "then": { "required": ["category"] }
+    }
+  ]
+}

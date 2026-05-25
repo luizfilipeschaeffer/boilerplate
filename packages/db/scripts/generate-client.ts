@@ -67,4 +67,17 @@ const result = spawnSync(process.execPath, [prismaEntry, "generate"], {
   stdio: "inherit",
 });
 
-process.exit(result.status ?? 1);
+if ((result.status ?? 1) !== 0) {
+  process.exit(result.status ?? 1);
+}
+
+const syncScript = join(MONOREPO_ROOT, "scripts/sync-prisma-engine-to-apps.ts");
+if (existsSync(syncScript)) {
+  const sync = spawnSync(process.execPath, [syncScript], {
+    cwd: MONOREPO_ROOT,
+    stdio: "inherit",
+  });
+  process.exit(sync.status ?? 1);
+}
+
+process.exit(0);

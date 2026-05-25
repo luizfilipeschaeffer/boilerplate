@@ -16,6 +16,7 @@ const ROUTE_MODULE: Record<string, PlatformModuleId> = {
   "/organizacoes": "organizacoes",
   "/segmentos": "platform-segmentos",
   "/integradores": "platform-integradores",
+  "/comunidade": "platform-comunidade",
 };
 
 function isAllowedPlatformIp(req: Request): boolean {
