@@ -16,33 +16,26 @@ Cada app possui [`vercel.json`](../../apps/web/vercel.json) com:
 - **Install:** `cd ../.. && bun install --frozen-lockfile`
 - **Build:** `cd ../.. && bun scripts/vercel-build.ts --filter @boilerplate/<app>`
 
-## Bootstrap automático no deploy
+## Bootstrap do banco (local — recomendado)
 
-O script [`scripts/vercel-build.ts`](../../scripts/vercel-build.ts) executa, **antes do build Next.js**, o bootstrap do banco quando `RUN_VERCEL_DB_BOOTSTRAP=true`.
+O deploy **não** roda seed por padrão (`RUN_VERCEL_DB_BOOTSTRAP` desligado na Vercel).
+Prepare o Neon **da sua máquina** antes do primeiro deploy:
 
-O bootstrap ([`packages/db/scripts/vercel-bootstrap.ts`](../../packages/db/scripts/vercel-bootstrap.ts)) é **idempotente** (upserts):
+```bash
+# .env.vercel.production com DATABASE_URL (Neon) + INTEGRATOR_ENCRYPTION_KEY + seeds
+bun run db:setup-remote
+```
+
+O script [`packages/db/scripts/vercel-bootstrap.ts`](../../packages/db/scripts/vercel-bootstrap.ts) é idempotente:
 
 1. `prisma generate` + `prisma db push`
-2. **Seed roadmap** — setores, módulos, segmentos, catálogo de integradores, gateways, planos e bundles
-3. **Seed platform-admin** — se `ALLOW_PLATFORM_ADMIN_SEED=true`
-4. **Seed credenciais demo** — Resend/Asaas/Stripe fake criptografadas — se `ALLOW_INTEGRATOR_CREDENTIALS_SEED=true`
+2. Seed roadmap (módulos, integradores, segmentos)
+3. Seed platform-admin — se `ALLOW_PLATFORM_ADMIN_SEED=true` no `.env.vercel.production`
+4. Seed credenciais demo — se `ALLOW_INTEGRATOR_CREDENTIALS_SEED=true`
 
-### Onde habilitar o bootstrap
+### Bootstrap no deploy (opcional — não recomendado)
 
-| Projeto | `RUN_VERCEL_DB_BOOTSTRAP` | Motivo |
-|---------|---------------------------|--------|
-| **platform-admin** | `true` | Um único job evita corrida entre deploys |
-| **web** | `false` (ou omitir) | Só consome o banco já bootstrapado |
-
-Habilite seeds de demo em **Preview** e, se desejar, em **Production** do ambiente de validação:
-
-```
-RUN_VERCEL_DB_BOOTSTRAP=true
-ALLOW_PLATFORM_ADMIN_SEED=true
-ALLOW_INTEGRATOR_CREDENTIALS_SEED=true
-```
-
-> **Produção real:** desligue `ALLOW_*_SEED` e crie operadores/credenciais manualmente ou via pipeline one-shot.
+Só se quiser rodar no build da Vercel, defina `RUN_VERCEL_DB_BOOTSTRAP=true` **no painel** (projeto platform-admin).
 
 ## Passo a passo — primeiro deploy
 
@@ -155,7 +148,7 @@ Sem Redis, rate limiting usa memória local (ok em dev; limitado em serverless).
 |---------|----------------|------|
 | Login admin falha | Seed não rodou | Confirme `RUN_VERCEL_DB_BOOTSTRAP=true` no admin; veja logs do build |
 | `INTEGRATOR_ENCRYPTION_KEY` | Ausente ou curta | Gere 32 bytes base64; configure em ambos projetos |
-| Prisma engine error | Binary não no bundle | Redeploy após build; confira `binaryTargets` no schema |
+| Prisma engine error | Binary não no bundle | Rode redeploy; build copia engine para `apps/*/src/generated/prisma` |
 | Integradores sem credencial | Seed desligado | `ALLOW_INTEGRATOR_CREDENTIALS_SEED=true` |
 | Auth redirect errado | `AUTH_URL` incorreto | Uma URL por app, com `https://` |
 

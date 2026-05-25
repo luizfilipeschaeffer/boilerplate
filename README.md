@@ -50,21 +50,21 @@ bun run dev
 
    ```env
    NEXT_PUBLIC_APP_URL=http://192.168.3.3:3000
-   DEV_ALLOWED_ORIGIN=http://192.168.3.3:3000,http://localhost:3000
+   AUTH_URL_WEB=http://192.168.3.3:3000
+   DEV_ALLOWED_ORIGIN_WEB=http://192.168.3.3:3000,http://localhost:3000
    NEXT_PUBLIC_PLATFORM_ADMIN_URL=http://192.168.3.3:3002
+   AUTH_URL_ADMIN=http://192.168.3.3:3002
+   DEV_ALLOWED_ORIGIN_ADMIN=http://192.168.3.3:3002,http://localhost:3002
    ```
 
-2. Copie os exemplos por app (ajuste o IP se mudar):
-
-   - `apps/web/.env.development.example` → `apps/web/.env.development`
-   - `apps/platform-admin/.env.development.example` → `apps/platform-admin/.env.development`
-
-3. `bun run dev` já escuta em `192.168.3.3` (todas as interfaces). Acesse:
+2. `bun run dev` já escuta em `0.0.0.0` (todas as interfaces). Acesse:
 
    - Tenant: http://192.168.3.3:3000
    - Admin: http://192.168.3.3:3002
 
-4. Se não abrir de outro aparelho, libere as portas **3000** e **3002** no Firewall do Windows para rede privada.
+3. Se não abrir de outro aparelho, libere as portas **3000** e **3002** no Firewall do Windows para rede privada.
+
+> **Env centralizado:** web e platform-admin leem variáveis só da **raiz** (`.env`, `.env.development`, `.env.local`). Não crie `.env` dentro de `apps/web` ou `apps/platform-admin`.
 
 ## PostgreSQL (Docker)
 

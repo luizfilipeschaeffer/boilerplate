@@ -179,17 +179,13 @@ const adminVars: Record<string, string | undefined> = {
   ...shared,
   AUTH_SECRET_PLATFORM_ADMIN: authAdmin,
   AUTH_URL: pick(env, "AUTH_URL_ADMIN") ?? pick(env, "AUTH_URL") ?? adminUrl,
-  RUN_VERCEL_DB_BOOTSTRAP: pick(env, "RUN_VERCEL_DB_BOOTSTRAP") ?? "true",
-  ALLOW_PLATFORM_ADMIN_SEED: pick(env, "ALLOW_PLATFORM_ADMIN_SEED") ?? "true",
-  ALLOW_INTEGRATOR_CREDENTIALS_SEED:
-    pick(env, "ALLOW_INTEGRATOR_CREDENTIALS_SEED") ?? "true",
-  PLATFORM_ADMIN_SEED_EMAIL: pick(env, "PLATFORM_ADMIN_SEED_EMAIL"),
-  PLATFORM_ADMIN_SEED_PASSWORD: pick(env, "PLATFORM_ADMIN_SEED_PASSWORD"),
-  PLATFORM_ADMIN_SEED_NAME: pick(env, "PLATFORM_ADMIN_SEED_NAME") ?? "Super Admin",
 };
+
+// Bootstrap/seeds: só local (`bun run db:setup-remote`) — nunca sobem para a Vercel
 
 syncProject(WEB, "boilerplate-web", webVars, previewBranch);
 syncProject(ADMIN, "boilerplate-platform-admin", adminVars, previewBranch);
 
 console.log("\n[vercel-env-sync] Concluído.");
-console.log("[vercel-env-sync] Próximo: cd apps/platform-admin && bunx vercel deploy");
+console.log("[vercel-env-sync] Banco: rode localmente `bun run db:setup-remote` antes do deploy.");
+console.log("[vercel-env-sync] Deploy: cd apps/web && bunx vercel deploy");

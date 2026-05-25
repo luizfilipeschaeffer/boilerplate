@@ -3,9 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "bun --env-file=../../.env --env-file=../../.env.development --env-file=.env.development next dev --turbopack -H 0.0.0.0",
-    "build": "bun --env-file=../../.env --env-file=../../.env.development --env-file=.env.development next build",
-    "start": "bun --env-file=../../.env --env-file=../../.env.development --env-file=.env.development next start",
+    "dev": "bun --env-file=../../.env --env-file=../../.env.development --env-file=../../.env.local next dev --turbopack -H 0.0.0.0",
+    "build": "bun --env-file=../../.env --env-file=../../.env.development --env-file=../../.env.local next build",
+    "start": "bun --env-file=../../.env --env-file=../../.env.development --env-file=../../.env.local next start",
     "lint": "eslint ."
   },
   "dependencies": {
