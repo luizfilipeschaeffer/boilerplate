@@ -129,7 +129,7 @@ Em produção, configure credenciais pelo **platform-admin** (Integradores → C
 
 Documentação completa: **[doc/vercel/README.md](./doc/vercel/README.md)** e **[doc/vercel/environment-variables.md](./doc/vercel/environment-variables.md)**.
 
-Resumo: dois projetos Vercel (`apps/web` + `apps/platform-admin`), PostgreSQL compartilhado (Neon), bootstrap automático no deploy do **platform-admin** com `RUN_VERCEL_DB_BOOTSTRAP=true`.
+Resumo: dois projetos Vercel (`apps/web` + `apps/platform-admin`), PostgreSQL compartilhado (Neon). Schema opcional no deploy (`RUN_VERCEL_DB_BOOTSTRAP=true`); seeds e dados demo via `bun run db:setup-remote` local.
 
 Evite descobrir erro só no painel da Vercel. Na raiz do monorepo:
 

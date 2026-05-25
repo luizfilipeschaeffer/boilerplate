@@ -47,6 +47,13 @@ type SeedFile = {
 };
 
 async function main(): Promise<void> {
+  if (process.env.VERCEL === "1") {
+    console.error(
+      "[seed-integrator-credentials] Seeds não podem rodar no build Vercel. Use: bun run db:setup-remote",
+    );
+    process.exit(1);
+  }
+
   const isProduction = process.env.NODE_ENV === "production";
   const isPreview = process.env.VERCEL_ENV === "preview";
   const allowSeed = process.env.ALLOW_INTEGRATOR_CREDENTIALS_SEED === "true";

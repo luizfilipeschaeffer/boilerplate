@@ -1,0 +1,14 @@
+# Evita upload gigante no `vercel deploy` local (limite 100 MB).
+# Deploy via Git usa build remoto (vercel.json) — preferido.
+
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/coverage
+**/.git
+**/packages/db/src/generated
+!apps/web/src/generated/prisma/libquery_engine-rhel-openssl-3.0.x.so.node
+!apps/web/src/generated/prisma/schema.prisma
+!apps/platform-admin/src/generated/prisma/libquery_engine-rhel-openssl-3.0.x.so.node
+!apps/platform-admin/src/generated/prisma/schema.prisma

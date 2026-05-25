@@ -6,9 +6,9 @@
  *   bun scripts/vercel-build.ts --filter @boilerplate/web
  *   bun scripts/vercel-build.ts --filter @boilerplate/platform-admin
  *
- * Bootstrap do banco (opcional, idempotente):
- *   RUN_VERCEL_DB_BOOTSTRAP=true  → roda packages/db/scripts/vercel-bootstrap.ts antes do build
- *   Recomendado: habilitar só no projeto platform-admin (evita corrida entre dois deploys).
+ * Schema sync no deploy (opcional, sem seeds):
+ *   RUN_VERCEL_DB_BOOTSTRAP=true  → roda packages/db/scripts/vercel-schema-sync.ts antes do build
+ *   Seeds: apenas local via `bun run db:setup-remote`. Recomendado: schema sync só em um projeto Vercel.
  */
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
@@ -54,13 +54,13 @@ if (process.env.VERCEL === "1" && vercelEnv && vercelEnv !== "development") {
 }
 
 if (process.env.RUN_VERCEL_DB_BOOTSTRAP === "true") {
-  run("Bootstrap do banco", [
+  run("Schema sync do banco", [
     process.execPath,
-    "packages/db/scripts/vercel-bootstrap.ts",
+    "packages/db/scripts/vercel-schema-sync.ts",
   ]);
 } else {
   console.log(
-    "[vercel-build] Bootstrap do banco desabilitado (RUN_VERCEL_DB_BOOTSTRAP≠true)",
+    "[vercel-build] Schema sync desabilitado (RUN_VERCEL_DB_BOOTSTRAP≠true)",
   );
 }
 

@@ -65,6 +65,13 @@ function mapVitalToSector(label: string): string {
   return MARKET_SECTOR_MAP[label] ?? "operacao";
 }
 
+if (process.env.VERCEL === "1") {
+  console.error(
+    "[seed-roadmap] Seeds não podem rodar no build Vercel. Use: bun run db:setup-remote",
+  );
+  process.exit(1);
+}
+
 const loaded = loadMonorepoEnv();
 if (loaded.length > 0) {
   console.log(`[seed-roadmap] env: ${loaded.join(" → ")}`);

@@ -16,26 +16,32 @@ Cada app possui [`vercel.json`](../../apps/web/vercel.json) com:
 - **Install:** `cd ../.. && bun install --frozen-lockfile`
 - **Build:** `cd ../.. && bun scripts/vercel-build.ts --filter @boilerplate/<app>`
 
-## Bootstrap do banco (local — recomendado)
+## Banco: schema no deploy, seeds só local
 
-O deploy **não** roda seed por padrão (`RUN_VERCEL_DB_BOOTSTRAP` desligado na Vercel).
-Prepare o Neon **da sua máquina** antes do primeiro deploy:
+| Etapa | Onde roda | Script |
+|-------|-----------|--------|
+| Schema (`generate` + `db push`) | Deploy Vercel (opcional) | [`vercel-schema-sync.ts`](../../packages/db/scripts/vercel-schema-sync.ts) quando `RUN_VERCEL_DB_BOOTSTRAP=true` |
+| Seeds (catálogo, admin, credenciais demo) | **Só local/CI** | [`setup-remote.ts`](../../packages/db/scripts/setup-remote.ts) via `bun run db:setup-remote` |
+
+Prepare o Neon **da sua máquina** antes do primeiro deploy com preview demo:
 
 ```bash
-# .env.vercel.production com DATABASE_URL (Neon) + INTEGRATOR_ENCRYPTION_KEY + seeds
+# .env.vercel.production: DATABASE_URL, INTEGRATOR_ENCRYPTION_KEY, ALLOW_* e PLATFORM_ADMIN_SEED_*
 bun run db:setup-remote
 ```
 
-O script [`packages/db/scripts/vercel-bootstrap.ts`](../../packages/db/scripts/vercel-bootstrap.ts) é idempotente:
+O `db:setup-remote` é idempotente:
 
-1. `prisma generate` + `prisma db push`
+1. `vercel-schema-sync` — `prisma generate` + `prisma db push`
 2. Seed roadmap (módulos, integradores, segmentos)
-3. Seed platform-admin — se `ALLOW_PLATFORM_ADMIN_SEED=true` no `.env.vercel.production`
+3. Seed platform-admin — se `ALLOW_PLATFORM_ADMIN_SEED=true`
 4. Seed credenciais demo — se `ALLOW_INTEGRATOR_CREDENTIALS_SEED=true`
 
-### Bootstrap no deploy (opcional — não recomendado)
+### Schema sync no deploy (opcional)
 
-Só se quiser rodar no build da Vercel, defina `RUN_VERCEL_DB_BOOTSTRAP=true` **no painel** (projeto platform-admin).
+Se quiser aplicar o schema no build da Vercel (sem seeds), defina `RUN_VERCEL_DB_BOOTSTRAP=true` em **um** projeto apenas (recomendado: `platform-admin`) para evitar corrida entre dois deploys simultâneos.
+
+**Não** configure `ALLOW_PLATFORM_ADMIN_SEED`, `ALLOW_INTEGRATOR_CREDENTIALS_SEED` nem `PLATFORM_ADMIN_SEED_*` no painel Vercel — essas variáveis são ignoradas no deploy e só pertencem ao `.env.vercel.production` local.
 
 ## Passo a passo — primeiro deploy
 
@@ -57,8 +63,8 @@ Só se quiser rodar no build da Vercel, defina `RUN_VERCEL_DB_BOOTSTRAP=true` **
 
 1. **Add New Project** → mesmo repositório
 2. **Root Directory:** `apps/platform-admin`
-3. Configure variáveis — ver [environment-variables.md](./environment-variables.md) (seção **Platform Admin** + **Bootstrap**)
-4. Deploy (este deploy roda o bootstrap se `RUN_VERCEL_DB_BOOTSTRAP=true`)
+3. Configure variáveis — ver [environment-variables.md](./environment-variables.md) (seção **Platform Admin**)
+4. Deploy (schema sync no build apenas se `RUN_VERCEL_DB_BOOTSTRAP=true`)
 
 ### 4. Validar ambiente
 
@@ -108,28 +114,23 @@ bun run vercel:env-sync
 | `AUTH_URL` | `https://boilerplate-admin.vercel.app` |
 | `NEXT_PUBLIC_PLATFORM_ADMIN_URL` | `https://boilerplate-admin.vercel.app` |
 | `NEXT_PUBLIC_APP_URL` | `https://boilerplate-web.vercel.app` |
-| `RUN_VERCEL_DB_BOOTSTRAP` | `true` |
-| `ALLOW_PLATFORM_ADMIN_SEED` | `true` |
-| `ALLOW_INTEGRATOR_CREDENTIALS_SEED` | `true` |
-| `PLATFORM_ADMIN_SEED_EMAIL` | `admin@demo.suaempresa.com` |
-| `PLATFORM_ADMIN_SEED_PASSWORD` | senha forte (secret) |
-| `PLATFORM_ADMIN_SEED_NAME` | `Super Admin` |
+| `RUN_VERCEL_DB_BOOTSTRAP` | `true` (opcional — só `db push`, sem seeds) |
+
+Seeds e operador demo: configure em `.env.vercel.production` e rode `bun run db:setup-remote` (não no painel Vercel).
 
 ## Comandos locais (espelham Vercel)
 
 ```bash
-# Simular build Vercel (sem bootstrap)
+# Simular build Vercel (sem schema sync)
 bun run check:vercel
 
-# Bootstrap manual (precisa DATABASE_URL + INTEGRATOR_ENCRYPTION_KEY)
-RUN_VERCEL_DB_BOOTSTRAP=true \
-ALLOW_PLATFORM_ADMIN_SEED=true \
-ALLOW_INTEGRATOR_CREDENTIALS_SEED=true \
-PLATFORM_ADMIN_SEED_EMAIL=admin@demo.dev \
-PLATFORM_ADMIN_SEED_PASSWORD=senha-local \
-bun run db:vercel-bootstrap
+# Setup completo remoto (schema + seeds) — use .env.vercel.production
+bun run db:setup-remote
 
-# Build com bootstrap (como platform-admin na Vercel)
+# Só schema (como deploy com RUN_VERCEL_DB_BOOTSTRAP=true)
+bun run db:schema-sync
+
+# Build com schema sync (como platform-admin na Vercel)
 RUN_VERCEL_DB_BOOTSTRAP=true bun scripts/vercel-build.ts --filter @boilerplate/platform-admin
 ```
 
@@ -146,11 +147,24 @@ Sem Redis, rate limiting usa memória local (ok em dev; limitado em serverless).
 
 | Sintoma | Causa provável | Ação |
 |---------|----------------|------|
-| Login admin falha | Seed não rodou | Confirme `RUN_VERCEL_DB_BOOTSTRAP=true` no admin; veja logs do build |
+| Login admin falha | Seed não rodou localmente | `bun run db:setup-remote` com `ALLOW_PLATFORM_ADMIN_SEED=true` no `.env.vercel.production` |
 | `INTEGRATOR_ENCRYPTION_KEY` | Ausente ou curta | Gere 32 bytes base64; configure em ambos projetos |
 | Prisma engine error | Binary não no bundle | Rode redeploy; build copia engine para `apps/*/src/generated/prisma` |
-| Integradores sem credencial | Seed desligado | `ALLOW_INTEGRATOR_CREDENTIALS_SEED=true` |
+| Integradores sem credencial | Seed demo ausente | `bun run db:setup-remote` com `ALLOW_INTEGRATOR_CREDENTIALS_SEED=true` local |
+| Build lento (~5 min) | Seeds no deploy (legado) | Remova `ALLOW_*` e `PLATFORM_ADMIN_SEED_*` do painel Vercel; seeds só via `db:setup-remote` |
 | Auth redirect errado | `AUTH_URL` incorreto | Uma URL por app, com `https://` |
+
+## Limpeza no painel Vercel (após esta mudança)
+
+Se o build ainda mostrar `[seed-roadmap]` nos logs, remova destes projetos (web e/ou platform-admin) em **Settings → Environment Variables**:
+
+- `ALLOW_PLATFORM_ADMIN_SEED`
+- `ALLOW_INTEGRATOR_CREDENTIALS_SEED`
+- `PLATFORM_ADMIN_SEED_EMAIL`
+- `PLATFORM_ADMIN_SEED_PASSWORD`
+- `PLATFORM_ADMIN_SEED_NAME`
+
+Mantenha `RUN_VERCEL_DB_BOOTSTRAP=true` apenas se quiser `db push` no deploy (recomendado em **um** projeto). Depois rode `bun run db:setup-remote` localmente para popular catálogo, admin e credenciais demo.
 
 ## Segurança em Production
 
