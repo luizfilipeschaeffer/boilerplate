@@ -139,7 +139,7 @@ export function IntegratorCredentialsForm({
                 : "Opcional";
 
           return (
-            <motionField
+            <CredentialField
               key={field.key}
               field={field}
               configured={status.configured}
@@ -176,7 +176,7 @@ export function IntegratorCredentialsForm({
   );
 }
 
-function motionField({
+function CredentialField({
   field,
   configured,
   value,

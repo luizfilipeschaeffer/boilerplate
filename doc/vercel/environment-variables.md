@@ -55,18 +55,25 @@ Legenda de escopo:
 
 ---
 
-## 5. Bootstrap no deploy (somente Admin recomendado)
+## 5. Schema sync no deploy (opcional — sem seeds)
 
 | Variável | Web | Admin | P | Pr | D | Obrigatória | Descrição |
 |----------|:---:|:-----:|:-:|:-:|:-:|:-----------:|-----------|
-| `RUN_VERCEL_DB_BOOTSTRAP` | — | ✓ | opcional | **true** | — | Demo: **Sim** | Executa `db push` + seeds antes do build |
-| `ALLOW_PLATFORM_ADMIN_SEED` | — | ✓ | ⚠️ | **true** | local | Demo: **Sim** | Cria operador inicial via seed |
-| `ALLOW_INTEGRATOR_CREDENTIALS_SEED` | — | ✓ | ⚠️ | **true** | local | Demo: **Sim** | Grava credenciais fake criptografadas (Resend, Asaas, etc.) |
-| `PLATFORM_ADMIN_SEED_EMAIL` | — | ✓ | ⚠️ | ✓ | ✓ | Com seed | E-mail do super admin demo |
-| `PLATFORM_ADMIN_SEED_PASSWORD` | — | ✓ | ⚠️ | ✓ | ✓ | Com seed | Senha (marque como **Secret** na Vercel) |
-| `PLATFORM_ADMIN_SEED_NAME` | — | ✓ | — | ✓ | ✓ | Não | Nome exibido (default: `Super Admin`) |
+| `RUN_VERCEL_DB_BOOTSTRAP` | opcional | ✓ | opcional | opcional | — | Não | Executa `prisma generate` + `db push` antes do build. **Sem seeds.** Prefira habilitar em **um** projeto só. |
 
-⚠️ = aceitável em ambiente demo/staging; **desligue em produção real**.
+## 5b. Seeds — somente local (`bun run db:setup-remote`)
+
+Configure em `.env.vercel.production` (gitignored). **Não** suba para a Vercel via `vercel:env-sync` nem no painel.
+
+| Variável | Obrigatória | Descrição |
+|----------|:-----------:|-----------|
+| `ALLOW_PLATFORM_ADMIN_SEED` | Demo local | Cria operador inicial via seed |
+| `ALLOW_INTEGRATOR_CREDENTIALS_SEED` | Demo local | Grava credenciais fake criptografadas (Resend, Asaas, etc.) |
+| `PLATFORM_ADMIN_SEED_EMAIL` | Com seed | E-mail do super admin demo |
+| `PLATFORM_ADMIN_SEED_PASSWORD` | Com seed | Senha (nunca commite) |
+| `PLATFORM_ADMIN_SEED_NAME` | Não | Nome exibido (default: `Super Admin`) |
+
+⚠️ Aceitável em ambiente demo/staging local; **não use em produção real**.
 
 ---
 
@@ -121,7 +128,10 @@ Credenciais Resend/Asaas reais: configure via **platform-admin → Integradores 
 
 ## Checklist — Preview demo 100% funcional
 
-Copie para o projeto **platform-admin** (Preview):
+1. Rode localmente: `bun run db:setup-remote` (`.env.vercel.production` com seeds abaixo).
+2. Configure no painel Vercel apenas auth/URLs (sem `ALLOW_*` nem `PLATFORM_ADMIN_SEED_*`).
+
+Copie para o projeto **platform-admin** (Preview — painel Vercel):
 
 ```env
 DATABASE_URL=<neon>
@@ -131,6 +141,11 @@ AUTH_URL=https://<seu-admin>.vercel.app
 NEXT_PUBLIC_APP_URL=https://<seu-web>.vercel.app
 NEXT_PUBLIC_PLATFORM_ADMIN_URL=https://<seu-admin>.vercel.app
 RUN_VERCEL_DB_BOOTSTRAP=true
+```
+
+Seeds (apenas `.env.vercel.production` local, para `db:setup-remote`):
+
+```env
 ALLOW_PLATFORM_ADMIN_SEED=true
 ALLOW_INTEGRATOR_CREDENTIALS_SEED=true
 PLATFORM_ADMIN_SEED_EMAIL=admin@demo.suaempresa.com

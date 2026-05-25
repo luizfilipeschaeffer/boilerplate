@@ -1,0 +1,9 @@
+{
+  "coreContract": "1.2.0",
+  "eventsContract": "2.0.0",
+  "sdkContract": "3.0.0",
+  "modules": [
+    { "id": "example-module", "version": "0.1.0", "core": "^1.2.0", "sdk": "^3.0.0" },
+    { "id": "core-crm", "version": "1.0.0", "core": "^1.2.0", "sdk": "^3.0.0" }
+  ]
+}

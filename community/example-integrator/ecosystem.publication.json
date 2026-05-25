@@ -1,0 +1,17 @@
+{
+  "$schema": "../../doc/ecosystem/ecosystem.publication.schema.json",
+  "kind": "integrator",
+  "externalId": "example-messaging",
+  "name": "Example Messaging",
+  "description": "Integrador de exemplo (mock) com healthCheck e configSchema.",
+  "publisherName": "Comunidade Boilerplate",
+  "publisherEmail": "ecosystem@boilerplate.dev",
+  "packageName": "@boilerplate-community/example-integrator",
+  "packagePath": "community/example-integrator",
+  "category": "messaging",
+  "segmentosAlvo": null,
+  "modulosSuportados": ["example-module"],
+  "dependencias": [],
+  "riscosConhecidos": "Adapter mock — não envia mensagens reais.",
+  "instrucoesRollout": "Entrada em platform-catalog.json; aprovar em platform-admin /comunidade."
+}

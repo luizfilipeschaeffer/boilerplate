@@ -46,25 +46,25 @@ bun run dev
 
 ### Rede local (celular / outro PC)
 
-1. No `.env.development` da raiz, use o IP da máquina (ex. `192.168.60.60`):
+1. No `.env.development` da raiz, use o IP da máquina (ex. `192.168.3.3`):
 
    ```env
-   NEXT_PUBLIC_APP_URL=http://192.168.60.60:3000
-   DEV_ALLOWED_ORIGIN=http://192.168.60.60:3000,http://localhost:3000
-   NEXT_PUBLIC_PLATFORM_ADMIN_URL=http://192.168.60.60:3002
+   NEXT_PUBLIC_APP_URL=http://192.168.3.3:3000
+   AUTH_URL_WEB=http://192.168.3.3:3000
+   DEV_ALLOWED_ORIGIN_WEB=http://192.168.3.3:3000,http://localhost:3000
+   NEXT_PUBLIC_PLATFORM_ADMIN_URL=http://192.168.3.3:3002
+   AUTH_URL_ADMIN=http://192.168.3.3:3002
+   DEV_ALLOWED_ORIGIN_ADMIN=http://192.168.3.3:3002,http://localhost:3002
    ```
 
-2. Copie os exemplos por app (ajuste o IP se mudar):
+2. `bun run dev` já escuta em `0.0.0.0` (todas as interfaces). Acesse:
 
-   - `apps/web/.env.development.example` → `apps/web/.env.development`
-   - `apps/platform-admin/.env.development.example` → `apps/platform-admin/.env.development`
+   - Tenant: http://192.168.3.3:3000
+   - Admin: http://192.168.3.3:3002
 
-3. `bun run dev` já escuta em `192.168.60.60` (todas as interfaces). Acesse:
+3. Se não abrir de outro aparelho, libere as portas **3000** e **3002** no Firewall do Windows para rede privada.
 
-   - Tenant: http://192.168.60.60:3000
-   - Admin: http://192.168.60.60:3002
-
-4. Se não abrir de outro aparelho, libere as portas **3000** e **3002** no Firewall do Windows para rede privada.
+> **Env centralizado:** web e platform-admin leem variáveis só da **raiz** (`.env`, `.env.development`, `.env.local`). Não crie `.env` dentro de `apps/web` ou `apps/platform-admin`.
 
 ## PostgreSQL (Docker)
 
@@ -129,7 +129,7 @@ Em produção, configure credenciais pelo **platform-admin** (Integradores → C
 
 Documentação completa: **[doc/vercel/README.md](./doc/vercel/README.md)** e **[doc/vercel/environment-variables.md](./doc/vercel/environment-variables.md)**.
 
-Resumo: dois projetos Vercel (`apps/web` + `apps/platform-admin`), PostgreSQL compartilhado (Neon), bootstrap automático no deploy do **platform-admin** com `RUN_VERCEL_DB_BOOTSTRAP=true`.
+Resumo: dois projetos Vercel (`apps/web` + `apps/platform-admin`), PostgreSQL compartilhado (Neon). Schema opcional no deploy (`RUN_VERCEL_DB_BOOTSTRAP=true`); seeds e dados demo via `bun run db:setup-remote` local.
 
 Evite descobrir erro só no painel da Vercel. Na raiz do monorepo:
 
@@ -152,6 +152,27 @@ bun run check:vercel:admin
 | `bun run ci` | Gate completo: Prisma validate + lint + build (precisa Postgres com `bun run db:up` e `.env`) |
 
 O GitHub Actions na branch `dev` roda o mesmo fluxo em push/PR.
+
+## Ecossistema (comunidade)
+
+Desenvolvedores que queiram propor **módulos ou integradores** da comunidade:
+
+→ **[doc/ecosystem/publicacao-pr-comunidade.md](./doc/ecosystem/publicacao-pr-comunidade.md)**
+
+Fluxo: PR padronizada → auditoria (CI + review) → moderação em platform-admin (`/comunidade`) → marketplace e tenants.
+
+### CI local (antes de commit/PR)
+
+Espelha GitHub Actions (`ci.yml` + `ecosystem-security.yml`):
+
+```bash
+# Pare o dev server antes do build (evita EPERM do Prisma no Windows)
+# Ctrl+C no terminal com bun run dev
+
+bun run ci:local
+```
+
+Atalho parcial: `bun run ci` (sem ecosystem lint nem example-module tests).
 
 ### Prisma na Vercel (query engine)
 

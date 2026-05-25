@@ -1,0 +1,17 @@
+{
+  "$schema": "../doc/ecosystem/ecosystem.publication.schema.json",
+  "kind": "module",
+  "externalId": "meu-modulo",
+  "name": "Meu Módulo",
+  "description": "Descrição curta exibida no marketplace e na fila de moderação (platform-admin → Comunidade).",
+  "publisherName": "Nome do publicador ou empresa",
+  "publisherEmail": "dev@empresa.com",
+  "packageName": "@boilerplate-community/meu-modulo",
+  "packagePath": "community/meu-modulo",
+  "category": null,
+  "segmentosAlvo": ["ecommerce"],
+  "modulosSuportados": null,
+  "dependencias": [],
+  "riscosConhecidos": "",
+  "instrucoesRollout": "Descreva passos que o time da plataforma deve executar após merge (ex.: registrar tabelas, aprovar em /comunidade, smoke test)."
+}

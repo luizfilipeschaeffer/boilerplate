@@ -1,0 +1,45 @@
+name: Ecosystem Security
+
+on:
+  pull_request:
+    paths:
+      - "community/**"
+      - "modules/**"
+      - "integrators/**"
+      - "packages/sdk-*/**"
+      - "packages/sandbox/**"
+      - "packages/eslint-plugin-boilerplate/**"
+  push:
+    branches: [main, master, dev]
+    paths:
+      - "community/**"
+      - "modules/**"
+
+jobs:
+  ecosystem-security:
+    name: Ecosystem security validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - run: bun install --frozen-lockfile
+
+      - name: ESLint ecosystem rules
+        run: bun run lint:ecosystem
+        continue-on-error: false
+
+      - name: SDK core tests
+        run: bun run --filter @boilerplate/sdk-core test
+
+      - name: Example module tests
+        run: bun run --filter @boilerplate-community/example-module test
+
+      - name: Capability manifest sync check
+        run: bun scripts/check-example-module-capabilities.ts
+
+      - name: Dependency audit (blocking)
+        run: bun audit --audit-level=high

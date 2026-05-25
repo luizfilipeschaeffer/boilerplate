@@ -6,9 +6,9 @@
  *   bun scripts/vercel-build.ts --filter @boilerplate/web
  *   bun scripts/vercel-build.ts --filter @boilerplate/platform-admin
  *
- * Bootstrap do banco (opcional, idempotente):
- *   RUN_VERCEL_DB_BOOTSTRAP=true  → roda packages/db/scripts/vercel-bootstrap.ts antes do build
- *   Recomendado: habilitar só no projeto platform-admin (evita corrida entre dois deploys).
+ * Schema sync no deploy (opcional, sem seeds):
+ *   RUN_VERCEL_DB_BOOTSTRAP=true  → roda packages/db/scripts/vercel-schema-sync.ts antes do build
+ *   Seeds: apenas local via `bun run db:setup-remote`. Recomendado: schema sync só em um projeto Vercel.
  */
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
@@ -44,14 +44,23 @@ function run(label: string, cmd: string[], cwd = ROOT): void {
 console.log(`[vercel-build] App: ${filter}`);
 console.log(`[vercel-build] VERCEL_ENV=${process.env.VERCEL_ENV ?? "local"}`);
 
-if (process.env.RUN_VERCEL_DB_BOOTSTRAP === "true") {
-  run("Bootstrap do banco", [
+const vercelEnv = process.env.VERCEL_ENV;
+if (process.env.VERCEL === "1" && vercelEnv && vercelEnv !== "development") {
+  run("Validar variáveis de ambiente", [
     process.execPath,
-    "packages/db/scripts/vercel-bootstrap.ts",
+    "scripts/validate-env.ts",
+    "--strict",
+  ]);
+}
+
+if (process.env.RUN_VERCEL_DB_BOOTSTRAP === "true") {
+  run("Schema sync do banco", [
+    process.execPath,
+    "packages/db/scripts/vercel-schema-sync.ts",
   ]);
 } else {
   console.log(
-    "[vercel-build] Bootstrap do banco desabilitado (RUN_VERCEL_DB_BOOTSTRAP≠true)",
+    "[vercel-build] Schema sync desabilitado (RUN_VERCEL_DB_BOOTSTRAP≠true)",
   );
 }
 

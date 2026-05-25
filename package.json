@@ -1,19 +1,32 @@
 {
   "name": "boilerplate",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "community/*",
+    "modules/*"
+  ],
   "scripts": {
     "clean": "bun run scripts/clean.ts",
-    "dev": "turbo run dev",
+    "dev": "bun scripts/free-dev-ports.ts && turbo run dev --filter=@boilerplate/web --filter=@boilerplate/platform-admin --filter=apps-marketplace",
+    "predev": "bun run db:migrate-tenants",
+    "dev:community": "turbo run dev --filter=@boilerplate/web --filter=@boilerplate-community/example-module",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "check:vercel": "bun scripts/pre-deploy-check.ts",
     "check:vercel:web": "bun scripts/pre-deploy-check.ts -- --web",
     "check:vercel:admin": "bun scripts/pre-deploy-check.ts -- --admin",
-    "db:vercel-bootstrap": "bun run --filter @boilerplate/db db:vercel-bootstrap",
+    "vercel:env-sync": "bun scripts/vercel-env-sync.ts",
+    "db:setup-remote": "bun --env-file=.env.vercel.production packages/db/scripts/setup-remote.ts",
+    "db:test-connection": "bun --env-file=.env.vercel.production scripts/test-db-connection.ts",
+    "db:schema-sync": "bun run --filter @boilerplate/db db:schema-sync",
     "ci": "bun run db:validate && bun run validate:env && bun run audit && bun run lint && bun run build",
+    "ci:local": "bun scripts/ci-local.ts",
     "validate:env": "bun scripts/validate-env.ts",
-    "audit": "bun audit --audit-level=high || true",
+    "audit": "bun audit --audit-level=high",
+    "test": "turbo run test",
+    "lint:ecosystem": "eslint -c eslint.ecosystem.config.mjs \"community/**/*.ts\"",
     "db:validate": "bun run --filter @boilerplate/db db:validate",
     "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
     "db:down": "docker compose -f infra/docker/docker-compose.yml down",
@@ -26,9 +39,17 @@
     "db:restart": "bun run --filter @boilerplate/db db:restart"
   },
   "devDependencies": {
+    "@boilerplate/shared": "workspace:*",
+    "@eslint/js": "^9.39.4",
+    "eslint": "^9.39.4",
+    "eslint-plugin-boilerplate": "workspace:*",
+    "typescript-eslint": "^8.59.4",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3",
     "@types/node": "^22.15.29"
   },
-  "packageManager": "bun@1.3.14"
+  "packageManager": "bun@1.3.14",
+  "overrides": {
+    "protobufjs": "^8.4.2"
+  }
 }

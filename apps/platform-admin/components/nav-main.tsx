@@ -46,16 +46,13 @@ function NavMainGroup({
   pathname: string;
 }) {
   const groupActive = isGroupActive(pathname, entry);
-  const [open, setOpen] = React.useState(groupActive);
-
-  React.useEffect(() => {
-    if (groupActive) setOpen(true);
-  }, [groupActive]);
+  const [userOpen, setUserOpen] = React.useState<boolean | undefined>(undefined);
+  const open = userOpen ?? groupActive;
 
   return (
     <Collapsible
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={setUserOpen}
       className="group/collapsible"
     >
       <SidebarMenuItem>

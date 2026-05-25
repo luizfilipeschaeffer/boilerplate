@@ -98,6 +98,8 @@ function tenantMigrateStatements(schema: string): string[] {
     `ALTER TABLE "${schema}"."catalog_items" ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT true`,
     `ALTER TABLE "${schema}"."catalog_items" ADD COLUMN IF NOT EXISTS stock_qty INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE "${schema}"."catalog_items" ADD COLUMN IF NOT EXISTS stock_min INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE "${schema}"."catalog_items" ADD COLUMN IF NOT EXISTS item_type TEXT NOT NULL DEFAULT 'produto'`,
+    `ALTER TABLE "${schema}"."catalog_items" ADD COLUMN IF NOT EXISTS sku TEXT`,
     `ALTER TABLE "${schema}"."stock_movements" ADD COLUMN IF NOT EXISTS batch_id TEXT`,
     `CREATE TABLE IF NOT EXISTS "${schema}"."aprendiz_perfil" (
       id TEXT PRIMARY KEY DEFAULT 'principal',
