@@ -46,6 +46,13 @@ export const ALL_PLATFORM_NAV: PlatformNavItem[] = [
     icon: <MessageSquare className="size-4" />,
   },
   {
+    id: "platform-helpdesk",
+    label: "Help Desk",
+    href: "/helpdesk",
+    ordem: 32,
+    icon: <MessageSquare className="size-4" />,
+  },
+  {
     id: "platform-insights",
     label: "Insights",
     href: "/insights",

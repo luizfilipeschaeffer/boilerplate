@@ -10,6 +10,7 @@ const ROUTE_MODULE: Record<string, PlatformModuleId> = {
   "/dashboard": "dashboard",
   "/crm": "platform-crm",
   "/comms": "platform-comms",
+  "/helpdesk": "platform-helpdesk",
   "/insights": "platform-insights",
   "/modulos": "platform-modulos",
   "/roadmap": "platform-roadmap",

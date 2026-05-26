@@ -25,6 +25,8 @@ export type CommsThreadSummary = {
   peerEmail: string | null;
   peerRole: string | null;
   assignedPlatformUserId: string | null;
+  helpdeskTicketId: string | null;
+  helpdeskTicketOrgId: string | null;
   messageCount: number;
 };
 
@@ -159,6 +161,11 @@ export async function listCommsThreads(filters?: {
       peerEmail: t.peerPlatformUser?.email ?? null,
       peerRole: t.peerPlatformUser?.role ?? null,
       assignedPlatformUserId: t.assignedPlatformUserId,
+      helpdeskTicketId:
+        (t as { helpdeskTicketId?: string | null }).helpdeskTicketId ?? null,
+      helpdeskTicketOrgId:
+        (t as { helpdeskTicketOrgId?: string | null }).helpdeskTicketOrgId ??
+        null,
       messageCount: t._count.messages,
     };
   });
@@ -221,6 +228,10 @@ export async function getCommsThread(
     peerEmail: t.peerPlatformUser?.email ?? null,
     peerRole: t.peerPlatformUser?.role ?? null,
     assignedPlatformUserId: t.assignedPlatformUserId,
+    helpdeskTicketId:
+      (t as { helpdeskTicketId?: string | null }).helpdeskTicketId ?? null,
+    helpdeskTicketOrgId:
+      (t as { helpdeskTicketOrgId?: string | null }).helpdeskTicketOrgId ?? null,
     messageCount: t.messages.length,
     messages: t.messages.map((m) => ({
       id: m.id,

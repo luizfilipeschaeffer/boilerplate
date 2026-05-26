@@ -39,6 +39,7 @@ export * from "./login-email-verification";
 export * from "./password-reset";
 export * from "./user-password";
 export * from "./crm";
+export * from "./crm-helpdesk";
 export * from "./billing-pricing";
 export * from "./platform-comms";
 export * from "./platform-insights";

@@ -35,6 +35,7 @@
     { "id": "segment-moda", "name": "Catálogo Moda", "sectorSlug": "operacao", "faseMinima": 2, "implementationStatus": "implemented", "depthCurrent": 1, "depthTarget": 3, "depthTargetMarco": "R3", "deliveryMarco": "R2" },
     { "id": "segment-alimentacao", "name": "Catálogo Alimentação", "sectorSlug": "operacao", "faseMinima": 2, "implementationStatus": "implemented", "depthCurrent": 1, "depthTarget": 3, "depthTargetMarco": "R3", "deliveryMarco": "R2" },
     { "id": "aprendiz", "name": "Aprendiz", "sectorSlug": "tecnologia", "faseMinima": 1, "implementationStatus": "implemented", "depthCurrent": 2, "depthTarget": 4, "depthTargetMarco": "R3", "deliveryMarco": "R1" },
+    { "id": "crm-helpdesk", "name": "Help Desk TI", "sectorSlug": "tecnologia", "faseMinima": 2, "implementationStatus": "implemented", "depthCurrent": 2, "depthTarget": 3, "depthTargetMarco": "R3", "deliveryMarco": "R3" },
     { "id": "ops-compras", "name": "Compras", "sectorSlug": "operacao", "faseMinima": 2, "implementationStatus": "implemented", "depthCurrent": 1, "depthTarget": 3, "depthTargetMarco": "R3", "deliveryMarco": "R3" }
   ],
   "segments": [

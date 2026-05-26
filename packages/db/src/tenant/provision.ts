@@ -1,4 +1,5 @@
 import { prisma } from "../client";
+import { helpdeskDdlStatements } from "../crm-helpdesk/ensure-tables";
 import { assertSafeSchemaName } from "./schema";
 
 function tenantDdlStatements(schema: string): string[] {
@@ -255,6 +256,7 @@ function tenantMigrateStatements(schema: string): string[] {
       notes TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`,
+    ...helpdeskDdlStatements(schema),
   ];
 }
 

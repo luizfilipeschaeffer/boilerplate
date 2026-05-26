@@ -299,4 +299,18 @@ export function registerAllModules(): void {
     depthTargetMarco: "R3",
     deliveryMarco: "R1",
   });
+
+  scaffold("crm-helpdesk", "Help Desk TI", {
+    navOrdem: 86,
+    routePath: "/helpdesk",
+    faseMinima: 2,
+    dependencias: ["aprendiz"],
+    implementationStatus: "implemented",
+    sectorSlug: "tecnologia",
+    camada: "Tática",
+    depthCurrent: 2,
+    depthTarget: 3,
+    depthTargetMarco: "R3",
+    deliveryMarco: "R3",
+  });
 }

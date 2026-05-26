@@ -13,6 +13,7 @@
     "@boilerplate/aprendiz-engine": "workspace:*",
     "@boilerplate/billing": "workspace:*",
     "@boilerplate/crm": "workspace:*",
+    "@boilerplate/crm-helpdesk": "workspace:*",
     "@boilerplate/crm-ui": "workspace:*",
     "@boilerplate/db": "workspace:*",
     "@boilerplate/event-bus": "workspace:*",

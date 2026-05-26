@@ -8,6 +8,8 @@ export {
 export {
   responderMensagemAprendiz,
   responderMensagemAprendizComLlm,
+  responderMensagemAprendizComHelpdesk,
+  type HelpdeskKbHit,
 } from "./respond";
 
 export interface AutomacaoTemplate {
