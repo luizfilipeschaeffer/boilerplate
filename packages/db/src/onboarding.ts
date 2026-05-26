@@ -16,6 +16,7 @@ import {
   registerModuloDemanda,
   resolveUniqueOrganizationSlug,
   setOrganizationModules,
+  syncSectorModulesFromTemplate,
 } from "./organization";
 import { recordProvisioningPlatformActivity } from "./provisioning-events";
 
@@ -105,6 +106,11 @@ export async function completeOnboarding(
   }
 
   await setOrganizationModules(org.id, moduleIds);
+  await syncSectorModulesFromTemplate(org.id, {
+    marketSegmentSlug,
+    phase,
+    moduleIds,
+  });
   await registerModuloDemanda(org.id, pkg.demandaModuleIds);
 
   await recordProvisioningPlatformActivity({

@@ -19,7 +19,7 @@ async function requireOrgId() {
 
 export async function listSectorsConfigAction() {
   const orgId = await requireOrgId();
-  const sectors = await listSectors(orgId);
+  const sectors = await listSectors(orgId, { includeHidden: true });
   const orgModules = await getActiveModuleIdsForOrg(orgId);
   const withModules = await Promise.all(
     sectors.map(async (s) => ({

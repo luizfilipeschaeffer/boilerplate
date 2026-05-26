@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { PhaseExpansionWizard } from "@/components/phase-expansion-wizard";
 import { ProvisioningBanner } from "@/components/provisioning-banner";
 import { SyncProvider } from "@/components/sync-provider";
 import {
@@ -50,6 +51,7 @@ export default async function DashboardLayout({
         sectorId={sectorId}
       >
         <ProvisioningBanner />
+        <PhaseExpansionWizard />
         {children}
       </DashboardShell>
     </SyncProvider>

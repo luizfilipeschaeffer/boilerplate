@@ -27,6 +27,8 @@ model Organization {
   marketSegmentSlug String?  @map("market_segment_slug")
   diagnosedPhase    Int?     @map("diagnosed_phase")
   declaredPhase     Int?     @map("declared_phase")
+  /// Fase P aguardando confirmação do dono no wizard de expansão
+  pendingExpansionPhase Int? @map("pending_expansion_phase")
   /// pending_payment | pre_active | trial | active | blocked
   provisioningStatus String  @default("trial") @map("provisioning_status")
   paymentIntegratorId String? @map("payment_integrator_id")
@@ -333,6 +335,12 @@ model Sector {
   name            String
   slug            String  @default("geral")
   coreSectorSlug  String? @map("core_sector_slug")
+  /// hidden | em_breve | active — expansão por fase de produto
+  visibilityStatus String @default("active") @map("visibility_status")
+  /// Dashboard agregador cross-setor (ex.: Geral)
+  isAggregator     Boolean @default(false) @map("is_aggregator")
+  /// Atalhos de módulo: [{ "moduleId": "...", "primarySectorSlug": "..." }]
+  moduleShortcuts  Json    @default("[]") @map("module_shortcuts")
   /// IDs dos cards do painel inicial por setor (ex.: cash_flow, clients, stock_alerts)
   dashboardCards  Json    @default("[\"cash_flow\",\"clients\",\"stock_alerts\"]") @map("dashboard_cards")
   /// IDs dos atalhos da paleta de comandos (Alt+P) por setor
@@ -530,13 +538,53 @@ model MarketSegment {
   tipoNegocioSugeridos Json     @default("[]") @map("tipo_negocio_sugeridos")
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
 
-  sectorModules   SegmentSectorModule[]
-  vitalModules    SegmentVitalModule[]
-  phaseConfigs    SegmentPhaseConfig[]
-  organizations   Organization[]
+  sectorModules        SegmentSectorModule[]
+  vitalModules         SegmentVitalModule[]
+  phaseConfigs         SegmentPhaseConfig[]
+  sectorTemplates      SegmentSectorTemplate[]
+  sectorModuleTemplates SegmentSectorModuleTemplate[]
+  organizations        Organization[]
 
   @@schema("boilerplate")
   @@map("market_segments")
+}
+
+/// Template de setor tenant por segmento × fase mínima — PRD expansão por P
+model SegmentSectorTemplate {
+  id                String @id @default(uuid())
+  segmentSlug       String @map("segment_slug")
+  phaseMin          Int    @map("phase_min")
+  coreSectorSlug    String @map("core_sector_slug")
+  displayName       String @map("display_name")
+  sectorSlug        String @map("sector_slug")
+  /// hidden | em_breve | active na fase phaseMin
+  visibilityDefault String @default("active") @map("visibility_default")
+  isAggregator      Boolean @default(false) @map("is_aggregator")
+  ordem             Int    @default(0)
+
+  segment MarketSegment @relation(fields: [segmentSlug], references: [slug], onDelete: Cascade)
+
+  @@unique([segmentSlug, sectorSlug])
+  @@index([segmentSlug, phaseMin])
+  @@schema("boilerplate")
+  @@map("segment_sector_templates")
+}
+
+/// Matriz segmento × setor core × módulo de produto (pai/filho explícitos)
+model SegmentSectorModuleTemplate {
+  id                      String @id @default(uuid())
+  segmentSlug             String @map("segment_slug")
+  coreSectorSlug          String @map("core_sector_slug")
+  moduleId                String @map("module_id")
+  phaseMin                Int    @default(1) @map("phase_min")
+  shortcutCoreSectorSlugs Json   @default("[]") @map("shortcut_core_sector_slugs")
+
+  segment MarketSegment @relation(fields: [segmentSlug], references: [slug], onDelete: Cascade)
+
+  @@unique([segmentSlug, moduleId, coreSectorSlug])
+  @@index([segmentSlug])
+  @@schema("boilerplate")
+  @@map("segment_sector_module_templates")
 }
 
 /// Matriz segmento × fase P → bundle/módulos e política de trial/pagamento

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { listContextOptionsAction } from "@/app/actions/context";
+import { requestSectorAccessAction } from "@/app/actions/sector-access";
 import {
   Select,
   SelectContent,
@@ -100,11 +101,30 @@ export function ContextSwitchers({
               <SelectValue placeholder="Setor" />
             </SelectTrigger>
             <SelectContent>
-              {options.sectors.map((s) => (
-                <SelectItem key={s.id} value={s.slug}>
-                  {s.name}
-                </SelectItem>
-              ))}
+              {options.sectors.map((s) => {
+                const locked =
+                  s.access_state === "request_access" ||
+                  s.access_state === "em_breve";
+                return (
+                  <SelectItem
+                    key={s.id}
+                    value={s.slug}
+                    disabled={locked}
+                    onSelect={(e) => {
+                      if (s.access_state === "request_access") {
+                        e.preventDefault();
+                        void requestSectorAccessAction(s.slug);
+                      }
+                    }}
+                  >
+                    {s.name}
+                    {s.access_state === "em_breve" ? " (em breve)" : ""}
+                    {s.access_state === "request_access"
+                      ? " — solicitar acesso"
+                      : ""}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

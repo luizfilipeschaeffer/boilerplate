@@ -4,6 +4,8 @@ import {
   listMarketSegments,
   listOrganizationProvisioning,
   listSegmentPhaseConfigs,
+  listSegmentSectorModuleTemplates,
+  listSegmentSectorTemplates,
   upsertMarketSegment,
   upsertSegmentPhaseConfig,
 } from "@boilerplate/db";
@@ -33,14 +35,18 @@ export async function loadSegmentsList() {
 
 export async function loadSegmentPhasesData(segmentSlug: string) {
   const ctx = await requirePlatformModule("platform-segmentos");
-  const [segment, phases] = await Promise.all([
+  const [segment, phases, sectorTemplates, moduleTemplates] = await Promise.all([
     listMarketSegments().then((list) => list.find((s) => s.slug === segmentSlug) ?? null),
     listSegmentPhaseConfigs(segmentSlug),
+    listSegmentSectorTemplates(segmentSlug),
+    listSegmentSectorModuleTemplates(segmentSlug),
   ]);
   if (!segment) throw new Error("Segmento não encontrado.");
   return {
     segment,
     phases,
+    sectorTemplates,
+    moduleTemplates,
     modules: loadRegistryModules(),
     canEdit: canEditSegments(ctx.platformRole),
   };

@@ -7,13 +7,15 @@ export default async function SegmentoFasesPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { segment, phases, modules, canEdit } = await loadSegmentPhasesData(slug);
+  const data = await loadSegmentPhasesData(slug);
   return (
     <SegmentoFasesView
-      segment={segment}
-      phases={phases}
-      modules={modules}
-      canEdit={canEdit}
+      segment={data.segment}
+      phases={data.phases}
+      sectorTemplates={data.sectorTemplates}
+      moduleTemplates={data.moduleTemplates}
+      modules={data.modules}
+      canEdit={data.canEdit}
     />
   );
 }

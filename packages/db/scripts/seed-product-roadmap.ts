@@ -87,6 +87,9 @@ const data = JSON.parse(raw) as RoadmapJson;
 
 const { prisma } = await import("../src/client");
 const { syncRegistryToCatalog } = await import("../src/product-roadmap");
+const { seedSegmentSectorTemplatesFromJson } = await import(
+  "../src/sector-provisioning"
+);
 
 console.log("[seed-roadmap] Setores core…");
 for (const s of data.sectors) {
@@ -217,9 +220,10 @@ const { seedAllSegmentPhaseConfigs } = await import("../src/segment-phases");
 const { seedPlatformCatalogFromJson } = await import("../src/platform-integrators");
 const phaseConfigs = await seedAllSegmentPhaseConfigs();
 const catalog = await seedPlatformCatalogFromJson();
+const sectorTemplates = await seedSegmentSectorTemplatesFromJson();
 
 console.log(
-  `[seed-roadmap] OK — ${data.sectors.length} setores, ${data.modules.length} módulos, ${data.segments.length} segmentos, ${phaseConfigs} configs fase, ${catalog.integrators} integradores, ${catalog.gateways} gateways, ${catalog.planos} planos, ${catalog.bundles} bundles, sync registry: ${synced}`,
+  `[seed-roadmap] OK — ${data.sectors.length} setores, ${data.modules.length} módulos, ${data.segments.length} segmentos, ${phaseConfigs} configs fase, ${sectorTemplates.sectors} templates setor, ${sectorTemplates.modules} templates módulo, ${catalog.integrators} integradores, ${catalog.gateways} gateways, ${catalog.planos} planos, ${catalog.bundles} bundles, sync registry: ${synced}`,
 );
 
 await prisma.$disconnect();

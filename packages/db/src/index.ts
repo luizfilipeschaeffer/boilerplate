@@ -11,6 +11,7 @@ export * from "./tenant/purchase-orders";
 export * from "./tenant/clients";
 export * from "./branches";
 export * from "./sectors-admin";
+export * from "./sector-provisioning";
 export * from "./sector-dashboard";
 export * from "./command-palette-shortcuts";
 export * from "./member-account-status";

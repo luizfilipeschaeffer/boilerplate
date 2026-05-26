@@ -105,9 +105,24 @@ export function ConfigSetoresView() {
                 onClick={() => setSelectedSector(s.id)}
               >
                 <span className="flex flex-1 flex-col items-start gap-0.5">
-                  <span>{s.name}</span>
+                  <span className="flex items-center gap-2">
+                    {s.name}
+                    {s.visibility_status === "em_breve" ? (
+                      <Badge variant="outline" className="text-[10px]">
+                        Em breve
+                      </Badge>
+                    ) : null}
+                    {s.is_aggregator ? (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Agregador
+                      </Badge>
+                    ) : null}
+                  </span>
                   <span className="text-xs font-normal opacity-70">
                     {s.slug}
+                    {s.core_sector_slug
+                      ? ` · core:${s.core_sector_slug}`
+                      : ""}
                   </span>
                 </span>
                 <Badge variant="secondary" className="ml-2 shrink-0">

@@ -3,6 +3,7 @@ import {
   resolveMemberAccountStatus,
   type MemberAccountStatus,
 } from "./member-account-status";
+import { listVisibleSectorsForOrg } from "./sector-provisioning";
 import { listSectors, type SectorRow } from "./sectors-admin";
 
 export type { MemberAccountStatus } from "./member-account-status";
@@ -131,25 +132,21 @@ export async function listSectorsAccessibleToUser(
 
   if (!membership) return [];
 
-  const all = await listSectors(organizationId);
-  const isAdmin =
-    membership.role === "dono" || membership.role === "gerente";
+  const visible = await listVisibleSectorsForOrg(organizationId, {
+    membershipId: membership.id,
+  });
 
-  // Dono/gerente enxergam todos os setores da org (sidebar e permissões de contexto).
-  if (isAdmin) return all;
-
-  if (membership.membershipSectors.length === 0) {
-    const geral = all.filter((s) => s.slug === "geral");
-    return geral.length > 0 ? geral : all.slice(0, 1);
-  }
-
-  return membership.membershipSectors
-    .map((ms) => ({
-      id: ms.sector.id,
-      organization_id: ms.sector.organizationId,
-      name: ms.sector.name,
-      slug: ms.sector.slug,
-      core_sector_slug: ms.sector.coreSectorSlug,
+  return visible
+    .filter((s) => s.accessState !== "hidden")
+    .map((s) => ({
+      id: s.id,
+      organization_id: organizationId,
+      name: s.name,
+      slug: s.slug,
+      core_sector_slug: s.coreSectorSlug,
+      visibility_status: s.visibilityStatus,
+      is_aggregator: s.isAggregator,
+      access_state: s.accessState,
     }))
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 }

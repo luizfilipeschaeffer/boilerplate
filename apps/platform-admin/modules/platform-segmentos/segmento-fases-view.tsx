@@ -1,6 +1,11 @@
 "use client";
 
-import type { MarketSegmentRow, SegmentPhaseConfigRow } from "@boilerplate/db";
+import type {
+  MarketSegmentRow,
+  SegmentPhaseConfigRow,
+  SegmentSectorModuleTemplateRow,
+  SegmentSectorTemplateRow,
+} from "@boilerplate/db";
 import type { ModuleDefinition } from "@boilerplate/shared";
 import {
   getCoreRowModel,
@@ -38,11 +43,15 @@ function buildPhaseRows(
 export function SegmentoFasesView({
   segment,
   phases,
+  sectorTemplates,
+  moduleTemplates,
   modules,
   canEdit,
 }: {
   segment: MarketSegmentRow;
   phases: SegmentPhaseConfigRow[];
+  sectorTemplates: SegmentSectorTemplateRow[];
+  moduleTemplates: SegmentSectorModuleTemplateRow[];
   modules: ModuleDefinition[];
   canEdit: boolean;
 }) {
@@ -189,6 +198,57 @@ export function SegmentoFasesView({
           onRowClick={abrirFase}
           emptyMessage="Nenhuma fase configurada."
         />
+
+        <div className="flex flex-col gap-2 border-t pt-6">
+          <h2 className="text-lg font-semibold">Template de setores</h2>
+          <p className="text-sm text-muted-foreground">
+            Setores provisionados por fase (signup e expansão). Seed via{" "}
+            <code className="text-xs">segment-sector-templates.json</code>.
+          </p>
+          {sectorTemplates.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum template — execute db:seed-roadmap.
+            </p>
+          ) : (
+            <ul className="grid gap-2 text-sm md:grid-cols-2">
+              {sectorTemplates.map((t) => (
+                <li
+                  key={t.sectorSlug}
+                  className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2"
+                >
+                  <span className="font-medium">{t.displayName}</span>
+                  <Badge variant="outline">P{t.phaseMin}+</Badge>
+                  <Badge variant="secondary">{t.visibilityDefault}</Badge>
+                  {t.isAggregator ? (
+                    <Badge variant="secondary">Agregador</Badge>
+                  ) : null}
+                  <span className="text-xs text-muted-foreground">
+                    {t.sectorSlug} · {t.coreSectorSlug}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <h2 className="text-lg font-semibold">Módulos por setor (template)</h2>
+          {moduleTemplates.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum vínculo.</p>
+          ) : (
+            <ul className="flex flex-col gap-1 text-sm">
+              {moduleTemplates.map((m) => (
+                <li key={`${m.moduleId}-${m.coreSectorSlug}`} className="font-mono text-xs">
+                  {m.moduleId} → {m.coreSectorSlug}
+                  {m.shortcutCoreSectorSlugs.length > 0
+                    ? ` (atalho: ${m.shortcutCoreSectorSlugs.join(", ")})`
+                    : ""}
+                  <span className="text-muted-foreground"> · P{m.phaseMin}+</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
 
       <SegmentPhaseEditDialog
