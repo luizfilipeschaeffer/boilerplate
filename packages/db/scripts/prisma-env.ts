@@ -72,9 +72,10 @@ const require = createRequire(join(DB_ROOT, "package.json"));
 const prismaEntry = require.resolve("prisma/build/index.js");
 
 const fileVars = envFile ? loadEnvFile(envFile) : {};
+/** Arquivo como base; variáveis já definidas no processo (CI, release-gate) prevalecem. */
 const env = {
-  ...process.env,
   ...fileVars,
+  ...process.env,
 };
 
 if (!env.DATABASE_URL) {

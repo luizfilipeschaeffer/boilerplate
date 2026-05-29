@@ -84,6 +84,12 @@ jobs:
       - name: Dependency audit
         run: bun audit --audit-level=high
 
+      - name: Generate Prisma client
+        run: bun run db:generate
+
+      - name: Aplicar schema no Postgres (testes de integração)
+        run: bun run db:push
+
       - name: Testes (CI)
         run: bun run test:ci
 
