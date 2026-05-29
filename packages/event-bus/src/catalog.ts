@@ -34,6 +34,9 @@ export const OFFICIAL_EVENT_CATALOG = {
     deprecated: "crm-helpdesk.ticket.closed",
   },
   "crm-helpdesk.kb.published": { version: "1.0.0", module: "crm-helpdesk" },
+  "civil-obras.entrada.publicada": { version: "1.0.0", module: "civil-obras" },
+  "civil-obras.usuario.convidado": { version: "1.0.0", module: "civil-obras" },
+  "civil-obras.relatorio.gerado": { version: "1.0.0", module: "civil-obras" },
 } as const;
 
 export type OfficialEventType = keyof typeof OFFICIAL_EVENT_CATALOG;

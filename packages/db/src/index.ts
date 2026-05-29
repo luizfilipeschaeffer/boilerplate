@@ -40,6 +40,7 @@ export * from "./login-email-verification";
 export * from "./password-reset";
 export * from "./user-password";
 export * from "./crm";
+export * from "./civil-obras";
 export * from "./crm-helpdesk";
 export * from "./billing-pricing";
 export * from "./platform-comms";

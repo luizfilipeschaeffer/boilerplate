@@ -3,6 +3,7 @@
 | Documento | Descrição |
 |-----------|-----------|
 | **[publicacao-pr-comunidade.md](./publicacao-pr-comunidade.md)** | Guia completo para desenvolvedores submeterem PR padronizada (módulos e integradores) |
+| **[../prompts/prompt-origem-novo-modulo.md](../prompts/prompt-origem-novo-modulo.md)** | Prompt único autocontido (origem → prompt final de módulo) para colar em qualquer LLM |
 | [ecosystem.publication.schema.json](./ecosystem.publication.schema.json) | JSON Schema dos metadados `ecosystem.publication.json` |
 
 ## Fluxo resumido

@@ -3,6 +3,7 @@ export type IntegratorTipo =
   | "fiscal"
   | "messaging"
   | "social"
+  | "storage"
   | "webhook";
 
 export interface IntegratorDefinition {
@@ -81,3 +82,11 @@ registerIntegrator({
   tipo: "social",
   modulosSuportados: ["platform-comms"],
 });
+
+registerIntegrator({
+  id: "storage-s3-mock",
+  tipo: "storage",
+  modulosSuportados: ["civil-obras", "*"],
+});
+
+export { createStorageS3Adapter, presignUploadUrl } from "./storage-s3";

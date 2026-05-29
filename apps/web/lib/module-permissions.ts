@@ -71,6 +71,11 @@ export const MODULE_PERMISSION_MATRIX: Record<
     editar: ["dono", "gerente", "operador"],
     fechar: ["dono", "gerente"],
   },
+  "civil-obras": {
+    ver: ["dono", "gerente", "operador", "vendedor"],
+    registrar: ["dono", "gerente", "operador"],
+    editar: ["dono", "gerente"],
+  },
 };
 
 const DEFAULT_PERMISSIONS: ModulePermissionKey[] = ["ver"];

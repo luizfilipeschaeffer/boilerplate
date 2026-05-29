@@ -15,6 +15,16 @@ registerModuleTables("example-module", [
   { name: "example_module_items", description: "Example module items" },
 ]);
 
+registerModuleTables("civil-obras", [
+  { name: "civil_obras_obras", description: "Obras civis" },
+  { name: "civil_obras_usuarios", description: "Usuários isolados por obra" },
+  { name: "civil_obras_entradas", description: "Entradas do diário" },
+  { name: "civil_obras_midias", description: "Mídias anexadas" },
+  { name: "civil_obras_mencoes", description: "Menções em entradas" },
+  { name: "civil_obras_eventos", description: "Marcos e eventos de calendário" },
+  { name: "civil_obras_relatorios", description: "Relatórios PDF gerados" },
+]);
+
 registerModuleTables("crm-helpdesk", [
   { name: "crm_helpdesk_tickets", description: "Helpdesk tickets" },
   { name: "crm_helpdesk_queues", description: "Helpdesk queues" },
