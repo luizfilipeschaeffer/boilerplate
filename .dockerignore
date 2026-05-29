@@ -1,0 +1,16 @@
+.git
+.github
+.cursor
+.specs
+bkp
+**/.next
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+apps/marketplace
+apps/platform-admin
+doc
+*.md
+!infra/self-hosted/README-self-hosted.md
+.env*
+!.env.example

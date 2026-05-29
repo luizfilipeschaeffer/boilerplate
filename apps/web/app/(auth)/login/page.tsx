@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { resolveAuthMode } from "@boilerplate/platform-api";
 
 import { AuthPanel } from "@/components/auth-panel";
 import { StripAuthSearchParams } from "@/components/strip-auth-search-params";
@@ -7,7 +8,12 @@ import { normalizeEmailParam } from "@/lib/mask-email";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string; reason?: string; primeiroAcesso?: string }>;
+  searchParams: Promise<{
+    email?: string;
+    reason?: string;
+    primeiroAcesso?: string;
+    callbackUrl?: string;
+  }>;
 }) {
   const params = await searchParams;
   const initialEmail = normalizeEmailParam(params.email) ?? "";
@@ -24,6 +30,8 @@ export default async function LoginPage({
           initialEmail={initialEmail}
           inactivityLogout={inactivityLogout}
           firstAccessHint={firstAccessHint}
+          authMode={resolveAuthMode()}
+          callbackUrl={params.callbackUrl}
         />
       </div>
     </div>

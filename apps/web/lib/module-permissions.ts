@@ -65,6 +65,12 @@ export const MODULE_PERMISSION_MATRIX: Record<
     cancelar: ["dono", "gerente"],
   },
   aprendiz: { ver: ["dono", "gerente", "vendedor", "operador"] },
+  "crm-helpdesk": {
+    ver: ["dono", "gerente", "operador", "vendedor"],
+    registrar: ["dono", "gerente", "operador", "vendedor"],
+    editar: ["dono", "gerente", "operador"],
+    fechar: ["dono", "gerente"],
+  },
 };
 
 const DEFAULT_PERMISSIONS: ModulePermissionKey[] = ["ver"];

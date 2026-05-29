@@ -61,8 +61,20 @@ jobs:
       - name: Dependency audit
         run: bun audit --audit-level=high
 
+      - name: Generate Prisma client
+        run: bun run db:generate
+
+      - name: Aplicar schema no Postgres (testes de integração)
+        run: bun run db:push
+
       - name: SDK tests
         run: bun run --filter @boilerplate/sdk-core test
+
+      - name: Testes (CI)
+        run: bun run test:ci
+
+      - name: Self-hosted compose check
+        run: bun run check:self-hosted-compose
 
       - name: Validate Prisma schema
         run: bun run db:validate

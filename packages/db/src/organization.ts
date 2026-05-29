@@ -1,6 +1,13 @@
+import type { Fase } from "@boilerplate/shared";
 import { prisma, type Prisma } from "./client";
+import { resolveDeploymentMode } from "@boilerplate/platform-api";
+import { loadLicenseCache } from "./self-hosted/local-install-state";
+import type { LicensePayload } from "@boilerplate/platform-api";
 import { ensureDefaultBranch } from "./branches";
-import { seedDefaultSectorModules } from "./sectors-admin";
+import {
+  distributeModulesToSectors,
+  provisionSectorsForPhase,
+} from "./sector-provisioning";
 import { provisionTenantSchema } from "./tenant/provision";
 import { schemaNameFromSlug } from "./tenant/schema";
 
@@ -111,76 +118,102 @@ export async function createOrganizationWithTenant(
   input: CreateOrganizationInput,
   ownerUserId: string,
 ) {
+  if (resolveDeploymentMode() === "self_hosted") {
+    const cached = await loadLicenseCache();
+    if (cached) {
+      const license = JSON.parse(cached.payloadJson) as LicensePayload;
+      const count = await prisma.organization.count();
+      if (count >= license.limits.organizations) {
+        throw new Error(
+          `Limite de organizações atingido (${license.limits.organizations}).`,
+        );
+      }
+    }
+  }
+
   const schemaName = schemaNameFromSlug(input.slug);
+  const marketSegmentSlug =
+    input.marketSegmentSlug ?? input.segmentoAtuacao ?? "varejo";
+  const declaredPhase = (input.declaredPhase ?? input.phase) as Fase;
 
-  const org = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const organizationData: Prisma.OrganizationUncheckedCreateInput = {
-      name: input.name,
-      slug: input.slug,
-      schemaName,
-      phase: input.phase,
-      tipoNegocio: input.tipoNegocio,
-      segmentoAtuacao: input.segmentoAtuacao,
-      marketSegmentSlug:
-        input.marketSegmentSlug ?? input.segmentoAtuacao ?? null,
-      diagnosedPhase: input.diagnosedPhase ?? input.phase,
-      declaredPhase: input.declaredPhase ?? input.phase,
-      provisioningStatus: input.provisioningStatus ?? "trial",
-      paymentIntegratorId: input.paymentIntegratorId ?? null,
-      trialEndsAt: input.trialEndsAt ?? null,
-      hasCnpj: input.hasCnpj,
-      cnpj: input.cnpj,
-      fiscalReady: input.fiscalReady,
-    };
+  const { org, membershipId, branchId } = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      const organizationData: Prisma.OrganizationUncheckedCreateInput = {
+        name: input.name,
+        slug: input.slug,
+        schemaName,
+        phase: input.phase,
+        tipoNegocio: input.tipoNegocio,
+        segmentoAtuacao: input.segmentoAtuacao,
+        marketSegmentSlug,
+        diagnosedPhase: input.diagnosedPhase ?? input.phase,
+        declaredPhase,
+        provisioningStatus: input.provisioningStatus ?? "trial",
+        paymentIntegratorId: input.paymentIntegratorId ?? null,
+        trialEndsAt: input.trialEndsAt ?? null,
+        hasCnpj: input.hasCnpj,
+        cnpj: input.cnpj,
+        fiscalReady: input.fiscalReady,
+      };
 
-    const organization = await tx.organization.create({
-      data: organizationData,
-    });
+      const organization = await tx.organization.create({
+        data: organizationData,
+      });
 
-    const sector = await tx.sector.create({
-      data: {
-        organizationId: organization.id,
-        name: "Geral",
-        slug: "geral",
-        coreSectorSlug: "comercial",
-      },
-    });
+      const branch = await tx.branch.create({
+        data: {
+          organizationId: organization.id,
+          name: "Matriz",
+          slug: "matriz",
+          isDefault: true,
+        },
+      });
 
-    const branch = await tx.branch.create({
-      data: {
-        organizationId: organization.id,
-        name: "Matriz",
-        slug: "matriz",
-        isDefault: true,
-      },
-    });
+      const membership = await tx.membership.create({
+        data: {
+          userId: ownerUserId,
+          organizationId: organization.id,
+          role: "dono",
+          defaultBranchId: branch.id,
+        } satisfies Prisma.MembershipUncheckedCreateInput,
+      });
 
-    const membership = await tx.membership.create({
-      data: {
-        userId: ownerUserId,
-        organizationId: organization.id,
-        role: "dono",
-        defaultBranchId: branch.id,
-      } satisfies Prisma.MembershipUncheckedCreateInput,
-    });
+      await provisionSectorsForPhase(
+        {
+          organizationId: organization.id,
+          marketSegmentSlug,
+          phase: declaredPhase,
+          branchId: branch.id,
+          ownerMembershipId: membership.id,
+        },
+        tx,
+      );
 
-    await tx.membershipSector.create({
-      data: {
+      return {
+        org: organization,
         membershipId: membership.id,
-        sectorId: sector.id,
-      },
-    });
-
-    return organization;
-  });
+        branchId: branch.id,
+      };
+    },
+  );
 
   await provisionTenantSchema(org.schemaName);
-
-  const moduleIds = await getActiveModuleIdsForOrg(org.id);
-  await seedDefaultSectorModules(org.id, "geral", moduleIds);
   await ensureDefaultBranch(org.id);
 
   return org;
+}
+
+/** Após definir modulos_ativos, distribui nos setores do template. */
+export async function syncSectorModulesFromTemplate(
+  organizationId: string,
+  opts: { marketSegmentSlug: string; phase: Fase; moduleIds: string[] },
+): Promise<void> {
+  await distributeModulesToSectors({
+    organizationId,
+    marketSegmentSlug: opts.marketSegmentSlug,
+    phase: opts.phase,
+    activeModuleIds: opts.moduleIds,
+  });
 }
 
 export async function setOrganizationModules(

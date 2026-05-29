@@ -109,3 +109,40 @@ export async function responderMensagemAprendizComLlm(
     mode: "templates",
   };
 }
+
+export type HelpdeskKbHit = {
+  kbEntryId: string;
+  title: string;
+  snippet: string;
+  score: number;
+};
+
+/** Respostas com contexto da base de conhecimento do Help Desk. */
+export async function responderMensagemAprendizComHelpdesk(
+  text: string,
+  ctx: {
+    kbHits?: HelpdeskKbHit[];
+    ownerFirstName?: string;
+    negocioNome?: string;
+  },
+): Promise<string> {
+  const hits = ctx.kbHits ?? [];
+  if (hits.length > 0) {
+    const lines = hits
+      .slice(0, 3)
+      .map((h, i) => `${i + 1}. ${h.title}: ${h.snippet.replace(/<[^>]+>/g, "")}`);
+    return `Encontrei na base de conhecimento:\n\n${lines.join("\n\n")}\n\nSe isso resolver, ótimo. Caso contrário, abra um ticket no Help Desk com os detalhes.`;
+  }
+
+  const q = text.trim().toLowerCase();
+  if (
+    /help|suporte|ti\b|computador|senha|email|rede|impressora|vpn|acesso|sistema/.test(
+      q,
+    )
+  ) {
+    return "Não encontrei um artigo correspondente na base ainda. Descreva o sintoma (o que você fez, mensagem de erro) e abra um ticket — a equipe de TI acompanha por lá.";
+  }
+
+  const llm = await responderMensagemAprendizComLlm(text, ctx);
+  return llm.reply;
+}

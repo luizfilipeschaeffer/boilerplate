@@ -9,6 +9,8 @@ export type Permission =
   | `${string}.read`
   | `${string}.write`
   | `${string}.admin`
+  | `${string}.assign`
+  | `${string}.kb.publish`
   | "billing.read"
   | "billing.write"
   | "members.manage";

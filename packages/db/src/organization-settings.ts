@@ -7,6 +7,7 @@ import {
   seedDefaultPricingIfEmpty,
 } from "./billing-pricing";
 import { getActiveModuleIdsForOrg } from "./organization";
+import { distributeModulesToSectors } from "./sector-provisioning";
 import { listSectors, setSectorModules } from "./sectors-admin";
 
 export type OrganizationProfileInput = {
@@ -60,11 +61,35 @@ export async function getOrganizationCompanySettings(organizationId: string) {
   };
 }
 
-/** Alinha módulos de todos os setores com os ativos na org (menu da sidebar). */
+/** Distribui módulos ativos nos setores (template por segmento ou fallback legado). */
 export async function syncSectorModulesWithOrganization(
   organizationId: string,
   moduleIds: string[],
 ): Promise<void> {
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: {
+      marketSegmentSlug: true,
+      segmentoAtuacao: true,
+      phase: true,
+      declaredPhase: true,
+    },
+  });
+
+  const marketSegmentSlug =
+    org?.marketSegmentSlug ?? org?.segmentoAtuacao ?? "varejo";
+  const phase = (org?.declaredPhase ?? org?.phase ?? 1) as 1 | 2 | 3 | 4;
+
+  if (org?.marketSegmentSlug || org?.segmentoAtuacao) {
+    await distributeModulesToSectors({
+      organizationId,
+      marketSegmentSlug,
+      phase,
+      activeModuleIds: moduleIds,
+    });
+    return;
+  }
+
   const sectors = await listSectors(organizationId);
   await Promise.all(
     sectors.map((sector) => setSectorModules(sector.id, moduleIds)),

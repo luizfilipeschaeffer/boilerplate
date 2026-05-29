@@ -1,0 +1,66 @@
+{
+  "sectorTemplates": [
+    { "segmentSlug": "varejo", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Geral", "sectorSlug": "geral", "visibilityDefault": "active", "isAggregator": true, "ordem": 0 },
+    { "segmentSlug": "varejo", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Loja", "sectorSlug": "loja", "visibilityDefault": "active", "isAggregator": false, "ordem": 10 },
+    { "segmentSlug": "varejo", "phaseMin": 1, "coreSectorSlug": "operacao", "displayName": "Estoque", "sectorSlug": "estoque", "visibilityDefault": "em_breve", "isAggregator": false, "ordem": 20 },
+    { "segmentSlug": "varejo", "phaseMin": 2, "coreSectorSlug": "financeiro", "displayName": "Financeiro", "sectorSlug": "financeiro", "visibilityDefault": "hidden", "isAggregator": false, "ordem": 30 },
+    { "segmentSlug": "varejo", "phaseMin": 2, "coreSectorSlug": "fiscal", "displayName": "Fiscal", "sectorSlug": "fiscal", "visibilityDefault": "em_breve", "isAggregator": false, "ordem": 40 },
+    { "segmentSlug": "varejo", "phaseMin": 3, "coreSectorSlug": "analytics", "displayName": "Analytics", "sectorSlug": "analytics", "visibilityDefault": "hidden", "isAggregator": false, "ordem": 50 },
+
+    { "segmentSlug": "restaurante", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Geral", "sectorSlug": "geral", "visibilityDefault": "active", "isAggregator": true, "ordem": 0 },
+    { "segmentSlug": "restaurante", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Atendimento", "sectorSlug": "atendimento", "visibilityDefault": "active", "isAggregator": false, "ordem": 10 },
+    { "segmentSlug": "restaurante", "phaseMin": 1, "coreSectorSlug": "operacao", "displayName": "Cozinha", "sectorSlug": "cozinha", "visibilityDefault": "em_breve", "isAggregator": false, "ordem": 20 },
+    { "segmentSlug": "restaurante", "phaseMin": 2, "coreSectorSlug": "logistica", "displayName": "Delivery", "sectorSlug": "delivery", "visibilityDefault": "em_breve", "isAggregator": false, "ordem": 30 },
+    { "segmentSlug": "restaurante", "phaseMin": 2, "coreSectorSlug": "fiscal", "displayName": "Fiscal", "sectorSlug": "fiscal", "visibilityDefault": "hidden", "isAggregator": false, "ordem": 40 },
+
+    { "segmentSlug": "alimentacao_food", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Geral", "sectorSlug": "geral", "visibilityDefault": "active", "isAggregator": true, "ordem": 0 },
+    { "segmentSlug": "alimentacao_food", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Atendimento", "sectorSlug": "atendimento", "visibilityDefault": "active", "isAggregator": false, "ordem": 10 },
+    { "segmentSlug": "alimentacao_food", "phaseMin": 1, "coreSectorSlug": "operacao", "displayName": "Cozinha", "sectorSlug": "cozinha", "visibilityDefault": "em_breve", "isAggregator": false, "ordem": 20 },
+    { "segmentSlug": "alimentacao_food", "phaseMin": 2, "coreSectorSlug": "logistica", "displayName": "Delivery", "sectorSlug": "delivery", "visibilityDefault": "hidden", "isAggregator": false, "ordem": 30 },
+
+    { "segmentSlug": "ecommerce", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Geral", "sectorSlug": "geral", "visibilityDefault": "active", "isAggregator": true, "ordem": 0 },
+    { "segmentSlug": "ecommerce", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Marketplace", "sectorSlug": "marketplace", "visibilityDefault": "active", "isAggregator": false, "ordem": 10 },
+    { "segmentSlug": "ecommerce", "phaseMin": 2, "coreSectorSlug": "atendimento", "displayName": "Atendimento", "sectorSlug": "sac", "visibilityDefault": "hidden", "isAggregator": false, "ordem": 20 },
+    { "segmentSlug": "ecommerce", "phaseMin": 2, "coreSectorSlug": "logistica", "displayName": "Logística", "sectorSlug": "logistica", "visibilityDefault": "em_breve", "isAggregator": false, "ordem": 30 },
+
+    { "segmentSlug": "saude", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Geral", "sectorSlug": "geral", "visibilityDefault": "active", "isAggregator": true, "ordem": 0 },
+    { "segmentSlug": "saude", "phaseMin": 1, "coreSectorSlug": "operacao", "displayName": "Clínico", "sectorSlug": "clinico", "visibilityDefault": "active", "isAggregator": false, "ordem": 10 },
+    { "segmentSlug": "saude", "phaseMin": 2, "coreSectorSlug": "atendimento", "displayName": "Atendimento", "sectorSlug": "atendimento", "visibilityDefault": "hidden", "isAggregator": false, "ordem": 20 },
+    { "segmentSlug": "saude", "phaseMin": 3, "coreSectorSlug": "compliance", "displayName": "Compliance", "sectorSlug": "compliance", "visibilityDefault": "hidden", "isAggregator": false, "ordem": 30 },
+
+    { "segmentSlug": "tecnologia_software", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Geral", "sectorSlug": "geral", "visibilityDefault": "active", "isAggregator": true, "ordem": 0 },
+    { "segmentSlug": "tecnologia_software", "phaseMin": 1, "coreSectorSlug": "comercial", "displayName": "Comercial", "sectorSlug": "comercial", "visibilityDefault": "active", "isAggregator": false, "ordem": 10 },
+    { "segmentSlug": "tecnologia_software", "phaseMin": 2, "coreSectorSlug": "tecnologia", "displayName": "Produto", "sectorSlug": "produto", "visibilityDefault": "hidden", "isAggregator": false, "ordem": 20 },
+    { "segmentSlug": "tecnologia_software", "phaseMin": 3, "coreSectorSlug": "tecnologia", "displayName": "Suporte", "sectorSlug": "suporte", "visibilityDefault": "hidden", "isAggregator": false, "ordem": 30 },
+    { "segmentSlug": "tecnologia_software", "phaseMin": 4, "coreSectorSlug": "tecnologia", "displayName": "Desenvolvimento", "sectorSlug": "desenvolvimento", "visibilityDefault": "hidden", "isAggregator": false, "ordem": 40 }
+  ],
+  "moduleTemplates": [
+    { "segmentSlug": "varejo", "coreSectorSlug": "comercial", "moduleId": "core-catalogo", "phaseMin": 1, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "varejo", "coreSectorSlug": "comercial", "moduleId": "core-clientes", "phaseMin": 1, "shortcutCoreSectorSlugs": ["loja"] },
+    { "segmentSlug": "varejo", "coreSectorSlug": "comercial", "moduleId": "core-vendas", "phaseMin": 1, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "varejo", "coreSectorSlug": "comercial", "moduleId": "core-crm", "phaseMin": 1, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "varejo", "coreSectorSlug": "operacao", "moduleId": "core-estoque-basico", "phaseMin": 1, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "varejo", "coreSectorSlug": "financeiro", "moduleId": "fin-fluxo-caixa", "phaseMin": 2, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "varejo", "coreSectorSlug": "fiscal", "moduleId": "fiscal-core", "phaseMin": 2, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "varejo", "coreSectorSlug": "fiscal", "moduleId": "fiscal-nfce", "phaseMin": 2, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "varejo", "coreSectorSlug": "analytics", "moduleId": "rel-basico", "phaseMin": 2, "shortcutCoreSectorSlugs": [] },
+
+    { "segmentSlug": "restaurante", "coreSectorSlug": "comercial", "moduleId": "core-vendas", "phaseMin": 1, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "restaurante", "coreSectorSlug": "comercial", "moduleId": "core-catalogo", "phaseMin": 1, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "restaurante", "coreSectorSlug": "operacao", "moduleId": "segment-alimentacao", "phaseMin": 2, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "restaurante", "coreSectorSlug": "fiscal", "moduleId": "fiscal-core", "phaseMin": 2, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "restaurante", "coreSectorSlug": "fiscal", "moduleId": "fiscal-nfce", "phaseMin": 2, "shortcutCoreSectorSlugs": [] },
+
+    { "segmentSlug": "ecommerce", "coreSectorSlug": "comercial", "moduleId": "core-catalogo", "phaseMin": 1, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "ecommerce", "coreSectorSlug": "comercial", "moduleId": "core-pedidos", "phaseMin": 2, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "ecommerce", "coreSectorSlug": "comercial", "moduleId": "core-clientes", "phaseMin": 1, "shortcutCoreSectorSlugs": ["sac"] },
+
+    { "segmentSlug": "saude", "coreSectorSlug": "comercial", "moduleId": "core-crm", "phaseMin": 1, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "saude", "coreSectorSlug": "comercial", "moduleId": "core-clientes", "phaseMin": 1, "shortcutCoreSectorSlugs": [] },
+
+    { "segmentSlug": "tecnologia_software", "coreSectorSlug": "comercial", "moduleId": "core-crm", "phaseMin": 1, "shortcutCoreSectorSlugs": [] },
+    { "segmentSlug": "tecnologia_software", "coreSectorSlug": "tecnologia", "moduleId": "crm-helpdesk", "phaseMin": 2, "shortcutCoreSectorSlugs": ["suporte"] },
+    { "segmentSlug": "tecnologia_software", "coreSectorSlug": "tecnologia", "moduleId": "aprendiz", "phaseMin": 1, "shortcutCoreSectorSlugs": [] }
+  ],
+  "fallbackSegmentSlug": "varejo"
+}

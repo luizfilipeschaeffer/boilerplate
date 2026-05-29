@@ -1,0 +1,20 @@
+{
+  "name": "@boilerplate/module-installer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "lint": "tsc --noEmit -p tsconfig.json" },
+  "dependencies": {
+    "@boilerplate/platform-api": "workspace:*",
+    "@boilerplate/license-client": "workspace:*",
+    "@boilerplate/module-migration-runner": "workspace:*",
+    "@boilerplate/db": "workspace:*",
+    "@boilerplate/module-registry": "workspace:*",
+    "@boilerplate/sdk-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
+  }
+}

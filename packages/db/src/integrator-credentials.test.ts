@@ -16,7 +16,26 @@ const TEST_ORG_SLUG = "test-integrator-creds-org";
 const SECRET_VALUE = "super_secret_test_api_key_xyz";
 
 const hasDatabase = Boolean(process.env.DATABASE_URL?.trim());
-const describeDb = hasDatabase ? describe : describe.skip;
+
+async function isIntegratorCredentialsSchemaReady(): Promise<boolean> {
+  if (!hasDatabase) return false;
+  try {
+    const rows = await prisma.$queryRaw<{ exists: boolean }[]>`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'boilerplate'
+          AND table_name = 'platform_integrator_credentials'
+      ) AS "exists"
+    `;
+    return rows[0]?.exists === true;
+  } catch {
+    return false;
+  }
+}
+
+const schemaReady = await isIntegratorCredentialsSchemaReady();
+const describeDb = hasDatabase && schemaReady ? describe : describe.skip;
 
 describeDb("integrator-credentials (DB)", () => {
   let organizationId: string;

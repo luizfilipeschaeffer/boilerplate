@@ -11,11 +11,15 @@ export function AuthPanel({
   initialEmail = "",
   inactivityLogout = false,
   firstAccessHint = false,
+  authMode = "legacy",
+  callbackUrl,
 }: {
   className?: string;
   initialEmail?: string;
   inactivityLogout?: boolean;
   firstAccessHint?: boolean;
+  authMode?: "central" | "legacy";
+  callbackUrl?: string;
 }) {
   return (
     <div className={cn("flex w-full flex-col gap-4", className)}>
@@ -23,6 +27,8 @@ export function AuthPanel({
         initialEmail={initialEmail}
         inactivityLogout={inactivityLogout}
         firstAccessHint={firstAccessHint}
+        authMode={authMode}
+        callbackUrl={callbackUrl}
       />
       <div className="text-center">
         <p className="text-sm text-muted-foreground">Primeira vez aqui?</p>

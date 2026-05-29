@@ -1,0 +1,186 @@
+name: Docker (self-hosted)
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "modules/**"
+      - "community/**"
+      - "infra/self-hosted/**"
+      - "package.json"
+      - "bun.lock"
+      - "turbo.json"
+      - ".dockerignore"
+      - ".github/workflows/docker-publish.yml"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "modules/**"
+      - "community/**"
+      - "infra/self-hosted/**"
+      - "package.json"
+      - "bun.lock"
+      - "turbo.json"
+      - ".dockerignore"
+      - ".github/workflows/docker-publish.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Testes e qualidade
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: boilerplate
+          POSTGRES_PASSWORD: boilerplate
+          POSTGRES_DB: boilerplate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U boilerplate -d boilerplate"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Environment file
+        run: |
+          cat > .env <<'EOF'
+          DATABASE_URL=postgresql://boilerplate:boilerplate@localhost:5432/boilerplate
+          AUTH_SECRET=ci-only-secret-do-not-use-in-production
+          INTEGRATOR_ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          EOF
+
+      - name: Validate environment
+        run: bun scripts/validate-env.ts
+
+      - name: Dependency audit
+        run: bun audit --audit-level=high
+
+      - name: Generate Prisma client
+        run: bun run db:generate
+
+      - name: Aplicar schema no Postgres (testes de integração)
+        run: bun run db:push
+
+      - name: Testes (CI)
+        run: bun run test:ci
+
+      - name: Validate Prisma schema
+        run: bun run db:validate
+
+      - name: Self-hosted compose check
+        run: bun run check:self-hosted-compose
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Build monorepo
+        run: bun run build
+
+  docker:
+    name: Build imagens (${{ matrix.image }})
+    needs: quality
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: self-hosted-web
+            dockerfile: infra/self-hosted/Dockerfile.web
+          - image: self-hosted-worker
+            dockerfile: infra/self-hosted/Dockerfile.worker
+          - image: self-hosted-license-agent
+            dockerfile: infra/self-hosted/Dockerfile.license-agent
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar secrets do Docker Hub
+        if: github.event_name != 'pull_request'
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          if [ -z "$DOCKER_USERNAME" ]; then
+            echo "::error::Secret DOCKER_USERNAME não configurado. Veja .github/DOCKER_PUBLISH.md"
+            exit 1
+          fi
+          if [ -z "$DOCKER_TOKEN" ]; then
+            echo "::error::Secret DOCKER_TOKEN não configurado. Veja .github/DOCKER_PUBLISH.md"
+            exit 1
+          fi
+
+      - name: Prefixo das imagens
+        id: image_prefix
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "value=${{ github.repository_owner }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=$DOCKER_USERNAME" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login no Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Metadados da imagem
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image_prefix.outputs.value }}/${{ matrix.image }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build e push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

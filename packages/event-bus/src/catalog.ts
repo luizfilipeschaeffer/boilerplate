@@ -24,6 +24,16 @@ export const OFFICIAL_EVENT_CATALOG = {
   "ai.usage.recorded": { version: "1.0.0", module: "ai-runtime" },
   "billing.ai.tokens": { version: "1.0.0", module: "billing" },
   "example.item.created": { version: "1.0.0", module: "example-module" },
+  "crm-helpdesk.ticket.created": { version: "1.0.0", module: "crm-helpdesk" },
+  "crm-helpdesk.ticket.assigned": { version: "1.0.0", module: "crm-helpdesk" },
+  "crm-helpdesk.ticket.resolved": { version: "1.0.0", module: "crm-helpdesk" },
+  "crm-helpdesk.ticket.closed": { version: "1.0.0", module: "crm-helpdesk" },
+  "crm.ticket.encerrado": {
+    version: "1.0.0",
+    module: "crm-helpdesk",
+    deprecated: "crm-helpdesk.ticket.closed",
+  },
+  "crm-helpdesk.kb.published": { version: "1.0.0", module: "crm-helpdesk" },
 } as const;
 
 export type OfficialEventType = keyof typeof OFFICIAL_EVENT_CATALOG;

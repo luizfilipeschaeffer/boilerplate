@@ -5,6 +5,7 @@ import { COMMS_CHANNEL_LABELS } from "@boilerplate/db/platform-comms-labels";
 import { activityTypeLabel } from "@boilerplate/db/platform-crm-ext-labels";
 import Link from "next/link";
 import { useState } from "react";
+import { createTicketFromCommsThreadAction } from "@/app/actions/helpdesk";
 import { sendCommsMessageAction } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function CommsThreadClient({
 }) {
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
+  const [ticketSaving, setTicketSaving] = useState(false);
 
   const crmHref = thread.organizationId
     ? `/crm?view=list`
@@ -88,6 +90,47 @@ export function CommsThreadClient({
           ) : null}
         </CardContent>
       </Card>
+
+      {thread.organizationId && canEdit ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Help Desk</CardTitle>
+            <CardDescription>
+              {thread.helpdeskTicketId
+                ? `Ticket vinculado: ${thread.helpdeskTicketId}`
+                : "Criar ticket de suporte no tenant da organização."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {thread.helpdeskTicketId ? (
+              <Link href="/helpdesk" className="text-primary text-sm hover:underline">
+                Ver agregado Help Desk
+              </Link>
+            ) : (
+              <Button
+                type="button"
+                disabled={ticketSaving}
+                onClick={async () => {
+                  setTicketSaving(true);
+                  try {
+                    const preview =
+                      thread.messages.at(-1)?.body?.slice(0, 500) ?? "";
+                    await createTicketFromCommsThreadAction(
+                      thread.id,
+                      thread.subject,
+                      preview || thread.subject,
+                    );
+                  } finally {
+                    setTicketSaving(false);
+                  }
+                }}
+              >
+                {ticketSaving ? "Criando…" : "Criar ticket a partir desta thread"}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

@@ -10,6 +10,7 @@
     "lint": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@boilerplate/crm-helpdesk-module": "workspace:*",
     "@boilerplate/shared": "workspace:*",
     "@boilerplate/sdk-core": "workspace:*"
   },

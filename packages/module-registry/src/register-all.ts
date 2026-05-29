@@ -1,3 +1,4 @@
+import { moduleContract as crmHelpdeskModuleContract } from "@boilerplate/crm-helpdesk-module";
 import type { CoreSectorSlug, DeliveryMarco } from "@boilerplate/shared";
 import { registerModule } from "./registry";
 import { defineModule } from "./define-module";
@@ -298,5 +299,19 @@ export function registerAllModules(): void {
     depthTarget: 4,
     depthTargetMarco: "R3",
     deliveryMarco: "R1",
+  });
+
+  scaffold("crm-helpdesk", "Help Desk TI", {
+    navOrdem: 86,
+    routePath: crmHelpdeskModuleContract.routes[0]?.path ?? "/helpdesk",
+    faseMinima: 2,
+    dependencias: ["aprendiz"],
+    implementationStatus: "implemented",
+    sectorSlug: "tecnologia",
+    camada: "Tática",
+    depthCurrent: 2,
+    depthTarget: 3,
+    depthTargetMarco: "R3",
+    deliveryMarco: "R3",
   });
 }

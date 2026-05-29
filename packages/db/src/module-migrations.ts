@@ -15,6 +15,18 @@ registerModuleTables("example-module", [
   { name: "example_module_items", description: "Example module items" },
 ]);
 
+registerModuleTables("crm-helpdesk", [
+  { name: "crm_helpdesk_tickets", description: "Helpdesk tickets" },
+  { name: "crm_helpdesk_queues", description: "Helpdesk queues" },
+  { name: "crm_helpdesk_sla_policies", description: "SLA policies" },
+  { name: "crm_helpdesk_kb_entries", description: "Knowledge base entries" },
+  { name: "crm_helpdesk_kb_posts", description: "KB thread posts" },
+  { name: "crm_helpdesk_ticket_kb_links", description: "Ticket KB links" },
+  { name: "crm_helpdesk_kb_search_chunks", description: "KB search index" },
+  { name: "crm_helpdesk_csat_responses", description: "CSAT responses" },
+  { name: "crm_helpdesk_automation_rules", description: "Automation rules" },
+]);
+
 const moduleMigrations = new Map<string, ModuleMigrationFn[]>();
 
 export function registerModuleMigrations(moduleId: string, migrations: ModuleMigrationFn[]): void {

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { assertActiveMembership } from "@boilerplate/db";
+import type { MemberRole } from "@boilerplate/db";
 
 export async function requireTenantContext() {
   const session = await auth();
@@ -19,7 +20,8 @@ export async function requireTenantContext() {
     schemaName: membership.schemaName,
     branchId: session?.branchId ?? membership.branchId ?? null,
     sectorId: session?.sectorId ?? "geral",
-    role: membership.role,
+    role: membership.role as MemberRole,
     userId,
+    membershipId: membership.membershipId,
   };
 }

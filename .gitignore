@@ -11,6 +11,7 @@ coverage
 .vercel
 packages/db/src/generated
 apps/*/src/generated
+artifacts/release-gate/
 
 
 .env

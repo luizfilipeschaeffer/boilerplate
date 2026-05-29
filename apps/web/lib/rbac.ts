@@ -25,6 +25,7 @@ const ROUTES_BY_ROLE: Record<TenantRole, string[] | "*"> = {
     "/estoque",
     "/catalogo",
     "/compras",
+    "/helpdesk",
     "/conta",
   ],
   financeiro: [
@@ -49,6 +50,7 @@ const MODULE_ROUTE_PREFIX: Record<string, string> = {
   "rel-basico": "/relatorios",
   "ops-multi-loja": "/configuracoes",
   aprendiz: "/aprendiz",
+  "crm-helpdesk": "/helpdesk",
   "evolucao-nav": "/evolucao",
 };
 
@@ -79,7 +81,13 @@ export function filterNavModuleIdsForRole(
       "core-pedidos",
       "core-ranking",
     ],
-    operador: ["core-catalogo", "core-pedidos", "core-estoque-basico", "ops-compras"],
+    operador: [
+      "core-catalogo",
+      "core-pedidos",
+      "core-estoque-basico",
+      "ops-compras",
+      "crm-helpdesk",
+    ],
     financeiro: ["fin-fluxo-caixa", "rel-basico", "core-catalogo"],
   };
   const prefixes = allowedPrefixes[r] ?? [];

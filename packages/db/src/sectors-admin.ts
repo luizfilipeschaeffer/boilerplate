@@ -1,26 +1,52 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "./client";
 
+export type SectorVisibilityStatus = "hidden" | "em_breve" | "active";
+
 export interface SectorRow {
   id: string;
   organization_id: string;
   name: string;
   slug: string;
   core_sector_slug: string | null;
+  visibility_status: SectorVisibilityStatus;
+  is_aggregator: boolean;
+  /** Preenchido em listagens com contexto de membro */
+  access_state?: "active" | "em_breve" | "hidden" | "request_access";
 }
 
-export async function listSectors(organizationId: string): Promise<SectorRow[]> {
+export async function listSectors(
+  organizationId: string,
+  opts?: { includeHidden?: boolean },
+): Promise<SectorRow[]> {
   const rows = await prisma.sector.findMany({
-    where: { organizationId },
+    where: {
+      organizationId,
+      ...(opts?.includeHidden ? {} : { visibilityStatus: { not: "hidden" } }),
+    },
     orderBy: { name: "asc" },
   });
-  return rows.map((r) => ({
+  return rows.map(mapSectorRow);
+}
+
+function mapSectorRow(r: {
+  id: string;
+  organizationId: string;
+  name: string;
+  slug: string;
+  coreSectorSlug: string | null;
+  visibilityStatus: string;
+  isAggregator: boolean;
+}): SectorRow {
+  return {
     id: r.id,
     organization_id: r.organizationId,
     name: r.name,
     slug: r.slug,
     core_sector_slug: r.coreSectorSlug,
-  }));
+    visibility_status: r.visibilityStatus as SectorVisibilityStatus,
+    is_aggregator: r.isAggregator,
+  };
 }
 
 export async function getSectorBySlug(
@@ -31,13 +57,7 @@ export async function getSectorBySlug(
     where: { organizationId, slug },
   });
   if (!row) return null;
-  return {
-    id: row.id,
-    organization_id: row.organizationId,
-    name: row.name,
-    slug: row.slug,
-    core_sector_slug: row.coreSectorSlug,
-  };
+  return mapSectorRow(row);
 }
 
 export async function createSector(
@@ -63,16 +83,12 @@ export async function createSector(
       name,
       slug,
       coreSectorSlug: input.coreSectorSlug ?? null,
+      visibilityStatus: "active",
+      isAggregator: false,
     },
   });
 
-  return {
-    id: row.id,
-    organization_id: row.organizationId,
-    name: row.name,
-    slug: row.slug,
-    core_sector_slug: row.coreSectorSlug,
-  };
+  return mapSectorRow(row);
 }
 
 export async function listSectorModuleIds(sectorId: string): Promise<string[]> {

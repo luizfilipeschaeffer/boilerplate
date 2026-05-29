@@ -10,7 +10,11 @@ import { spawnSync } from "node:child_process";
 const steps: Array<{ name: string; cmd: string[] }> = [
   { name: "validate:env", cmd: ["bun", "run", "validate:env"] },
   { name: "audit", cmd: ["bun", "audit", "--audit-level=high"] },
+  { name: "db:generate", cmd: ["bun", "run", "db:generate"] },
+  { name: "db:push", cmd: ["bun", "run", "db:push"] },
   { name: "sdk-core test", cmd: ["bun", "run", "--filter", "@boilerplate/sdk-core", "test"] },
+  { name: "test:ci", cmd: ["bun", "run", "test:ci"] },
+  { name: "check:self-hosted-compose", cmd: ["bun", "run", "check:self-hosted-compose"] },
   { name: "db:validate", cmd: ["bun", "run", "db:validate"] },
   { name: "lint:ecosystem", cmd: ["bun", "run", "lint:ecosystem"] },
   {

@@ -16,7 +16,13 @@ export type DomainEventType =
   | "ordem_compra.criada"
   | "ordem_compra.enviada"
   | "compra.recebida"
-  | "estoque.reposicao_sugerida";
+  | "estoque.reposicao_sugerida"
+  | "crm-helpdesk.ticket.created"
+  | "crm-helpdesk.ticket.assigned"
+  | "crm-helpdesk.ticket.resolved"
+  | "crm-helpdesk.ticket.closed"
+  | "crm-helpdesk.kb.published"
+  | "crm.ticket.encerrado";
 
 /** Legacy shape — bridged to @boilerplate/event-bus */
 export interface DomainEvent<T extends DomainEventType = DomainEventType> {

@@ -56,9 +56,13 @@
         "@boilerplate/crm": "workspace:*",
         "@boilerplate/crm-ui": "workspace:*",
         "@boilerplate/db": "workspace:*",
+        "@boilerplate/feedback-bridge": "workspace:*",
         "@boilerplate/integrators": "workspace:*",
+        "@boilerplate/license-server": "workspace:*",
         "@boilerplate/module-registry": "workspace:*",
+        "@boilerplate/platform-api": "workspace:*",
         "@boilerplate/shared": "workspace:*",
+        "@boilerplate/update-server": "workspace:*",
         "@hugeicons/core-free-icons": "^4.1.4",
         "@hugeicons/react": "^1.1.6",
         "@tanstack/react-table": "^8.21.3",
@@ -98,14 +102,20 @@
         "@boilerplate/aprendiz-engine": "workspace:*",
         "@boilerplate/billing": "workspace:*",
         "@boilerplate/crm": "workspace:*",
+        "@boilerplate/crm-helpdesk": "workspace:*",
         "@boilerplate/crm-ui": "workspace:*",
         "@boilerplate/db": "workspace:*",
         "@boilerplate/event-bus": "workspace:*",
+        "@boilerplate/feedback-bridge": "workspace:*",
         "@boilerplate/fiscal-engine": "workspace:*",
         "@boilerplate/integrators": "workspace:*",
+        "@boilerplate/license-client": "workspace:*",
+        "@boilerplate/module-installer": "workspace:*",
         "@boilerplate/module-registry": "workspace:*",
         "@boilerplate/observability": "workspace:*",
+        "@boilerplate/platform-api": "workspace:*",
         "@boilerplate/shared": "workspace:*",
+        "@boilerplate/update-client": "workspace:*",
         "@hugeicons/core-free-icons": "^4.1.4",
         "@hugeicons/react": "^1.1.6",
         "@tanstack/react-query": "^5.80.7",
@@ -161,6 +171,18 @@
         "@boilerplate/sdk-core": "workspace:*",
         "@boilerplate/sdk-events": "workspace:*",
         "@boilerplate/sdk-server": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.15.29",
+        "typescript": "^5.8.3",
+      },
+    },
+    "modules/crm-helpdesk": {
+      "name": "@boilerplate/crm-helpdesk-module",
+      "version": "0.1.0",
+      "dependencies": {
+        "@boilerplate/sdk-core": "workspace:*",
+        "@boilerplate/sdk-events": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^22.15.29",
@@ -236,6 +258,14 @@
         "typescript": "^5.8.3",
       },
     },
+    "packages/crm-helpdesk": {
+      "name": "@boilerplate/crm-helpdesk",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@types/node": "^22.15.29",
+        "typescript": "^5.8.3",
+      },
+    },
     "packages/crm-ui": {
       "name": "@boilerplate/crm-ui",
       "version": "0.0.1",
@@ -261,8 +291,10 @@
       "dependencies": {
         "@boilerplate/billing": "workspace:*",
         "@boilerplate/crm": "workspace:*",
+        "@boilerplate/crm-helpdesk": "workspace:*",
         "@boilerplate/integrators": "workspace:*",
         "@boilerplate/module-registry": "workspace:*",
+        "@boilerplate/platform-api": "workspace:*",
         "@boilerplate/sdk-core": "workspace:*",
         "@boilerplate/shared": "workspace:*",
         "@prisma/client": "^6.9.0",
@@ -292,6 +324,18 @@
         "typescript": "^5.8.3",
       },
     },
+    "packages/feedback-bridge": {
+      "name": "@boilerplate/feedback-bridge",
+      "version": "0.1.0",
+      "dependencies": {
+        "@boilerplate/db": "workspace:*",
+        "@boilerplate/platform-api": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.15.29",
+        "typescript": "^5.8.3",
+      },
+    },
     "packages/fiscal-engine": {
       "name": "@boilerplate/fiscal-engine",
       "version": "0.0.1",
@@ -310,10 +354,64 @@
         "typescript": "^5.8.3",
       },
     },
+    "packages/license-client": {
+      "name": "@boilerplate/license-client",
+      "version": "0.1.0",
+      "dependencies": {
+        "@boilerplate/db": "workspace:*",
+        "@boilerplate/platform-api": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.15.29",
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/license-server": {
+      "name": "@boilerplate/license-server",
+      "version": "0.1.0",
+      "dependencies": {
+        "@boilerplate/db": "workspace:*",
+        "@boilerplate/platform-api": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.15.29",
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/module-installer": {
+      "name": "@boilerplate/module-installer",
+      "version": "0.1.0",
+      "dependencies": {
+        "@boilerplate/db": "workspace:*",
+        "@boilerplate/license-client": "workspace:*",
+        "@boilerplate/module-migration-runner": "workspace:*",
+        "@boilerplate/module-registry": "workspace:*",
+        "@boilerplate/platform-api": "workspace:*",
+        "@boilerplate/sdk-core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.15.29",
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/module-migration-runner": {
+      "name": "@boilerplate/module-migration-runner",
+      "version": "0.1.0",
+      "dependencies": {
+        "@boilerplate/db": "workspace:*",
+        "@boilerplate/platform-api": "workspace:*",
+        "@boilerplate/sdk-core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.15.29",
+        "typescript": "^5.8.3",
+      },
+    },
     "packages/module-registry": {
       "name": "@boilerplate/module-registry",
       "version": "0.0.1",
       "dependencies": {
+        "@boilerplate/crm-helpdesk-module": "workspace:*",
         "@boilerplate/sdk-core": "workspace:*",
         "@boilerplate/shared": "workspace:*",
       },
@@ -330,6 +428,17 @@
         "@opentelemetry/auto-instrumentations-node": "^0.75.0",
         "@opentelemetry/exporter-trace-otlp-http": "^0.217.0",
         "@opentelemetry/sdk-node": "^0.217.0",
+      },
+      "devDependencies": {
+        "@types/node": "^22.15.29",
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/platform-api": {
+      "name": "@boilerplate/platform-api",
+      "version": "0.1.0",
+      "dependencies": {
+        "@boilerplate/sdk-core": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^22.15.29",
@@ -408,6 +517,31 @@
         "@upstash/ratelimit": "^2.0.5",
         "@upstash/redis": "^1.34.9",
         "zod": "^3.25.67",
+      },
+      "devDependencies": {
+        "@types/node": "^22.15.29",
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/update-client": {
+      "name": "@boilerplate/update-client",
+      "version": "0.1.0",
+      "dependencies": {
+        "@boilerplate/license-client": "workspace:*",
+        "@boilerplate/module-migration-runner": "workspace:*",
+        "@boilerplate/platform-api": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.15.29",
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/update-server": {
+      "name": "@boilerplate/update-server",
+      "version": "0.1.0",
+      "dependencies": {
+        "@boilerplate/db": "workspace:*",
+        "@boilerplate/platform-api": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^22.15.29",
@@ -513,21 +647,37 @@
 
     "@boilerplate/crm": ["@boilerplate/crm@workspace:packages/crm"],
 
+    "@boilerplate/crm-helpdesk": ["@boilerplate/crm-helpdesk@workspace:packages/crm-helpdesk"],
+
+    "@boilerplate/crm-helpdesk-module": ["@boilerplate/crm-helpdesk-module@workspace:modules/crm-helpdesk"],
+
     "@boilerplate/crm-ui": ["@boilerplate/crm-ui@workspace:packages/crm-ui"],
 
     "@boilerplate/db": ["@boilerplate/db@workspace:packages/db"],
 
     "@boilerplate/event-bus": ["@boilerplate/event-bus@workspace:packages/event-bus"],
 
+    "@boilerplate/feedback-bridge": ["@boilerplate/feedback-bridge@workspace:packages/feedback-bridge"],
+
     "@boilerplate/fiscal-engine": ["@boilerplate/fiscal-engine@workspace:packages/fiscal-engine"],
 
     "@boilerplate/integrators": ["@boilerplate/integrators@workspace:packages/integrators"],
+
+    "@boilerplate/license-client": ["@boilerplate/license-client@workspace:packages/license-client"],
+
+    "@boilerplate/license-server": ["@boilerplate/license-server@workspace:packages/license-server"],
+
+    "@boilerplate/module-installer": ["@boilerplate/module-installer@workspace:packages/module-installer"],
+
+    "@boilerplate/module-migration-runner": ["@boilerplate/module-migration-runner@workspace:packages/module-migration-runner"],
 
     "@boilerplate/module-registry": ["@boilerplate/module-registry@workspace:packages/module-registry"],
 
     "@boilerplate/observability": ["@boilerplate/observability@workspace:packages/observability"],
 
     "@boilerplate/platform-admin": ["@boilerplate/platform-admin@workspace:apps/platform-admin"],
+
+    "@boilerplate/platform-api": ["@boilerplate/platform-api@workspace:packages/platform-api"],
 
     "@boilerplate/sandbox": ["@boilerplate/sandbox@workspace:packages/sandbox"],
 
@@ -540,6 +690,10 @@
     "@boilerplate/sdk-server": ["@boilerplate/sdk-server@workspace:packages/sdk-server"],
 
     "@boilerplate/shared": ["@boilerplate/shared@workspace:packages/shared"],
+
+    "@boilerplate/update-client": ["@boilerplate/update-client@workspace:packages/update-client"],
+
+    "@boilerplate/update-server": ["@boilerplate/update-server@workspace:packages/update-server"],
 
     "@boilerplate/web": ["@boilerplate/web@workspace:apps/web"],
 
