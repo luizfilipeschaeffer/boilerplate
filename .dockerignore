@@ -7,8 +7,6 @@ bkp
 **/node_modules
 **/dist
 **/*.tsbuildinfo
-apps/marketplace
-apps/platform-admin
 doc
 *.md
 !infra/self-hosted/README-self-hosted.md

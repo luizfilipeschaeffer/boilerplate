@@ -4,7 +4,7 @@ WORKDIR /app
 
 FROM base AS builder
 COPY package.json bun.lock turbo.json ./
-COPY apps/web ./apps/web
+COPY apps ./apps
 COPY packages ./packages
 COPY modules ./modules
 COPY community ./community
