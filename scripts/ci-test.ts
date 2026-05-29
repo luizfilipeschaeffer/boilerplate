@@ -13,6 +13,7 @@ const packages = [
   "@boilerplate/sdk-core",
   "@boilerplate/shared",
   "@boilerplate/db",
+  "@boilerplate/crm-helpdesk-module",
   "@boilerplate-community/example-module",
 ] as const;
 

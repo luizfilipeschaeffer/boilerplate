@@ -1,3 +1,4 @@
+import { moduleContract as crmHelpdeskModuleContract } from "@boilerplate/crm-helpdesk-module";
 import type { CoreSectorSlug, DeliveryMarco } from "@boilerplate/shared";
 import { registerModule } from "./registry";
 import { defineModule } from "./define-module";
@@ -302,7 +303,7 @@ export function registerAllModules(): void {
 
   scaffold("crm-helpdesk", "Help Desk TI", {
     navOrdem: 86,
-    routePath: "/helpdesk",
+    routePath: crmHelpdeskModuleContract.routes[0]?.path ?? "/helpdesk",
     faseMinima: 2,
     dependencias: ["aprendiz"],
     implementationStatus: "implemented",

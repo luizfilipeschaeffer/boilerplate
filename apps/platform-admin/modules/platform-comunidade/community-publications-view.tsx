@@ -1,10 +1,10 @@
 ﻿"use client";
 
-import type { EcosystemPublicationRow } from "@boilerplate/db";
+import type { EcosystemPublicationRow } from "@boilerplate/db/ecosystem-labels";
 import {
   ECOSYSTEM_KIND_LABELS,
   ECOSYSTEM_MODERATION_LABELS,
-} from "@boilerplate/db";
+} from "@boilerplate/db/ecosystem-labels";
 import {
   getCoreRowModel,
   getFilteredRowModel,

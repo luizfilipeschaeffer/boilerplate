@@ -67,7 +67,12 @@ export function PlatformInstallationTokenDialog({ organizations }: Props) {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="install-org">Organização do cliente</Label>
-              <Select value={organizationId} onValueChange={setOrganizationId}>
+              <Select
+                value={organizationId}
+                onValueChange={(value) => {
+                  if (value) setOrganizationId(value);
+                }}
+              >
                 <SelectTrigger id="install-org" className="w-full">
                   <SelectValue placeholder="Selecione…">
                     {selectedOrg?.name}

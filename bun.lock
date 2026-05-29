@@ -411,6 +411,7 @@
       "name": "@boilerplate/module-registry",
       "version": "0.0.1",
       "dependencies": {
+        "@boilerplate/crm-helpdesk-module": "workspace:*",
         "@boilerplate/sdk-core": "workspace:*",
         "@boilerplate/shared": "workspace:*",
       },

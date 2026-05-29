@@ -9,7 +9,7 @@ import {
   preparePhaseExpansion,
   resolveActivationPackage,
 } from "@boilerplate/db";
-import type { Fase } from "@boilerplate/shared";
+import type { Fase, TipoNegocio } from "@boilerplate/shared";
 import { requireTenantContext } from "@/lib/tenant-context";
 import { revalidatePath } from "next/cache";
 
@@ -70,7 +70,7 @@ export async function confirmPhaseExpansionAction(targetPhase: number) {
   const pkg = await resolveActivationPackage({
     marketSegmentSlug,
     phase,
-    tipoNegocio: org.tipoNegocio,
+    tipoNegocio: org.tipoNegocio as TipoNegocio,
     possuiCnpj: org.hasCnpj,
   });
 

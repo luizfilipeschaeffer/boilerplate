@@ -21,7 +21,7 @@
     "db:setup-remote": "bun --env-file=.env.vercel.production packages/db/scripts/setup-remote.ts",
     "db:test-connection": "bun --env-file=.env.vercel.production scripts/test-db-connection.ts",
     "db:schema-sync": "bun run --filter @boilerplate/db db:schema-sync",
-    "ci": "bun run db:validate && bun run validate:env && bun run audit && bun run test:ci && bun run check:self-hosted-compose && bun run lint && bun run build",
+    "ci": "bun run db:validate && bun run validate:env && bun run audit && bun run db:generate && bun run test:ci && bun run check:self-hosted-compose && bun run lint && bun run build",
     "ci:local": "bun scripts/ci-local.ts",
     "validate:env": "bun scripts/validate-env.ts",
     "audit": "bun audit --audit-level=high",

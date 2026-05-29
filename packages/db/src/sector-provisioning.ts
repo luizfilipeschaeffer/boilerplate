@@ -1,40 +1,22 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import type { Fase } from "@boilerplate/shared";
+import segmentSectorTemplatesJson from "../data/segment-sector-templates.json";
 import { prisma, type Prisma } from "./client";
 import { setSectorModules } from "./sectors-admin";
 import { recordProvisioningPlatformActivity } from "./provisioning-events";
+import type {
+  ModuleShortcut,
+  SegmentSectorModuleTemplateRow,
+  SegmentSectorTemplateRow,
+  SectorVisibility,
+} from "./sector-provisioning.types";
 
-export type SectorVisibility = "hidden" | "em_breve" | "active";
-
-export type SegmentSectorTemplateRow = {
-  segmentSlug: string;
-  phaseMin: number;
-  coreSectorSlug: string;
-  displayName: string;
-  sectorSlug: string;
-  visibilityDefault: SectorVisibility;
-  isAggregator: boolean;
-  ordem: number;
-};
-
-export type SegmentSectorModuleTemplateRow = {
-  segmentSlug: string;
-  coreSectorSlug: string;
-  moduleId: string;
-  phaseMin: number;
-  shortcutCoreSectorSlugs: string[];
-};
-
-export type ModuleShortcut = {
-  moduleId: string;
-  primarySectorSlug: string;
-};
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const TEMPLATES_PATH = join(__dirname, "../data/segment-sector-templates.json");
+export type {
+  ModuleShortcut,
+  SegmentSectorModuleTemplateRow,
+  SegmentSectorTemplateRow,
+  SectorVisibility,
+} from "./sector-provisioning.types";
 
 type TemplatesJson = {
   sectorTemplates: SegmentSectorTemplateRow[];
@@ -42,15 +24,10 @@ type TemplatesJson = {
   fallbackSegmentSlug: string;
 };
 
-let cachedTemplates: TemplatesJson | null = null;
+const templatesJson = segmentSectorTemplatesJson as TemplatesJson;
 
 function loadTemplatesJson(): TemplatesJson {
-  if (!cachedTemplates) {
-    cachedTemplates = JSON.parse(
-      readFileSync(TEMPLATES_PATH, "utf-8"),
-    ) as TemplatesJson;
-  }
-  return cachedTemplates;
+  return templatesJson;
 }
 
 export function resolveSegmentSlugForProvisioning(

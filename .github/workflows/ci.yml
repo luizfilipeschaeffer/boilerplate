@@ -61,6 +61,9 @@ jobs:
       - name: Dependency audit
         run: bun audit --audit-level=high
 
+      - name: Generate Prisma client
+        run: bun run db:generate
+
       - name: SDK tests
         run: bun run --filter @boilerplate/sdk-core test
 
