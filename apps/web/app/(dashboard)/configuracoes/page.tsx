@@ -33,6 +33,36 @@ const links = [
     title: "Cobrança",
     desc: "Validação de pagamento e período de teste da conta.",
   },
+  {
+    href: "/configuracoes/conta",
+    title: "Conta da plataforma",
+    desc: "Assinatura, plano e faturamento central.",
+  },
+  {
+    href: "/configuracoes/licenca",
+    title: "Licença",
+    desc: "Entitlements, limites e status da licença.",
+  },
+  {
+    href: "/configuracoes/modulos",
+    title: "Módulos extras",
+    desc: "Catálogo e instalação de módulos autorizados.",
+  },
+  {
+    href: "/configuracoes/suporte",
+    title: "Suporte",
+    desc: "Tickets e atendimento vinculado à instalação.",
+  },
+  {
+    href: "/configuracoes/atualizacoes",
+    title: "Atualizações",
+    desc: "Versões disponíveis da plataforma.",
+  },
+  {
+    href: "/configuracoes/dominios",
+    title: "Domínios permitidos",
+    desc: "Controle de origem de acesso à instalação.",
+  },
 ];
 
 export default function ConfiguracoesPage() {

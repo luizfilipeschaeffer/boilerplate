@@ -1,5 +1,8 @@
 import type { Fase } from "@boilerplate/shared";
 import { prisma, type Prisma } from "./client";
+import { resolveDeploymentMode } from "@boilerplate/platform-api";
+import { loadLicenseCache } from "./self-hosted/local-install-state";
+import type { LicensePayload } from "@boilerplate/platform-api";
 import { ensureDefaultBranch } from "./branches";
 import {
   distributeModulesToSectors,
@@ -115,6 +118,19 @@ export async function createOrganizationWithTenant(
   input: CreateOrganizationInput,
   ownerUserId: string,
 ) {
+  if (resolveDeploymentMode() === "self_hosted") {
+    const cached = await loadLicenseCache();
+    if (cached) {
+      const license = JSON.parse(cached.payloadJson) as LicensePayload;
+      const count = await prisma.organization.count();
+      if (count >= license.limits.organizations) {
+        throw new Error(
+          `Limite de organizações atingido (${license.limits.organizations}).`,
+        );
+      }
+    }
+  }
+
   const schemaName = schemaNameFromSlug(input.slug);
   const marketSegmentSlug =
     input.marketSegmentSlug ?? input.segmentoAtuacao ?? "varejo";

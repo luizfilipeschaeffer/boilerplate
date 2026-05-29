@@ -57,6 +57,42 @@ const CONFIG_LINKS = [
     url: "/configuracoes/pagamentos",
     icon: <CreditCard className="size-4" />,
   },
+  {
+    id: "config-conta",
+    title: "Conta da plataforma",
+    url: "/configuracoes/conta",
+    icon: <CreditCard className="size-4" />,
+  },
+  {
+    id: "config-licenca",
+    title: "Licença",
+    url: "/configuracoes/licenca",
+    icon: <CreditCard className="size-4" />,
+  },
+  {
+    id: "config-modulos-plataforma",
+    title: "Módulos extras",
+    url: "/configuracoes/modulos",
+    icon: <Layers className="size-4" />,
+  },
+  {
+    id: "config-suporte",
+    title: "Suporte",
+    url: "/configuracoes/suporte",
+    icon: <Users className="size-4" />,
+  },
+  {
+    id: "config-atualizacoes",
+    title: "Atualizações",
+    url: "/configuracoes/atualizacoes",
+    icon: <Settings className="size-4" />,
+  },
+  {
+    id: "config-dominios",
+    title: "Domínios",
+    url: "/configuracoes/dominios",
+    icon: <Building2 className="size-4" />,
+  },
 ] as const;
 
 function isConfigActive(pathname: string, url: string) {

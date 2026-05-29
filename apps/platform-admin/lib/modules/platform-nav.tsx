@@ -101,6 +101,34 @@ export const ALL_PLATFORM_NAV: PlatformNavItem[] = [
     ordem: 50,
     icon: <Building2 className="size-4" />,
   },
+  {
+    id: "instalacoes",
+    label: "Instalações",
+    href: "/instalacoes",
+    ordem: 51,
+    icon: <Globe className="size-4" />,
+  },
+  {
+    id: "licencas",
+    label: "Licenças",
+    href: "/licencas",
+    ordem: 52,
+    icon: <Wallet className="size-4" />,
+  },
+  {
+    id: "suporte",
+    label: "Suporte",
+    href: "/suporte",
+    ordem: 53,
+    icon: <MessageSquare className="size-4" />,
+  },
+  {
+    id: "desenvolvedores",
+    label: "Desenvolvedores",
+    href: "/dev/modulos",
+    ordem: 54,
+    icon: <Users className="size-4" />,
+  },
 ];
 
 export function getPlatformNavForRole(role: PlatformRole): PlatformNavItem[] {

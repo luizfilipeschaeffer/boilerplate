@@ -36,7 +36,10 @@ export default auth((req) => {
 
   const isPublic =
     pathname.startsWith("/login") ||
-    pathname.startsWith("/api/auth");
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/v1/") ||
+    pathname.startsWith("/api/oauth/") ||
+    pathname.startsWith("/.well-known/");
 
   if (!isAllowedPlatformIp(req)) {
     return new NextResponse("Forbidden", { status: 403 });

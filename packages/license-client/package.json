@@ -1,0 +1,16 @@
+{
+  "name": "@boilerplate/license-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "lint": "tsc --noEmit -p tsconfig.json", "test": "bun test src" },
+  "dependencies": {
+    "@boilerplate/platform-api": "workspace:*",
+    "@boilerplate/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
+  }
+}

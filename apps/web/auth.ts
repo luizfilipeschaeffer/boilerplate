@@ -1,3 +1,4 @@
+import { resolveAuthMode } from "@boilerplate/platform-api";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import {
@@ -107,6 +108,64 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   providers: [
+    ...(resolveAuthMode() === "central"
+      ? [
+          Credentials({
+            id: "central",
+            name: "Conta Boilerplate",
+            credentials: {
+              email: { label: "E-mail", type: "email" },
+              password: { label: "Senha", type: "password" },
+            },
+            authorize: async (credentials) => {
+              const email = credentials?.email?.toString().trim().toLowerCase();
+              const password = credentials?.password?.toString() ?? "";
+              if (!email || !password) return null;
+              const central =
+                process.env.CENTRAL_API_URL ??
+                process.env.NEXT_PUBLIC_CENTRAL_API_URL ??
+                "http://localhost:3002";
+              const res = await fetch(`${central.replace(/\/$/, "")}/api/oauth/token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                redirect: "manual",
+                body: JSON.stringify({
+                  grant_type: "password",
+                  username: email,
+                  password,
+                }),
+              });
+              if (res.status >= 300 && res.status < 400) return null;
+              if (!res.ok) return null;
+              const user = await findUserByEmailForAuth(email);
+              if (!user) return null;
+              const membership = await getMembershipForUser(user.id);
+              if (!membership?.active) {
+                return {
+                  id: user.id,
+                  email: user.email,
+                  name: user.name,
+                  needsOnboarding: true,
+                  sessionVersion: 0,
+                };
+              }
+              const sectorSlug =
+                membership.membershipSectors[0]?.sector?.slug ?? "geral";
+              return {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                organizationId: membership.organizationId,
+                sectorId: sectorSlug,
+                branchId: membership.defaultBranchId ?? undefined,
+                role: membership.role,
+                needsOnboarding: false,
+                sessionVersion: 0,
+              };
+            },
+          }),
+        ]
+      : []),
     Credentials({
       name: "credentials",
       credentials: {

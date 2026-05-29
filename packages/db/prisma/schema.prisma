@@ -59,6 +59,11 @@ model Organization {
   platformActivities  PlatformActivity[]
   platformCommsConsents PlatformCommsConsent[]
   tenantIntegrators   TenantIntegrator[]
+  customerAccount     PlatformCustomerAccount?
+  selfHostedInstallations SelfHostedInstallation[]
+  platformSubscription PlatformSubscription?
+  entitlementGrants   EntitlementGrant[]
+  supportTickets      SupportTicket[]
 
   @@index([marketSegmentSlug])
   @@index([provisioningStatus])
@@ -259,6 +264,8 @@ model User {
   createdAt      DateTime @default(now()) @map("created_at")
 
   memberships Membership[]
+  customerAccount PlatformCustomerAccount?
+  developerAccount DeveloperAccount?
 
   @@schema("boilerplate")
   @@map("users")
@@ -904,4 +911,292 @@ model DomainEvent {
   @@index([organizationId, createdAt])
   @@schema("boilerplate")
   @@map("domain_events")
+}
+
+/// Conta de assinante na plataforma central (billing entity)
+model PlatformCustomerAccount {
+  id             String   @id @default(uuid())
+  userId         String   @unique @map("user_id")
+  organizationId String   @unique @map("organization_id")
+  /// customer_owner | customer_billing | customer_technical
+  role           String   @default("customer_owner")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@schema("boilerplate")
+  @@map("platform_customer_accounts")
+}
+
+/// Assinatura central vinculada à org de billing
+model PlatformSubscription {
+  id             String    @id @default(uuid())
+  organizationId String    @unique @map("organization_id")
+  planId         String    @map("plan_id")
+  /// active | past_due | expired | suspended | trial
+  status         String    @default("trial")
+  expiresAt      DateTime? @map("expires_at")
+  paymentRef     String?   @map("payment_ref")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@schema("boilerplate")
+  @@map("platform_subscriptions")
+}
+
+/// Entitlements explícitos (módulos, features, integradores)
+model EntitlementGrant {
+  id             String   @id @default(uuid())
+  organizationId String   @map("organization_id")
+  installationId String?  @map("installation_id")
+  entitlement    String
+  grantedAt      DateTime @default(now()) @map("granted_at")
+  expiresAt      DateTime? @map("expires_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, installationId, entitlement])
+  @@index([organizationId])
+  @@schema("boilerplate")
+  @@map("entitlement_grants")
+}
+
+/// Instalação self-hosted registrada na plataforma central
+model SelfHostedInstallation {
+  id               String    @id @default(uuid())
+  organizationId   String    @map("organization_id")
+  name             String
+  installationKeyHash String @map("installation_key_hash")
+  publicUrl        String?   @map("public_url")
+  /// pending | active | suspended | revoked
+  status           String    @default("pending")
+  version          String    @default("0.0.0")
+  lastHeartbeatAt  DateTime? @map("last_heartbeat_at")
+  healthStatus     String?   @map("health_status")
+  lastMigrationStatus String? @map("last_migration_status")
+  metadata         Json      @default("{}")
+  /// Hosts/origins permitidos para acessar esta instalação (ex.: erp.cliente.com.br)
+  allowedOrigins   Json      @default("[]") @map("allowed_origins")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tokens       InstallationToken[]
+  credentials  InstallationCredential[]
+  events       InstallationEvent[]
+  supportTickets SupportTicket[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@schema("boilerplate")
+  @@map("self_hosted_installations")
+}
+
+/// Token one-time para bootstrap da VPS
+model InstallationToken {
+  id             String    @id @default(uuid())
+  installationId String?   @map("installation_id")
+  organizationId String    @map("organization_id")
+  tokenHash      String    @map("token_hash")
+  expiresAt      DateTime  @map("expires_at")
+  usedAt         DateTime? @map("used_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  installation SelfHostedInstallation? @relation(fields: [installationId], references: [id], onDelete: SetNull)
+
+  @@index([tokenHash])
+  @@index([organizationId])
+  @@schema("boilerplate")
+  @@map("installation_tokens")
+}
+
+/// Credenciais OAuth da instalação (criptografadas)
+model InstallationCredential {
+  id             String   @id @default(uuid())
+  installationId String   @unique @map("installation_id")
+  oauthClientId  String   @map("oauth_client_id")
+  secretsEncrypted String @map("secrets_encrypted") @db.Text
+  rotatedAt      DateTime? @map("rotated_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  installation SelfHostedInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  @@schema("boilerplate")
+  @@map("installation_credentials")
+}
+
+model InstallationEvent {
+  id             String   @id @default(uuid())
+  installationId String   @map("installation_id")
+  eventType      String   @map("event_type")
+  payload        Json     @default("{}")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  installation SelfHostedInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  @@index([installationId, createdAt])
+  @@schema("boilerplate")
+  @@map("installation_events")
+}
+
+/// Catálogo marketplace central
+model MarketplaceListing {
+  id                     String   @id @default(uuid())
+  externalId             String   @unique @map("external_id")
+  /// module | submodule | integrator
+  kind                   String
+  name                   String
+  description            String?  @db.Text
+  ownerDeveloperId       String?  @map("owner_developer_id")
+  /// experimental | approved | recommended | official | enterprise
+  listingStatus          String   @default("approved") @map("listing_status")
+  pricingModel           String   @default("free") @map("pricing_model")
+  priceMonthlyCents      Int?     @map("price_monthly_cents")
+  currentVersion         String   @map("current_version")
+  minimumPlatformVersion String   @map("minimum_platform_version")
+  entitlementsRequired   Json     @default("[]") @map("entitlements_required")
+  migrationManifest      Json     @default("{}") @map("migration_manifest")
+  changelog              Json     @default("[]")
+  packageChecksum        String?  @map("package_checksum")
+  active                 Boolean  @default(true)
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  @@index([kind, listingStatus])
+  @@schema("boilerplate")
+  @@map("marketplace_listings")
+}
+
+model ReleaseCatalog {
+  id                   String   @id @default(uuid())
+  /// platform | module | integrator
+  targetType           String   @map("target_type")
+  targetId             String   @map("target_id")
+  version              String
+  compatibility        Json     @default("{}")
+  changelog            String   @db.Text
+  migrationIds         Json     @default("[]") @map("migration_ids")
+  artifactChecksum     String?  @map("artifact_checksum")
+  publishedBy          String   @map("published_by")
+  publishedAt          DateTime @default(now()) @map("published_at")
+
+  @@unique([targetType, targetId, version])
+  @@schema("boilerplate")
+  @@map("release_catalog")
+}
+
+model DeveloperAccount {
+  id               String    @id @default(uuid())
+  userId           String    @unique @map("user_id")
+  displayName      String    @map("display_name")
+  githubUsername   String?   @map("github_username")
+  publicProfileSlug String?  @map("public_profile_slug")
+  termsAcceptedAt  DateTime  @map("terms_accepted_at")
+  active           Boolean   @default(true)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roles DeveloperRole[]
+
+  @@schema("boilerplate")
+  @@map("developer_accounts")
+}
+
+model DeveloperRole {
+  id          String @id @default(uuid())
+  developerId String @map("developer_id")
+  moduleId    String @map("module_id")
+  /// owner | maintainer | contributor | support
+  role        String
+
+  developer DeveloperAccount @relation(fields: [developerId], references: [id], onDelete: Cascade)
+
+  @@unique([developerId, moduleId, role])
+  @@schema("boilerplate")
+  @@map("developer_roles")
+}
+
+model SupportTicket {
+  id               String   @id @default(uuid())
+  organizationId   String   @map("organization_id")
+  installationId   String   @map("installation_id")
+  createdByUserId  String?  @map("created_by_user_id")
+  moduleId         String?  @map("module_id")
+  integratorId     String?  @map("integrator_id")
+  type             String
+  status           String   @default("open")
+  priority         String   @default("medium")
+  subject          String
+  sanitizedContext Json     @default("{}") @map("sanitized_context")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  installation SelfHostedInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  messages     SupportTicketMessage[]
+
+  @@index([installationId, status])
+  @@index([moduleId])
+  @@schema("boilerplate")
+  @@map("support_tickets")
+}
+
+model SupportTicketMessage {
+  id         String   @id @default(uuid())
+  ticketId   String   @map("ticket_id")
+  authorType String   @map("author_type")
+  authorId   String?  @map("author_id")
+  body       String   @db.Text
+  sanitized  Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@schema("boilerplate")
+  @@map("support_ticket_messages")
+}
+
+model CustomerFeedback {
+  id               String   @id @default(uuid())
+  organizationId   String   @map("organization_id")
+  installationId   String   @map("installation_id")
+  moduleId         String?  @map("module_id")
+  summary          String
+  sanitizedDetails Json     @default("{}") @map("sanitized_details")
+  /// pending | triaged | approved | rejected | published_github
+  status           String   @default("pending")
+  triageNotes      String?  @map("triage_notes") @db.Text
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  githubIssue GithubIssueLink?
+
+  @@index([status])
+  @@schema("boilerplate")
+  @@map("customer_feedback")
+}
+
+model GithubIssueLink {
+  id               String   @id @default(uuid())
+  feedbackId       String   @unique @map("feedback_id")
+  githubIssueNumber Int     @map("github_issue_number")
+  githubRepo       String   @map("github_repo")
+  labels           Json     @default("[]")
+  moduleId         String?  @map("module_id")
+  bountyAvailable  Boolean  @default(false) @map("bounty_available")
+  status           String   @default("triagem")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  feedback CustomerFeedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+
+  @@schema("boilerplate")
+  @@map("github_issue_links")
 }
