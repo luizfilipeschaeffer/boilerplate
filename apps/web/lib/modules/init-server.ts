@@ -3,7 +3,7 @@ import "server-only";
 import { registerCivilObrasEventHandlers } from "@/lib/civil-obras-event-handlers";
 import { registerDomainEventHandlers } from "@/lib/events/register-handlers";
 import { initEventBus } from "@/lib/events/event-bus-init";
-import { configureCredentialResolver } from "@boilerplate/sdk-server";
+import { configureCredentialResolver } from "@boilerplate/sdk-server/credential-resolver";
 import { resolve as resolveIntegratorCredentials } from "@boilerplate/db";
 import { ensureModulesRegistered } from "./init-modules";
 

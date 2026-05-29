@@ -16,7 +16,7 @@ export async function runInWorkerSandbox<T>(opts: WorkerSandboxOptions): Promise
   const quotas = getQuotasForTrust(opts.trust);
 
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL("./worker-entry.js", import.meta.url), {
+    const worker = new Worker(new URL("./worker-entry.ts", import.meta.url), {
       workerData: { modulePath: opts.modulePath, payload: opts.payload },
       resourceLimits: {
         maxOldGenerationSizeMb: quotas.maxMemoryMb,

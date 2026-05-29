@@ -4,7 +4,8 @@ import Link from "next/link";
 import type { ObraSummary } from "@boilerplate/civil-obras";
 import { CIVIL_OBRAS_ROUTES } from "@/lib/civil-obras-access";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function ObrasListClient({
   obras,
@@ -16,9 +17,12 @@ export function ObrasListClient({
   return (
     <div className="flex flex-col gap-3">
       {canAdmin ? (
-        <Button asChild className="w-fit">
-          <Link href={CIVIL_OBRAS_ROUTES.nova}>Nova obra</Link>
-        </Button>
+        <Link
+          href={CIVIL_OBRAS_ROUTES.nova}
+          className={cn(buttonVariants(), "w-fit")}
+        >
+          Nova obra
+        </Link>
       ) : null}
       {obras.length === 0 ? (
         <p className="text-muted-foreground text-sm">Nenhuma obra cadastrada.</p>

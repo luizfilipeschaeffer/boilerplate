@@ -12,7 +12,8 @@ import {
   canViewCivilObras,
   CIVIL_OBRAS_ROUTES,
 } from "@/lib/civil-obras-access";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
@@ -39,9 +40,12 @@ export default async function DiarioPage({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Diário de obra</CardTitle>
           {canWrite ? (
-            <Button asChild size="sm">
-              <Link href={CIVIL_OBRAS_ROUTES.diarioNova(obraId)}>Nova entrada</Link>
-            </Button>
+            <Link
+              href={CIVIL_OBRAS_ROUTES.diarioNova(obraId)}
+              className={cn(buttonVariants({ size: "sm" }))}
+            >
+              Nova entrada
+            </Link>
           ) : null}
         </CardHeader>
         <CardContent className="flex flex-col gap-4">

@@ -20,6 +20,10 @@ export function registerCivilObrasEventHandlers(): void {
       schemaName: "public",
       branchId: null,
       departmentId: null,
+      teamId: null,
+      userId: "system",
+      membershipId: "system",
+      role: "system",
     },
     onSendEmail: sendCivilObrasEmail,
     onEntradaPublicada: async (organizationId, payload) => {
