@@ -314,4 +314,15 @@ export function registerAllModules(): void {
     depthTargetMarco: "R3",
     deliveryMarco: "R3",
   });
+
+  scaffold("civil-obras", "Gestão de Obras", {
+    navOrdem: 10,
+    routePath: "/civil-obras",
+    faseMinima: 1,
+    dependencias: [],
+    implementationStatus: "scaffold",
+    sectorSlug: "operacao",
+    camada: "Operacional",
+    tiposNegocioElegiveis: [],
+  });
 }

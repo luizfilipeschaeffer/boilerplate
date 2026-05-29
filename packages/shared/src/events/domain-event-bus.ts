@@ -22,7 +22,10 @@ export type DomainEventType =
   | "crm-helpdesk.ticket.resolved"
   | "crm-helpdesk.ticket.closed"
   | "crm-helpdesk.kb.published"
-  | "crm.ticket.encerrado";
+  | "crm.ticket.encerrado"
+  | "civil-obras.entrada.publicada"
+  | "civil-obras.usuario.convidado"
+  | "civil-obras.relatorio.gerado";
 
 /** Legacy shape — bridged to @boilerplate/event-bus */
 export interface DomainEvent<T extends DomainEventType = DomainEventType> {

@@ -1,4 +1,5 @@
 import { prisma } from "../client";
+import { civilObrasDdlStatements } from "../civil-obras/ensure-tables";
 import { helpdeskDdlStatements } from "../crm-helpdesk/ensure-tables";
 import { assertSafeSchemaName } from "./schema";
 
@@ -257,6 +258,7 @@ function tenantMigrateStatements(schema: string): string[] {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`,
     ...helpdeskDdlStatements(schema),
+    ...civilObrasDdlStatements(schema),
   ];
 }
 

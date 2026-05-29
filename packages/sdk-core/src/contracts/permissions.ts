@@ -11,6 +11,8 @@ export type Permission =
   | `${string}.admin`
   | `${string}.assign`
   | `${string}.kb.publish`
+  | `${string}.colaborador`
+  | `${string}.visualizador`
   | "billing.read"
   | "billing.write"
   | "members.manage";

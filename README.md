@@ -159,6 +159,10 @@ Desenvolvedores que queiram propor **módulos ou integradores** da comunidade:
 
 → **[doc/ecosystem/publicacao-pr-comunidade.md](./doc/ecosystem/publicacao-pr-comunidade.md)**
 
+Para **especificar um novo módulo com IA** (prompt único autocontido — copiar da linha indicada no arquivo, preencher o placeholder, colar em qualquer LLM):
+
+→ **[doc/prompts/prompt-origem-novo-modulo.md](./doc/prompts/prompt-origem-novo-modulo.md)**
+
 Fluxo: PR padronizada → auditoria (CI + review) → moderação em platform-admin (`/comunidade`) → marketplace e tenants.
 
 ### CI local (antes de commit/PR)

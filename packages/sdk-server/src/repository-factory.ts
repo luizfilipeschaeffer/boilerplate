@@ -1,6 +1,6 @@
 import type { OrgBootContext, ModuleCapabilities } from "@boilerplate/sdk-core";
 import { assertCapability } from "@boilerplate/sdk-core";
-import { createRepositoryProxy, type FixedTenantScope } from "@boilerplate/sandbox";
+import { createRepositoryProxy, type FixedTenantScope } from "@boilerplate/sandbox/runtime";
 
 export type QueryFn = (
   table: string,
