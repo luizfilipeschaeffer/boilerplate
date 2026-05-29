@@ -64,6 +64,9 @@ jobs:
       - name: Generate Prisma client
         run: bun run db:generate
 
+      - name: Aplicar schema no Postgres (testes de integração)
+        run: bun run db:push
+
       - name: SDK tests
         run: bun run --filter @boilerplate/sdk-core test
 
