@@ -9,7 +9,8 @@
     "./platform-user": "./src/platform-user.ts",
     "./platform-comms-labels": "./src/platform-comms-labels.ts",
     "./platform-crm-ext-labels": "./src/platform-crm-ext-labels.ts",
-    "./platform-integrators.types": "./src/platform-integrators.types.ts"
+    "./platform-integrators.types": "./src/platform-integrators.types.ts",
+    "./self-hosted": "./src/self-hosted/index.ts"
   },
   "scripts": {
     "build": "bun scripts/generate-client.ts",
@@ -21,10 +22,11 @@
     "db:seed-platform-admin": "bun ./scripts/seed-platform-admin.ts",
     "db:seed-roadmap": "bun ./scripts/seed-product-roadmap.ts",
     "db:seed-integrator-credentials": "bun ./scripts/seed-integrator-credentials.ts",
+    "db:seed-self-hosted": "bun ./scripts/seed-self-hosted.ts",
     "db:schema-sync": "bun ./scripts/vercel-schema-sync.ts",
     "db:setup-remote": "bun ./scripts/setup-remote.ts",
     "db:rotate-kek": "bun ./scripts/rotate-kek.ts",
-    "test": "bun --env-file=../../.env --env-file=../../.env.development test src",
+    "test": "bun test src",
     "db:restart": "bun ./scripts/db-restart.ts"
   },
   "dependencies": {
@@ -34,6 +36,7 @@
     "@boilerplate/module-registry": "workspace:*",
     "@boilerplate/shared": "workspace:*",
     "@boilerplate/sdk-core": "workspace:*",
+    "@boilerplate/platform-api": "workspace:*",
     "@prisma/client": "^6.9.0",
     "bcryptjs": "^3.0.2"
   },

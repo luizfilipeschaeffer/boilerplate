@@ -10,7 +10,11 @@ export type PlatformModuleId =
   | "platform-integradores"
   | "platform-comunidade"
   | "platform-roadmap"
-  | "organizacoes";
+  | "organizacoes"
+  | "instalacoes"
+  | "licencas"
+  | "suporte"
+  | "desenvolvedores";
 
 const MODULE_ACCESS: Record<PlatformModuleId, PlatformRole[]> = {
   dashboard: [
@@ -73,6 +77,25 @@ const MODULE_ACCESS: Record<PlatformModuleId, PlatformRole[]> = {
     "platform_suporte",
     "platform_produto",
     "platform_engenharia",
+  ],
+  instalacoes: [
+    "platform_admin",
+    "platform_suporte",
+    "platform_engenharia",
+    "platform_produto",
+  ],
+  licencas: ["platform_admin", "platform_comercial", "platform_produto"],
+  suporte: [
+    "platform_admin",
+    "platform_suporte",
+    "platform_comercial",
+    "platform_produto",
+  ],
+  desenvolvedores: [
+    "platform_admin",
+    "platform_produto",
+    "platform_engenharia",
+    "platform_comercial",
   ],
 };
 

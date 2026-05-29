@@ -64,6 +64,12 @@ jobs:
       - name: SDK tests
         run: bun run --filter @boilerplate/sdk-core test
 
+      - name: Testes (CI)
+        run: bun run test:ci
+
+      - name: Self-hosted compose check
+        run: bun run check:self-hosted-compose
+
       - name: Validate Prisma schema
         run: bun run db:validate
 

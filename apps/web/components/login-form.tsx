@@ -29,11 +29,15 @@ export function LoginForm({
   initialEmail = "",
   inactivityLogout = false,
   firstAccessHint = false,
+  authMode = "legacy",
+  callbackUrl,
   ...props
 }: React.ComponentProps<"div"> & {
   initialEmail?: string;
   inactivityLogout?: boolean;
   firstAccessHint?: boolean;
+  authMode?: "central" | "legacy";
+  callbackUrl?: string;
 }) {
   const router = useRouter();
   const [mode, setMode] = React.useState<LoginMode>(
@@ -78,7 +82,8 @@ export function LoginForm({
     setInfo(null);
     setSubmitting(true);
 
-    const res = await signIn("credentials", {
+    const providerId = authMode === "central" ? "central" : "credentials";
+    const res = await signIn(providerId, {
       email,
       password,
       redirect: false,
@@ -88,13 +93,15 @@ export function LoginForm({
 
     if (res?.error || !res?.ok) {
       setError(
-        "Não foi possível entrar. Verifique e-mail e senha — ou use o código por e-mail se ainda não criou senha.",
+        authMode === "central"
+          ? "Não foi possível entrar na conta central. Verifique e-mail e senha da conta cliente."
+          : "Não foi possível entrar. Verifique e-mail e senha — ou use o código por e-mail se ainda não criou senha.",
       );
       return;
     }
 
     router.refresh();
-    router.push("/dashboard");
+    router.push(callbackUrl ?? "/dashboard");
   }
 
   async function requestCode() {
@@ -167,15 +174,17 @@ export function LoginForm({
         >
           Senha
         </Button>
-        <Button
-          type="button"
-          variant={mode === "code" ? "secondary" : "ghost"}
-          size="sm"
-          className="flex-1"
-          onClick={() => switchMode("code")}
-        >
-          Código por e-mail
-        </Button>
+        {authMode !== "central" ? (
+          <Button
+            type="button"
+            variant={mode === "code" ? "secondary" : "ghost"}
+            size="sm"
+            className="flex-1"
+            onClick={() => switchMode("code")}
+          >
+            Código por e-mail
+          </Button>
+        ) : null}
       </div>
 
       {mode === "password" ? (

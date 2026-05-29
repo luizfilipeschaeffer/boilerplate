@@ -1,0 +1,82 @@
+# Stack self-hosted — imagens do Docker Hub (publicadas pelo CI).
+# O cliente só define BOILERPLATE_IMAGE no .env (ex.: minhaempresa ou minhaempresa:1.2.0).
+# Instalação automática: infra/self-hosted/install-vps.sh
+
+name: boilerplate
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: boilerplate
+      POSTGRES_PASSWORD: boilerplate
+      POSTGRES_DB: boilerplate
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boilerplate -d boilerplate"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  license-agent:
+    image: ${BOILERPLATE_REGISTRY}/self-hosted-license-agent:${BOILERPLATE_VERSION}
+    restart: unless-stopped
+    env_file: .env
+    pull_policy: always
+    environment:
+      DEPLOYMENT_MODE: self_hosted
+      DATABASE_URL: postgresql://boilerplate:boilerplate@postgres:5432/boilerplate
+      CENTRAL_API_URL: ${CENTRAL_API_URL:-https://platform.boilerplate.com.br}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    image: ${BOILERPLATE_REGISTRY}/self-hosted-worker:${BOILERPLATE_VERSION}
+    restart: unless-stopped
+    env_file: .env
+    pull_policy: always
+    environment:
+      DEPLOYMENT_MODE: self_hosted
+      DATABASE_URL: postgresql://boilerplate:boilerplate@postgres:5432/boilerplate
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    image: ${BOILERPLATE_REGISTRY}/self-hosted-web:${BOILERPLATE_VERSION}
+    restart: unless-stopped
+    env_file: .env
+    pull_policy: always
+    environment:
+      DEPLOYMENT_MODE: self_hosted
+      AUTH_MODE: central
+      DATABASE_URL: postgresql://boilerplate:boilerplate@postgres:5432/boilerplate
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "${BOILERPLATE_HTTP_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      license-agent:
+        condition: service_started
+
+volumes:
+  pgdata:

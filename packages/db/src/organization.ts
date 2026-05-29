@@ -1,4 +1,7 @@
 import { prisma, type Prisma } from "./client";
+import { resolveDeploymentMode } from "@boilerplate/platform-api";
+import { loadLicenseCache } from "./self-hosted/local-install-state";
+import type { LicensePayload } from "@boilerplate/platform-api";
 import { ensureDefaultBranch } from "./branches";
 import { seedDefaultSectorModules } from "./sectors-admin";
 import { provisionTenantSchema } from "./tenant/provision";
@@ -111,6 +114,19 @@ export async function createOrganizationWithTenant(
   input: CreateOrganizationInput,
   ownerUserId: string,
 ) {
+  if (resolveDeploymentMode() === "self_hosted") {
+    const cached = await loadLicenseCache();
+    if (cached) {
+      const license = JSON.parse(cached.payloadJson) as LicensePayload;
+      const count = await prisma.organization.count();
+      if (count >= license.limits.organizations) {
+        throw new Error(
+          `Limite de organizações atingido (${license.limits.organizations}).`,
+        );
+      }
+    }
+  }
+
   const schemaName = schemaNameFromSlug(input.slug);
 
   const org = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
